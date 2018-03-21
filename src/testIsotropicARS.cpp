@@ -43,14 +43,14 @@ void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, ars
 void plotBranchBoundBox(std::ostream& out, const std::vector<BoundInterval>& bbbs);
 
 int main() {
-    ars::AngularRadonSpectrum2d ars;
+    ars::AngularRadonSpectrum2d ars1;
     ars::AngularRadonSpectrum2d ars2;
     ars::Point2Vector acesPoints1;
     std::chrono::system_clock::time_point timeStart, timeStop;
     double sigma = 0.05;
     int fourierOrder = 20;
 
-    ars.setARSFOrder(fourierOrder);
+    ars1.setARSFOrder(fourierOrder);
     ars2.setARSFOrder(fourierOrder);
 
     rangeToPoint(acesRanges1, 180, -0.5 * M_PI, M_PI / 180.0 * 1.0, acesPoints1);
@@ -61,15 +61,15 @@ int main() {
     //    }
 
     const int trialNum = 1;
-    ars.initLUT(0.0001);
-    ars.setComputeMode(ars::AngularRadonSpectrum2d::PNEBI_DOWNWARD);
+    ars1.initLUT(0.0001);
+    ars1.setComputeMode(ars::AngularRadonSpectrum2d::PNEBI_DOWNWARD);
     for (int threadNum = 1; threadNum <= 1; ++threadNum) {
-        ars.setThreadNumOMP(threadNum);
+        ars1.setThreadNumOMP(threadNum);
         timeStart = std::chrono::system_clock::now();
         for (int t = 0; t < trialNum; ++t) {
-            ars.insertIsotropicGaussians(acesPoints1, sigma);
+            ars1.insertIsotropicGaussians(acesPoints1, sigma);
 
-            std::cout << "trial " << t << ": ars.coefficients().at(0) " << ars.coefficients().at(0) << ", ars.coefficients().at(2) " << ars.coefficients().at(2) << std::endl;
+            std::cout << "trial " << t << ": ars.coefficients().at(0) " << ars1.coefficients().at(0) << ", ars.coefficients().at(2) " << ars1.coefficients().at(2) << std::endl;
         }
         timeStop = std::chrono::system_clock::now();
         double timeAvg = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count() / (double) trialNum;
@@ -93,8 +93,8 @@ int main() {
 
     std::cout << "\nARS Coefficients:\n";
     std::cout << "\ti \tDownward \tLUT\n";
-    for (int i = 0; i < ars.coefficients().size() && i < ars2.coefficients().size(); ++i) {
-        std::cout << "\t" << i << " \t" << ars.coefficients().at(i) << " \t" << ars2.coefficients().at(i) << "\n";
+    for (int i = 0; i < ars1.coefficients().size() && i < ars2.coefficients().size(); ++i) {
+        std::cout << "\t" << i << " \t" << ars1.coefficients().at(i) << " \t" << ars2.coefficients().at(i) << "\n";
     }
     std::cout << std::endl;
 
@@ -105,7 +105,7 @@ int main() {
     double theta;
     for (int i = 0; i < thnum; ++i) {
         theta = dtheta * i;
-        funcFourierRecursDownLUT.push_back(ars.eval(theta));
+        funcFourierRecursDownLUT.push_back(ars1.eval(theta));
         funcFourierRecursDown.push_back(ars2.eval(theta));
     }
 
@@ -116,11 +116,11 @@ int main() {
         bbbs[i].x0 = M_PI * i / bbnum;
         bbbs[i].x1 = M_PI * (i + 1) / bbnum;
         //emotion::findARSFLU(ars.coeffsRecursDown(),bbbs[i].x0,bbbs[i].x1,bbbs[i].y0,bbbs[i].y1);
-        ars::findLUFourier(ars.coefficients(), bbbs[i].x0, bbbs[i].x1, bbbs[i].y0, bbbs[i].y1);
+        ars::findLUFourier(ars1.coefficients(), bbbs[i].x0, bbbs[i].x1, bbbs[i].y0, bbbs[i].y1);
         std::cout << i << ": x0 " << RAD2DEG(bbbs[i].x0) << " x1 " << RAD2DEG(bbbs[i].x1) << ", y0 " << bbbs[i].y0 << " y1 " << bbbs[i].y1 << std::endl;
     }
     
-    ars::FourierOptimizerBB1D optim(ars.coefficients());
+    ars::FourierOptimizerBB1D optim(ars1.coefficients());
     double xopt, ymin, ymax;
     optim.enableXTolerance(true);
     optim.enableYTolerance(true);

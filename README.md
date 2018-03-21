@@ -68,7 +68,7 @@ HOW TO USE LIBRARY ars IN YOUR PROJECT
 
 If library ars has been installed in system directory "/usr/local",
 then it is straighforward to use it in your projects.
-You needs to add the following lines to your project as in this example:
+You need to add the following lines to your project as in this example:
 
 
 > CMAKE_MINIMUM_REQUIRED(VERSION 2.8)  
