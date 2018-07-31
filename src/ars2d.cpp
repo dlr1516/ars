@@ -123,7 +123,7 @@ namespace ars {
     AngularRadonSpectrum2d::~AngularRadonSpectrum2d() {
     }
 
-    void AngularRadonSpectrum2d::insertIsotropicGaussians(const Point2Vector& means, double sigma) {
+    void AngularRadonSpectrum2d::insertIsotropicGaussians(const Vector2Vector& means, double sigma) {
         int kernelNum = means.size();
         //std::cout << "kernelNum " << kernelNum << ", mode_ " << mode_ << " " << MODE_NAME[mode_] << std::endl;
 
@@ -159,7 +159,7 @@ namespace ars {
         }
     }
 
-    void AngularRadonSpectrum2d::insertIsotropicGaussians(const Point2Vector& means, const std::vector<double>& sigmas) {
+    void AngularRadonSpectrum2d::insertIsotropicGaussians(const Vector2Vector& means, const std::vector<double>& sigmas) {
         int kernelNum = means.size();
 
         if (kernelNum != sigmas.size()) {

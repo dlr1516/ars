@@ -27,6 +27,7 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 add_library(ars
   src/ars2d.cpp
   src/functions.cpp
+  src/ArsKernel.cpp
   src/BBOptimizer1d.cpp
   src/HoughSpectrum.cpp
   src/thirdparty/Profiler.cpp
@@ -38,7 +39,8 @@ target_link_libraries(testFunctions ${ars_LINK_LIBS} ars)
 add_executable(testIsotropicARS src/testIsotropicARS.cpp )
 target_link_libraries(testIsotropicARS ${ars_LINK_LIBS} ars)
 
-
+add_executable(testAnisotropicArs src/testAnisotropicArs.cpp)
+target_link_libraries(testAnisotropicArs ${ars_LINK_LIBS} ars)
 
 # Option "make install": copy binaries
 INSTALL(TARGETS ars 

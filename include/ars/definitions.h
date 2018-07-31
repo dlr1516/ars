@@ -25,9 +25,11 @@
 
 namespace ars {
 
-typedef Eigen::Vector2d Point2;
+typedef Eigen::Vector2d Vector2;
 
-typedef std::vector<Point2, Eigen::aligned_allocator<Point2> > Point2Vector;
+typedef std::vector<Vector2, Eigen::aligned_allocator<Vector2> > Vector2Vector;
+
+typedef Eigen::Matrix2d Matrix2;
 
 } // end of namespace
 

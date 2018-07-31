@@ -135,11 +135,11 @@ namespace ars {
         
         /** Inserts the given points and computes all the data about point pairs.
          */
-        void insertIsotropicGaussians(const Point2Vector& means,double sigma);
+        void insertIsotropicGaussians(const Vector2Vector& means,double sigma);
 
         /** Inserts the given points and computes all the data about point pairs.
          */
-        void insertIsotropicGaussians(const Point2Vector& means,const std::vector<double>& sigmas);
+        void insertIsotropicGaussians(const Vector2Vector& means,const std::vector<double>& sigmas);
 
         /** Initializes LUT (the LUT is used by initARSFRecursDownLUT).
          */

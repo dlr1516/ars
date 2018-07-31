@@ -13,7 +13,8 @@ If you use this library, please cite the following paper:
 
 D. Lodi Rizzini. 
 Angular Radon Spectrum for Rotation Estimation. 
-In press, 2018.
+Pattern Recognition, Volume 84, Dec. 2018, Pages 182-196, 
+DOI 10.1016/j.patcog.2018.07.017. 
 
 or the most relevant associated publications by visiting: 
 http://rimlab.ce.unipr.it/
