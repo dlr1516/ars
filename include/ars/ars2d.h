@@ -22,20 +22,21 @@
 #include <cmath>
 #include <ars/definitions.h>
 #include <ars/functions.h>
+#include <ars/BBOptimizer1d.h>
 
 namespace ars {
 
     // --------------------------------------------------------
     // ARS-2D FUNCTIONS
     // --------------------------------------------------------
-    
+
     /** Computes the contribution of term (lambda,phi) to the Angular Radon Spectrum Fourier (ARSF) 
      * coefficients computed with downward recursion of modified Bessel functions. 
      * The vector of coefficients coeffs[i] are used in Fourier series:
      *   S(x) = \sum_{i=0}^{n} ( coeffs[2*i] * cos(2*i*x) + coeffs[2*i+1] * sin(2*i*x) )
      */
     void updateARSF2CoeffRecursDown(double lambda, double cth2, double sth2, double factor, int n, std::vector<double>& coeffs);
-    
+
     /** Computes the contribution of term (lambda,phi) to the Angular Radon Spectrum Fourier (ARSF) 
      * coefficients computed with downward recursion of modified Bessel functions. 
      * The vector of coefficients coeffs[i] are used in Fourier series:
@@ -47,7 +48,7 @@ namespace ars {
         sth2 = sin(2.0 * phi);
         updateARSF2CoeffRecursDown(lambda, cth2, sth2, factor, n, coeffs);
     }
-    
+
     /** Computes the contribution of term (lambda,phi) to the Angular Radon Spectrum Fourier (ARSF) 
      * coefficients computed with downward recursion of modified Bessel functions.
      * Values are computed using LUT!
@@ -55,7 +56,7 @@ namespace ars {
      *   S(x) = \sum_{i=0}^{n} ( coeffs[2*i] * cos(2*i*x) + coeffs[2*i+1] * sin(2*i*x) )
      */
     void updateARSF2CoeffRecursDownLUT(double lambda, double cth2, double sth2, double factor, int n, const PnebiLUT& pnebiLUT, std::vector<double>& coeffs);
-    
+
     /** Computes the contribution of term (lambda,phi) to the Angular Radon Spectrum Fourier (ARSF) 
      * coefficients computed with downward recursion of modified Bessel functions.
      * Values are computed using LUT!
@@ -88,12 +89,15 @@ namespace ars {
      */
     class AngularRadonSpectrum2d {
     public:
-        enum ComputeMode { PNEBI_DOWNWARD, PNEBI_LUT };
+
+        enum ComputeMode {
+            PNEBI_DOWNWARD, PNEBI_LUT
+        };
 
         /** Default constructor. 
          */
         AngularRadonSpectrum2d();
-        
+
         /** Destructor. 
          */
         ~AngularRadonSpectrum2d();
@@ -118,11 +122,11 @@ namespace ars {
         void setThreadNumOMP(int tno) {
             threadNumOMP_ = tno;
         }
-        
+
         void setComputeMode(ComputeMode mode) {
             mode_ = mode;
         }
-        
+
         const std::string& getComputeModeName() const {
             return MODE_NAME[mode_];
         }
@@ -132,14 +136,14 @@ namespace ars {
         const std::vector<double>& coefficients() const {
             return coeffs_;
         }
-        
-        /** Inserts the given points and computes all the data about point pairs.
-         */
-        void insertIsotropicGaussians(const Vector2Vector& means,double sigma);
 
         /** Inserts the given points and computes all the data about point pairs.
          */
-        void insertIsotropicGaussians(const Vector2Vector& means,const std::vector<double>& sigmas);
+        void insertIsotropicGaussians(const Vector2Vector& means, double sigma);
+
+        /** Inserts the given points and computes all the data about point pairs.
+         */
+        void insertIsotropicGaussians(const Vector2Vector& means, const std::vector<double>& sigmas);
 
         /** Initializes LUT (the LUT is used by initARSFRecursDownLUT).
          */
@@ -155,7 +159,7 @@ namespace ars {
          */
         double findMax() const {
             double arsfMax, thetaMax;
-            //findARSFMaxBB(coeffsRecursDown_,0,M_PI,thetaToll_,10.0,thetaMax,arsfMax);
+            findGlobalMaxBBFourier(coeffs_, 0, M_PI, thetaToll_, 10.0, thetaMax, arsfMax);
             return arsfMax;
         }
 
@@ -163,7 +167,7 @@ namespace ars {
          */
         double findMax(double& thetaMax) const {
             double arsfMax;
-            //findARSFMaxBB(coeffsRecursDown_,0,M_PI,thetaToll_,10.0,thetaMax,arsfMax);
+            findGlobalMaxBBFourier(coeffs_, 0, M_PI, thetaToll_, 10.0, thetaMax, arsfMax);
             return arsfMax;
         }
 

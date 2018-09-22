@@ -42,6 +42,9 @@ target_link_libraries(testIsotropicARS ${ars_LINK_LIBS} ars)
 add_executable(testAnisotropicArs src/testAnisotropicArs.cpp)
 target_link_libraries(testAnisotropicArs ${ars_LINK_LIBS} ars)
 
+add_executable(testCorrelationArs src/testCorrelationArs.cpp)
+target_link_libraries(testCorrelationArs ${ars_LINK_LIBS} ars)
+
 # Option "make install": copy binaries
 INSTALL(TARGETS ars 
   RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
