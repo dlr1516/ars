@@ -30,7 +30,7 @@ add_library(ars
   src/ArsKernel.cpp
   src/BBOptimizer1d.cpp
   src/HoughSpectrum.cpp
-  src/thirdparty/Profiler.cpp
+  src/Profiler.cpp
 )
 
 add_executable(testFunctions src/testFunctions.cpp )
