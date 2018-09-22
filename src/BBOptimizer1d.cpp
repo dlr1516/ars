@@ -132,7 +132,7 @@ namespace ars {
             fopt.setYTolerance(fourierTol);
             fopt.enableYTolerance(true);
         }
-        fopt.findGlobalMax(theta0, theta1, fourierLower, fourierUpper, thetaMax);
+        fopt.findGlobalMax(theta0, theta1, thetaMax, fourierLower, fourierUpper);
         fourierMax = 0.5 * (fourierLower + fourierUpper);
     }
 

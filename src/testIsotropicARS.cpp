@@ -129,6 +129,10 @@ int main() {
     optim.findGlobalMax(0,M_PI,xopt,ymin,ymax);
     std::cout << "\n****\nMaximum in x = " << xopt << " (" << RAD2DEG(xopt) << " deg), maximum between [" << ymin << "," << ymax << "]" << std::endl;
 
+    double xopt2, ymax2;
+    ars::findGlobalMaxBBFourier(ars1.coefficients(), 0, M_PI, M_PI/180.0*0.5, 1.0, xopt2, ymax2);
+    std::cout << "  repeated evaluation with findGlobalMaxBBFourier(): maximum in x " << xopt2 << " (" << RAD2DEG(xopt2) << " deg), maximum value " << ymax2 << std::endl;
+
 
     Gnuplot gp("gnuplot -persist");
     double vieweps = 5e-3;
