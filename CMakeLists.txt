@@ -27,7 +27,6 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 add_library(ars
   src/ars2d.cpp
   src/functions.cpp
-  src/ArsKernel.cpp
   src/BBOptimizer1d.cpp
   src/HoughSpectrum.cpp
   src/Profiler.cpp

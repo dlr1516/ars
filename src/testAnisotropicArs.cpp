@@ -18,7 +18,7 @@
 #include <iostream>
 #include <Eigen/Dense>
 
-#include <ars/ArsKernel.h>
+//#include <ars/ArsKernel.h>
 #include <ars/definitions.h>
 
 void getMatrix(double lmin, double lmax, double ang, ars::Matrix2& mat);
