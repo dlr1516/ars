@@ -28,7 +28,9 @@ The software depends on the following external libraries
 - Boost (submodule lexical_cast)
 - Eigen 3.0 
 
-Other dependencies are placed in directory thirdparty.
+Other dependencies are placed in directory thirdparty. 
+Some examples require the external application "gnuplot" to display 
+results. 
 
 
 HOW TO COMPILE
