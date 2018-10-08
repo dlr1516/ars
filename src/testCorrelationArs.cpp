@@ -93,8 +93,10 @@ int main() {
     Gnuplot gp("gnuplot -persist");
     //    double vieweps = 5e-3;
     //    //  std::ostream& gp = std::cout;
-    gp << "set term wxt 0\n";
-    gp << "plot '-' title \"ars 1\" w l, '-' title \"ars 2\" w l, '-' title \"ars corr\" w l\n";
+    //gp << "set term wxt 0\n";
+    gp << "set terminal postscript eps enhanced color \"Times-Roman\" 24\n";
+    gp << "set output \"registration_ars.eps\"\n";
+    gp << "plot '-' title \"ARS 1\" w l lw 5.0, '-' title \"ARS 2\" w l lw 2.0, '-' title \"ARS corr\" w l lw 5.0\n";
     for (int i = 0; i < thnum; ++i) {
         double a = M_PI / thnum * i;
         gp << (180.0 / thnum * i) << " " << ars1.eval(a)/arsMax1 << "\n";
@@ -110,6 +112,23 @@ int main() {
         gp << (180.0 / thnum * i) << " " << ars::evaluateFourier(correlationFourier, 2.0 * a)/corrMax << "\n";
     }
     gp << "e" << std::endl;
+    
+    //gp << "set term wxt 1\n";
+    gp << "set terminal postscript eps enhanced color \"Times-Roman\" 24\n";
+    gp << "set output \"registration_input_scans.eps\"\n";
+    gp << "set size ratio -1\n";
+    gp << "set xrange [0.0:8.0]\n";
+    gp << "set yrange [-8.0:8.0]\n";
+    gp << "plot '-' title \"scan 1\" w p pt 7 ps 0.5, '-' title \"scan 2\" w p pt 7 ps 0.5\n";
+    for (auto& p : acesPoints1) {
+        gp << p.x() << " " << p.y() << "\n";
+    }
+    gp << "e" << std::endl;
+    for (auto& p : acesPoints2) {
+        gp << p.x() << " " << p.y() << "\n";
+    }
+    gp << "e" << std::endl;
+    
 
     return 0;
 }

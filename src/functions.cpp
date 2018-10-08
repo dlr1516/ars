@@ -211,7 +211,7 @@ namespace ars {
 //                      << "real deriv " << (lut_.back().y[1] - lut_.back().y[0]) << ", deriv " << deriv << ", ratio " << ratio << std::endl;
             y0prev = lut_.back().y[0];
         }
-        std::cout << __FILE__ << "," << __LINE__ << ": lut num " << lut_.size() << ", x max " << lut_.back().x << " -> y[0] " << lut_.back().y[0] << std::endl;
+        //std::cout << __FILE__ << "," << __LINE__ << ": lut num " << lut_.size() << ", x max " << lut_.back().x << " -> y[0] " << lut_.back().y[0] << std::endl;
     }
 
     double PnebiLUT::eval(int k, double x) const {
