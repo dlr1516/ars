@@ -20,55 +20,50 @@
 
 using namespace std;
 
-namespace ars
-{
+namespace ars {
 
-HoughSpectrum::HoughSpectrum()
- : thetaNum_(360), 
-   rhoNum_(1000),
-   thetaStep_(0.0087266), rhoStep_(0.02),
-   hough_(thetaNum_,rhoNum_),
-   spectrum_(thetaNum_),
-   cosLut_(thetaNum_), sinLut_(thetaNum_)
-{
-  for (unsigned int i = 0; i < thetaNum_; ++i) {
-    cosLut_(i) = cos(thetaStep_ * i);
-    sinLut_(i) = sin(thetaStep_ * i);
-  }
-}
+    HoughSpectrum::HoughSpectrum()
+    : thetaNum_(360),
+    rhoNum_(1000),
+    thetaStep_(0.0087266), rhoStep_(0.02),
+    hough_(thetaNum_, rhoNum_),
+    spectrum_(thetaNum_),
+    cosLut_(thetaNum_), sinLut_(thetaNum_) {
+        for (unsigned int i = 0; i < thetaNum_; ++i) {
+            cosLut_(i) = cos(thetaStep_ * i);
+            sinLut_(i) = sin(thetaStep_ * i);
+        }
+    }
 
+    HoughSpectrum::HoughSpectrum(double thetaStep, double rhoStep, double rhoMax)
+    : thetaNum_(static_cast<unsigned int> (ceil(M_PI / thetaStep))),
+    rhoNum_(2 * static_cast<unsigned int> (ceil(rhoMax / rhoStep))),
+    thetaStep_(thetaStep), rhoStep_(rhoStep),
+    hough_(thetaNum_, rhoNum_),
+    spectrum_(thetaNum_),
+    cosLut_(thetaNum_), sinLut_(thetaNum_) {
+        for (unsigned int i = 0; i < thetaNum_; ++i) {
+            cosLut_(i) = cos(thetaStep_ * i);
+            sinLut_(i) = sin(thetaStep_ * i);
+        }
+    }
 
-HoughSpectrum::HoughSpectrum(double thetaStep,double rhoStep,double rhoMax)
- : thetaNum_(static_cast<unsigned int>(ceil(M_PI/thetaStep))), 
-   rhoNum_(2 * static_cast<unsigned int>(ceil(rhoMax/rhoStep))),
-   thetaStep_(thetaStep), rhoStep_(rhoStep),
-   hough_(thetaNum_,rhoNum_),
-   spectrum_(thetaNum_),
-   cosLut_(thetaNum_), sinLut_(thetaNum_)
-{
-  for (unsigned int i = 0; i < thetaNum_; ++i) {
-    cosLut_(i) = cos(thetaStep_ * i);
-    sinLut_(i) = sin(thetaStep_ * i);
-  }
-}
+    void HoughSpectrum::init(double thetaStep, double rhoStep, double rhoMax) {
+        thetaStep_ = thetaStep;
+        rhoStep_ = rhoStep;
+        thetaNum_ = (unsigned int) ceil(M_PI / thetaStep);
+        rhoNum_ = (unsigned int) ceil(rhoMax / rhoStep);
 
-void HoughSpectrum::init(double thetaStep,double rhoStep,double rhoMax)
-{
-  thetaStep_ = thetaStep;
-  rhoStep_ = rhoStep;
-  thetaNum_ = (unsigned int)ceil(M_PI / thetaStep);
-  rhoNum_ = (unsigned int)ceil(rhoMax / rhoStep);
+        hough_.resize(thetaNum_, rhoNum_);
+        spectrum_.resize(thetaNum_);
+        cosLut_.resize(thetaNum_);
+        sinLut_.resize(thetaNum_);
 
-  hough_.resize(thetaNum_,rhoNum_);
-  spectrum_.resize(thetaNum_);
-  cosLut_.resize(thetaNum_);
-  sinLut_.resize(thetaNum_);
-
-  for (unsigned int i = 0; i < thetaNum_; ++i) {
-    cosLut_(i) = cos(thetaStep_ * i);
-    sinLut_(i) = sin(thetaStep_ * i);
-  }
-}
+        for (unsigned int i = 0; i < thetaNum_; ++i) {
+            cosLut_(i) = cos(thetaStep_ * i);
+            sinLut_(i) = sin(thetaStep_ * i);
+        }
+    }
 
 } // end of namespace
 

@@ -17,6 +17,8 @@
  */
 #include <ars/BBOptimizer1d.h>
 
+//#define STREAM_BOUND_INTERVAL(X)  "depth " << (X).depth << "[" << (X).xmin.transpose() << "; " << (X).xmax.transpose() << "]: values in  [" << (X).ylower << "," << (X).yupper << "]"
+
 namespace ars {
 
     // --------------------------------------------------------
@@ -68,7 +70,6 @@ namespace ars {
                     global.ylower = curr.ylower;
                     global.yupper = curr.yupper;
                 }
-                //      std::cout << "curr " << STREAM_BOUND_INTERVAL(curr) << std::endl;
                 //      std::cout << "  global " << STREAM_BOUND_INTERVAL(global) << std::endl; 
                 // Splits curr into intervals left and right, if the interval does not satisfy stop criteria
                 if (!checkInterval(curr)) {

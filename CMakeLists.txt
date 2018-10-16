@@ -28,6 +28,7 @@ add_library(ars
   src/ars2d.cpp
   src/functions.cpp
   src/BBOptimizer1d.cpp
+  src/HistogramCircularCorrelation.cpp
   src/HoughSpectrum.cpp
   src/Profiler.cpp
 )
