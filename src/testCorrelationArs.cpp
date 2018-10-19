@@ -21,6 +21,9 @@
 #include <ars/definitions.h>
 #include <ars/ars2d.h>
 #include <ars/BBOptimizer1d.h>
+#include <ars/HoughSpectrum.h>
+#include <ars/HistogramCircularCorrelation.h>
+
 
 #include <chrono>
 #include <ars/thirdparty/gnuplot-iostream.h>
@@ -47,6 +50,9 @@ void plotBranchBoundBox(std::ostream& out, const std::vector<BoundInterval>& bbb
 int main() {
     ars::AngularRadonSpectrum2d ars1;
     ars::AngularRadonSpectrum2d ars2;
+    ars::HoughSpectrum hs1;
+    ars::HoughSpectrum hs2;
+    ars::HistogramCircularCorrelation corr;
     ars::Vector2Vector acesPoints1;
     ars::Vector2Vector acesPoints2;
     std::vector<double> correlationFourier;
@@ -56,6 +62,8 @@ int main() {
     double thetaMax1, arsMax1, thetaMax2, arsMax2;
     double thetaTol, fourierTol, thetaMax, corrMax;
     int thnum = 360;
+    int hsShiftMax;
+    double hsCorrMax;
 
     ars1.setARSFOrder(fourierOrder);
     ars2.setARSFOrder(fourierOrder);
@@ -73,13 +81,13 @@ int main() {
     ars1.setComputeMode(ars::AngularRadonSpectrum2d::PNEBI_LUT);
     ars1.insertIsotropicGaussians(acesPoints1, sigma);
     arsMax1 = ars1.findMax(thetaMax1);
-    std::cout << "ars1: maximum " << arsMax1 << " in " << (180.0/M_PI*thetaMax1) << " [deg]" << std::endl;
+    std::cout << "ars1: maximum " << arsMax1 << " in " << (180.0 / M_PI * thetaMax1) << " [deg]" << std::endl;
 
     ars2.initLUT(0.0001);
     ars2.setComputeMode(ars::AngularRadonSpectrum2d::PNEBI_LUT);
     ars2.insertIsotropicGaussians(acesPoints2, sigma);
     arsMax2 = ars2.findMax(thetaMax2);
-    std::cout << "ars2: maximum " << arsMax2 << " in " << (180.0/M_PI*thetaMax2) << " [deg]" << std::endl;
+    std::cout << "ars2: maximum " << arsMax2 << " in " << (180.0 / M_PI * thetaMax2) << " [deg]" << std::endl;
 
     ars::computeFourierCorr(ars1.coefficients(), ars2.coefficients(), correlationFourier);
 
@@ -87,34 +95,55 @@ int main() {
     fourierTol = 1.0;
     ars::findGlobalMaxBBFourier(correlationFourier, 0.0, M_PI, thetaTol, fourierTol, thetaMax, corrMax);
 
-    std::cout << "best correlation for rotation " << (180.0 / M_PI * thetaMax) << " [deg] with max value " << corrMax << std::endl;
+    std::cout << "ARS: best correlation for rotation " << (180.0 / M_PI * thetaMax) << " [deg] with max value " << corrMax << std::endl;
+
+    hs1.init(M_PI / thnum, 0.20, 30.0);
+    hs2.init(M_PI / thnum, 0.20, 30.0);
+    hs1.insertPoint(acesPoints1.begin(), acesPoints1.end());
+    hs2.insertPoint(acesPoints2.begin(), acesPoints2.end());
+    corr.computeHistSimpleShift(hs1.spectrum(), hs2.spectrum(), thnum, hsShiftMax, hsCorrMax);
+    std::cout << "HS: best correlation for rotation " << (180.0 * hsShiftMax / thnum) << " [deg] with max value " << corrMax << std::endl;
 
 
     Gnuplot gp("gnuplot -persist");
     //    double vieweps = 5e-3;
     //    //  std::ostream& gp = std::cout;
-    //gp << "set term wxt 0\n";
-    gp << "set terminal postscript eps enhanced color \"Times-Roman\" 24\n";
-    gp << "set output \"registration_ars.eps\"\n";
+    gp << "set term wxt 0\n";
+    //gp << "set terminal postscript eps enhanced color \"Times-Roman\" 24\n";
+    //gp << "set output \"registration_ars.eps\"\n";
     gp << "plot '-' title \"ARS 1\" w l lw 5.0, '-' title \"ARS 2\" w l lw 2.0, '-' title \"ARS corr\" w l lw 5.0\n";
     for (int i = 0; i < thnum; ++i) {
         double a = M_PI / thnum * i;
-        gp << (180.0 / thnum * i) << " " << ars1.eval(a)/arsMax1 << "\n";
+        gp << (180.0 / thnum * i) << " " << ars1.eval(a) / arsMax1 << "\n";
     }
     gp << "e" << std::endl;
     for (int i = 0; i < thnum; ++i) {
         double a = M_PI / thnum * i;
-        gp << (180.0 / thnum * i) << " " << ars2.eval(a)/arsMax2 << "\n";
+        gp << (180.0 / thnum * i) << " " << ars2.eval(a) / arsMax2 << "\n";
     }
     gp << "e" << std::endl;
     for (int i = 0; i < thnum; ++i) {
         double a = M_PI / thnum * i;
-        gp << (180.0 / thnum * i) << " " << ars::evaluateFourier(correlationFourier, 2.0 * a)/corrMax << "\n";
+        gp << (180.0 / thnum * i) << " " << ars::evaluateFourier(correlationFourier, 2.0 * a) / corrMax << "\n";
     }
     gp << "e" << std::endl;
-    
-    //gp << "set term wxt 1\n";
-    gp << "set terminal postscript eps enhanced color \"Times-Roman\" 24\n";
+
+    gp << "set term wxt 1\n";
+    //gp << "set output \"registration_ars.eps\"\n";
+    gp << "plot '-' title \"HS 1\" w l lw 5.0, '-' title \"HS 2\" w l lw 2.0\n";
+    for (int i = 0; i < thnum; ++i) {
+        double a = M_PI / thnum * i;
+        gp << (180.0 / thnum * i) << " " << hs1.spectrum(a) << "\n";
+    }
+    gp << "e" << std::endl;
+    for (int i = 0; i < thnum; ++i) {
+        double a = M_PI / thnum * i;
+        gp << (180.0 / thnum * i) << " " << hs2.spectrum(a) << "\n";
+    }
+    gp << "e" << std::endl;
+
+    gp << "set term wxt 2\n";
+    //gp << "set terminal postscript eps enhanced color \"Times-Roman\" 24\n";
     gp << "set output \"registration_input_scans.eps\"\n";
     gp << "set size ratio -1\n";
     gp << "set xrange [0.0:8.0]\n";
@@ -128,7 +157,7 @@ int main() {
         gp << p.x() << " " << p.y() << "\n";
     }
     gp << "e" << std::endl;
-    
+
 
     return 0;
 }
