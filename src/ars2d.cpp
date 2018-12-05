@@ -120,6 +120,11 @@ namespace ars {
     thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4), pnebiLut_(), mode_(PNEBI_LUT) {
     }
 
+    AngularRadonSpectrum2d::AngularRadonSpectrum2d(const std::vector<double>& coeffs)
+    : coeffs_(coeffs), arsfOrder_(0),
+    thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4), pnebiLut_(), mode_(PNEBI_LUT) {
+    }
+
     AngularRadonSpectrum2d::~AngularRadonSpectrum2d() {
     }
 

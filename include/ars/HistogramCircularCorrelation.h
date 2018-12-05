@@ -44,14 +44,14 @@ namespace ars {
             assert(h1.size() == h2.size());
             Value corrTmp = 0;
             corr = 0;
-            //    std::cout << __FILE__ << "," << __LINE__ << ": find histogram correlation" << std::endl;
+            std::cout << __FILE__ << "," << __LINE__ << ": find histogram correlation" << std::endl;
             for (int i = -shiftMax; i < shiftMax; ++i) {
                 computeHistSimpleCorr(h1, h2, i, corrTmp);
                 if (corrTmp > corr) {
                     corr = corrTmp;
                     shift = i;
                 }
-                //      std::cout << "  shift " << i << " corr " << corrTmp << " best shift " << shift << " best corr " << corr << std::endl;
+                std::cout << "  shift " << i << " corr " << corrTmp << " best shift " << shift << " best corr " << corr << std::endl;
             }
         }
 

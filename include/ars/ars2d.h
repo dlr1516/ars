@@ -97,6 +97,10 @@ namespace ars {
         /** Default constructor. 
          */
         AngularRadonSpectrum2d();
+        
+        /** Default constructor. 
+         */
+        AngularRadonSpectrum2d(const std::vector<double>& coeffs);
 
         /** Destructor. 
          */
@@ -135,6 +139,12 @@ namespace ars {
          */
         const std::vector<double>& coefficients() const {
             return coeffs_;
+        }
+        
+        /** Sets the ARSF coefficients. 
+         */
+        void setCoefficients(const std::vector<double>& coeffs) {
+            coeffs_ = coeffs;
         }
 
         /** Inserts the given points and computes all the data about point pairs.

@@ -75,7 +75,7 @@ namespace ars {
          */
         double hough(double theta, double rho) const {
             int ith = thetaToIdx(theta);
-            int irh = rhoToIdx(theta);
+            int irh = rhoToIdx(rho);
             if (0 <= ith && ith < hough_.rows() && 0 <= irh && irh < hough_.cols()) {
                 return hough_(ith, irh);
             }
