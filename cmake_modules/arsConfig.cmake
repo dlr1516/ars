@@ -17,7 +17,7 @@ message(STATUS "    ars_INCLUDE_DIR ${ars_INCLUDE_DIR}." )
 set(ars_INCLUDE_DIRS ${ars_INCLUDE_DIR})
   
 # Searches library librimagraph.a in /usr/local/lib
-find_path(ars_LIBRARY_DIR librimagraph.a ${ars_PREFIX_DIR}/lib)
+find_path(ars_LIBRARY_DIR libars.a ${ars_PREFIX_DIR}/lib)
 message(STATUS "    ars_LIBRARY_DIR ${ars_LIBRARY_DIR}." )
 set(ars_LIBRARY_DIRS ${ars_PREFIX_DIR}/lib)
 

@@ -19,9 +19,7 @@
 #include <ars/functions.h>
 #include <ars/ars2d.h>
 #include <ars/thirdparty/gnuplot-iostream.h>
-
-#include "ars/Profiler.h"
-//#include <ars/thirdparty/Profiler.h>
+#include <ars/Profiler.h>
 
 struct PlotItem {
     std::vector<std::pair<double, double> > values;
