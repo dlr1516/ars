@@ -180,6 +180,31 @@ namespace ars {
             findGlobalMaxBBFourier(coeffs_, 0, M_PI, thetaToll_, 10.0, thetaMax, arsfMax);
             return arsfMax;
         }
+        
+        /**
+         * Finds the maximum of ARSF on the given interval [thetaLow, thetaUpp].
+         * @param thetaLow
+         * @param thetaUpp
+         * @return the maximum value of correlation function. 
+         */
+        double findMax(double thetaLow, double thetaUpp) const {
+            double arsfMax, thetaMax;
+            findGlobalMaxBBFourier(coeffs_, thetaLow, thetaUpp, thetaToll_, 10.0, thetaMax, arsfMax);
+            return arsfMax;
+        }
+        
+        /**
+         *  Finds the maximum of ARSF on the given interval.
+         * @param thetaOpt
+         * @param thetaMin
+         * @param thetaMax
+         * @return 
+         */
+        double findMax(double& thetaMax, double thetaLow, double thetaUpp) const {
+            double arsfMax;
+            findGlobalMaxBBFourier(coeffs_, thetaLow, thetaUpp, thetaToll_, 10.0, thetaMax, arsfMax);
+            return arsfMax;
+        }
 
     protected:
         static std::array<std::string, 2> const MODE_NAME;
