@@ -16,6 +16,22 @@ Angular Radon Spectrum for Rotation Estimation.
 Pattern Recognition, Volume 84, Dec. 2018, Pages 182-196, 
 DOI [10.1016/j.patcog.2018.07.017](https://doi.org/10.1016/j.patcog.2018.07.017).
 
+````
+  @article{lodirizzini2018pr,
+    author={Lodi Rizzini, D.},
+    title={{Angular Radon Spectrum for Rotation Estimation}}
+    journal={Pattern Recognition},
+    volume={84},
+    pages={182--196},
+    month={dec},
+    year={2018},
+    publisher={Elsevier},
+    issn = {},
+    doi = {10.1016/j.patcog.2018.07.017},
+    note = {DOI 10.1016/j.patcog.2018.07.017, EID 2-s2.0-85050072081},
+  }
+````
+
 or the most relevant associated publications by visiting: 
 http://rimlab.ce.unipr.it/
 
