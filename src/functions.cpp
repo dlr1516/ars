@@ -19,6 +19,8 @@
 #include <cassert> 
 #include <algorithm>
 
+#include "ars/definitions.h"
+
 
 namespace ars {
 
@@ -207,8 +209,8 @@ namespace ars {
             lut_.push_back(PnebiPoint(n, x));
             ratio = deriv * (y0prev - lut_.back().y[0]) / tol;
             deriv = std::min(std::max(lut_.back().y[1] - lut_.back().y[0], ratio), -10.0 * std::numeric_limits<double>::min());
-//            std::cout << "x " << x << ", y[0] " << lut_.back().y[0] << " (incr prev y[0] " << (lut_.back().y[0] - y0prev) << "), "
-//                      << "real deriv " << (lut_.back().y[1] - lut_.back().y[0]) << ", deriv " << deriv << ", ratio " << ratio << std::endl;
+            //            std::cout << "x " << x << ", y[0] " << lut_.back().y[0] << " (incr prev y[0] " << (lut_.back().y[0] - y0prev) << "), "
+            //                      << "real deriv " << (lut_.back().y[1] - lut_.back().y[0]) << ", deriv " << deriv << ", ratio " << ratio << std::endl;
             y0prev = lut_.back().y[0];
         }
         //std::cout << __FILE__ << "," << __LINE__ << ": lut num " << lut_.size() << ", x max " << lut_.back().x << " -> y[0] " << lut_.back().y[0] << std::endl;
@@ -274,21 +276,21 @@ namespace ars {
             }
         }
     }
-    
-    void PnebiLUT::printLUT(std::ostream& out,int n,int k) {
+
+    void PnebiLUT::printLUT(std::ostream& out, int n, int k) {
         int incr = std::max<int>(lut_.size() / n, 1);
-        for (int i = 0; i < lut_.size(); i+=incr) {
+        for (int i = 0; i < lut_.size(); i += incr) {
             out << i << "\t" << lut_[i].x << "\t";
             for (int j = 0; j <= k && j < lut_[i].y.size(); ++j) {
                 out << lut_[i].y[j] << "\t";
             }
             out << std::endl;
         }
-        out << (lut_.size()-1) << "\t" << lut_.back().x << "\t";
-            for (int j = 0; j <= k && j < lut_.back().y.size(); ++j) {
-                out << lut_.back().y[j] << "\t";
-            }
-            out << std::endl;
+        out << (lut_.size() - 1) << "\t" << lut_.back().x << "\t";
+        for (int j = 0; j <= k && j < lut_.back().y.size(); ++j) {
+            out << lut_.back().y[j] << "\t";
+        }
+        out << std::endl;
     }
 
     // --------------------------------------------------------
@@ -363,6 +365,63 @@ namespace ars {
             fourierMin += amplitude * sinusoidMin;
             fourierMax += amplitude * sinusoidMax;
         }
+    }
+
+    // --------------------------------------------------------
+    // ORTHOGONAL POLYNOMIALS AND SPHERICAL HARMONICS
+    // --------------------------------------------------------
+
+    double evaluateLegendreAssoc(int l, int m, double x) {
+        double p0, p1, px, sign, t2;
+        bool inverted = false;
+        
+        // Polynomial is computed only in domain [-1, 1]
+        ARS_ASSERT(-1.0 <= x && x <= 1.0);
+
+        // If m < 0, P_{l}^{-m}(x) is computed and the result is adjusted 
+        // before returning it
+        if (m < 0) {
+            m = -m;
+            inverted = true;
+        }
+        if (m % 2 == 0) {
+            sign = 1.0;
+        } else {
+            sign = -1.0;
+        }
+
+        //Initializes the recurrence at (m, m) and (m, m+1)
+        t2 = sqrt(1.0 - x * x);
+        p0 = sign;
+        for (int i = 0; i < m; ++i) {
+            p0 *= t2 * (2 * i + 1);
+        }
+        p1 = x * ((2 * m + 1) * p0);
+
+        // If these are the desired indices, return these initial values.
+        if (l == m) {
+            px = p0;
+        } else if (l == m + 1) {
+            px = p1;
+        } else {
+            // Fixing m, work our way up from(m, m + 1) to(m, j).
+            for (int i = m + 1; i >= i - 1; --i) {
+                px = ((2 * i + 1) * x * p1 - (i + m) * p0) / (i - m + 1.0);
+                p0 = p1;
+                p1 = px;
+            }
+        }
+
+        // If sign was inverted, we apply
+        //   P_{l}^{-m}(x) = (-1)^{m} * (l - m)! / (l + m)! * P_{l}^{m}(x)
+        if (inverted) {
+            px *= sign;
+            for (int i = l - m + 1; i <= l + m; ++i) {
+                px *= i;
+            }
+        }
+
+        return px;
     }
 
 } // end of namespace

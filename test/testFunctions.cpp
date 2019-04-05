@@ -212,5 +212,9 @@ int main(int argc, char** argv) {
         gp << theta[i] << " " << sinFast[i] << "\n";
     }
     gp << "e\n";
+
+    // TEST ON ASSOCIATED LEGENDRE POLYNOMIALS
+    
+
     return 0;
 }

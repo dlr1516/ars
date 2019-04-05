@@ -1,6 +1,7 @@
 /**
  * ARS - Angular Radon Spectrum 
  * Copyright (C) 2017 Dario Lodi Rizzini.
+ *           (C) 2019 Dario Lodi Rizzini, Stefano Marini. 
  *
  * ARS is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -188,6 +189,24 @@ namespace ars {
      *   S(x) = \sum_{i=0}^{n} ( coeffs[2*i] * cos(2*i*x) + coeffs[2*i+1] * sin(2*i*x) )
      */
     void findLUFourier(const std::vector<double>& coeffs, double theta0, double theta1, double& fourierMin, double& fourierfMax);
+    
+    // --------------------------------------------------------
+    // ORTHOGONAL POLYNOMIALS AND SPHERICAL HARMONICS
+    // --------------------------------------------------------
+    
+    /**
+     * Evaluates the value of associated Legendre polynomials:
+     * 
+     *   P_{l}^{m}(x) = (-1)^{m} * (1- x^2)^{m/2} * d^{m} P_{l}(x) / dx^{m}
+     * 
+     * where P_{l}(x) is the standard Legendre polynomial. 
+     *  
+     * @param l  first order of Legendre (integer >= 0)
+     * @param m  second order of Legendre (interger -l <= m <= l)
+     * @param x  argument
+     * @return the value of polynomial 
+     */
+    double evaluateLegendreAssoc(int l, int m, double x);
 
 
 } // end of namespace

@@ -33,16 +33,16 @@ add_library(ars
   src/Profiler.cpp
 )
 
-add_executable(testFunctions src/testFunctions.cpp )
+add_executable(testFunctions test/testFunctions.cpp )
 target_link_libraries(testFunctions ${ars_LINK_LIBS} ars)
 
-add_executable(testIsotropicARS src/testIsotropicARS.cpp )
+add_executable(testIsotropicARS test/testIsotropicARS.cpp )
 target_link_libraries(testIsotropicARS ${ars_LINK_LIBS} ars)
 
-add_executable(testAnisotropicArs src/testAnisotropicArs.cpp)
+add_executable(testAnisotropicArs test/testAnisotropicArs.cpp)
 target_link_libraries(testAnisotropicArs ${ars_LINK_LIBS} ars)
 
-add_executable(testCorrelationArs src/testCorrelationArs.cpp)
+add_executable(testCorrelationArs test/testCorrelationArs.cpp)
 target_link_libraries(testCorrelationArs ${ars_LINK_LIBS} ars)
 
 # Option "make install": copy binaries
@@ -62,4 +62,3 @@ INSTALL(FILES ${headers_3rdparty} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ar
 FILE(GLOB cmake_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/arsConfig.cmake")
 message(STATUS "cmake_script " ${cmake_script})
 INSTALL(FILES ${cmake_script} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/ars/)
-

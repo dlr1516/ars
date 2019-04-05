@@ -23,13 +23,25 @@
 
 #define ARS_PRINT(X) std::cout << __FILE__ << "," << __LINE__ << ": " << (#X) << " " << (X) << std::endl;
 
+#define ARS_ASSERT(X) \
+  if (!(X)) { \
+    std::cerr << __FILE__ << "," << __LINE__ << ": assertion failed " << #X << " " << (X) << std::endl; \
+    exit(-1); \
+  } 
+
 namespace ars {
 
-typedef Eigen::Vector2d Vector2;
+    typedef Eigen::Vector2d Vector2;
 
-typedef std::vector<Vector2, Eigen::aligned_allocator<Vector2> > Vector2Vector;
+    typedef std::vector<Vector2, Eigen::aligned_allocator<Vector2> > Vector2Vector;
 
-typedef Eigen::Matrix2d Matrix2;
+    typedef Eigen::Matrix2d Matrix2;
+
+    typedef Eigen::Vector3d Vector3;
+
+    typedef std::vector<Vector3, Eigen::aligned_allocator<Vector3> > Vector3Vector;
+
+    typedef Eigen::Matrix3d Matrix3;
 
 } // end of namespace
 
