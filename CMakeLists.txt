@@ -30,11 +30,15 @@ add_library(ars
   src/BBOptimizer1d.cpp
   src/HistogramCircularCorrelation.cpp
   src/HoughSpectrum.cpp
+  src/ParamMap.cpp
   src/Profiler.cpp
 )
 
 add_executable(testFunctions test/testFunctions.cpp )
 target_link_libraries(testFunctions ${ars_LINK_LIBS} ars)
+
+add_executable(testLegendre test/testLegendre.cpp )
+target_link_libraries(testLegendre ${ars_LINK_LIBS} ars)
 
 add_executable(testIsotropicARS test/testIsotropicARS.cpp )
 target_link_libraries(testIsotropicARS ${ars_LINK_LIBS} ars)
