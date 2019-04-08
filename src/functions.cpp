@@ -430,23 +430,27 @@ namespace ars {
         return px;
     }
 
-    AssocLegendreCosLUT::AssocLegendreCosLUT(int lmax, int num)
-    : lmax_(lmax), polyNum_((lmax_ + 1) * (lmax_ + 1)), num_(num), values_(polyNum_ * (num + 1), 0.0), thetaInc_(M_PI / num) {
-        double theta;
+    SphericalHarmonicsLUT::SphericalHarmonicsLUT(int lmax, int num)
+    : lmax_(lmax), polyNum_((lmax_ + 1) * (lmax_ + 1)), num_(num), legendre_(polyNum_ * (num + 1), 0.0), thetaInc_(M_PI / num) {
+        double theta, factorPos, factorNeg, factorL;
         int polyNum, prevL;
 
         for (int i = 0; i <= num_; ++i) {
             theta = thetaInc_ * i;
             for (int l = 0; l <= lmax; ++l) {
-                for (int m = -l; m <= l; ++m) {
-                    //std::cout << " i " << i << " l " << l << " m " << m << ": idx " << (polyNum_ * i + l*l + l + m) << "\n";
-                    values_[polyNum_ * i + l*l + l + m] = boost::math::legendre_p<double>(l, m, cos(theta));
+                factorL = sqrt((2.0 * l + 1.0) / 12.566371); 
+                legendre_[polyNum_ * i + l*l + l] = factorL * boost::math::legendre_p<double>(l, 0, cos(theta));
+                for (int m = 1; m <= l; ++m) {
+                    factorPos = sqrt(boost::math::factorial<double>(l - m) / boost::math::factorial<double>(l + m));
+                    factorNeg = sqrt(boost::math::factorial<double>(l + m) / boost::math::factorial<double>(l - m));
+                    legendre_[polyNum_ * i + l*l + l + m] = factorL * factorPos * boost::math::legendre_p<double>(l, m, cos(theta));
+                    legendre_[polyNum_ * i + l*l + l - m] = factorL * factorNeg * boost::math::legendre_p<double>(l, -m, cos(theta));
                 }
             }
         }
     }
 
-    double AssocLegendreCosLUT::eval(int l, int m, double theta) {
+    double SphericalHarmonicsLUT::evalLegendre(int l, int m, double theta) const {
         int i, idxPrev, idxNext;
         double t;
 
@@ -464,9 +468,17 @@ namespace ars {
         } else {
             idxNext = polyNum_ * (i + 1) + l * l + l + m;
         }
-        ARS_ASSERT(0 <= idxPrev && idxPrev < values_.size());
-        ARS_ASSERT(0 <= idxNext && idxNext < values_.size());
-        return ((1.0 - t) * values_[idxPrev] + t * values_[idxNext]);
+        ARS_ASSERT(0 <= idxPrev && idxPrev < legendre_.size());
+        ARS_ASSERT(0 <= idxNext && idxNext < legendre_.size());
+        return ((1.0 - t) * legendre_[idxPrev] + t * legendre_[idxNext]);
+    }
+    
+    std::complex<double> SphericalHarmonicsLUT::evalSpHarm(int l, int m, double theta, double phi) const {
+        std::complex<double> val;
+        double module = evalLegendre(l, m, theta);
+        val.real(module * cos(phi));
+        val.imag(module * sin(phi));
+        return val;
     }
 
 } // end of namespace

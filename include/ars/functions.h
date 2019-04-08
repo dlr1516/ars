@@ -214,7 +214,7 @@ namespace ars {
      * associated Legendre polynomials with cosine argument up to order lmax 
      * and with discretization interval. 
      */
-    class AssocLegendreCosLUT {
+    class SphericalHarmonicsLUT {
     public:
 
         /**
@@ -222,25 +222,37 @@ namespace ars {
          * @param lmax
          * @param num
          */
-        AssocLegendreCosLUT(int lmax, int num);
+        SphericalHarmonicsLUT(int lmax, int num);
 
         /**
-         * Returns the values of associacted Legendre polynomials from the 
+         * Returns the values of associated Legendre polynomials from the 
          * interpolated values of a LUT.
          * 
-         *   eval(l, m, cos(theta)) ~= P_{l}^{m}(cos(theta))
+         *   eval(l, m, cos(theta)) = norm(l,m) * P_{l}^{m}(cos(theta))
+         * 
+         * where norm(l,m) = sqrt( ((2*l+1) * (l-m)!) / (4 * \pi * (l+m)!) ). 
          * 
          * @param l order of polynomial (must be <= lmax)
          * @param m associated order of polynomial (must be -l <= m <= l)
          * @param theta angle (must be in [0, M_PI])
          */
-        double eval(int l, int m, double theta);
+        double evalLegendre(int l, int m, double theta) const;
+        
+        /**
+         * Returns the values of the spherical harmonics from the 
+         * interpolated values of a LUT.
+         * @param l order of polynomial (must be <= lmax)
+         * @param m associated order of polynomial (must be -l <= m <= l)
+         * @param theta angle (must be in [0, M_PI])
+         * @param phi angle (must be in [0, 2*M_PI]) 
+         */
+        std::complex<double> evalSpHarm(int l, int m, double theta, double phi) const;
 
     private:
         int lmax_;
         int polyNum_;
         int num_;
-        std::vector<double> values_;
+        std::vector<double> legendre_;
         double thetaInc_;
     };
 

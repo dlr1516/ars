@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     paramMap.write(std::cout);
 
 
-    ars::AssocLegendreCosLUT alegLut(lmax, thetaNum);
+    ars::SphericalHarmonicsLUT alegLut(lmax, thetaNum);
 
 
     plotNum = floor(2.5 * thetaNum);
@@ -56,11 +56,11 @@ int main(int argc, char** argv) {
         //xleg1[i] = ars::evaluateLegendreAssoc(l, m, xvalues[i]);
         {
             ars::ScopedTimer timer("legendreLUT");
-            aleg1[i] = alegLut.eval(l, m, thetas[i]);
+            aleg1[i] = alegLut.evalLegendre(l, m, thetas[i]);
         }
         {
             ars::ScopedTimer timer("legendreDirect");
-            aleg2[i] = boost::math::legendre_p<double>(l, m, cos(thetas[i]));
+            aleg2[i] = sqrt(boost::math::factorial<double>(l - m) / boost::math::factorial<double>(l + m)) * boost::math::legendre_p<double>(l, m, cos(thetas[i]));
         }
         //        std::cout << "legendre at angle " << (180.0 / M_PI * thetas[i]) << " [deg], cos " << cos(thetas[i])
         //                << ": direct " << aleg2[i] << ", LUT " << aleg1[i] << ", error " << fabs(aleg1[i] - aleg2[i]) << "\n";
