@@ -374,9 +374,10 @@ namespace ars {
     double evaluateLegendreAssoc(int l, int m, double x) {
         double p0, p1, px, sign, t2;
         bool inverted = false;
-        
+
         // Polynomial is computed only in domain [-1, 1]
         ARS_ASSERT(-1.0 <= x && x <= 1.0);
+        ARS_ASSERT(-l <= m && m <= l);
 
         // If m < 0, P_{l}^{-m}(x) is computed and the result is adjusted 
         // before returning it
@@ -390,6 +391,8 @@ namespace ars {
             sign = -1.0;
         }
 
+        ARS_PRINT(x);
+
         //Initializes the recurrence at (m, m) and (m, m+1)
         t2 = sqrt(1.0 - x * x);
         p0 = sign;
@@ -397,6 +400,9 @@ namespace ars {
             p0 *= t2 * (2 * i + 1);
         }
         p1 = x * ((2 * m + 1) * p0);
+
+        ARS_PRINT(p0);
+        ARS_PRINT(p1);
 
         // If these are the desired indices, return these initial values.
         if (l == m) {
@@ -422,6 +428,45 @@ namespace ars {
         }
 
         return px;
+    }
+
+    AssocLegendreCosLUT::AssocLegendreCosLUT(int lmax, int num)
+    : lmax_(lmax), polyNum_((lmax_ + 1) * (lmax_ + 1)), num_(num), values_(polyNum_ * (num + 1), 0.0), thetaInc_(M_PI / num) {
+        double theta;
+        int polyNum, prevL;
+
+        for (int i = 0; i <= num_; ++i) {
+            theta = thetaInc_ * i;
+            for (int l = 0; l <= lmax; ++l) {
+                for (int m = -l; m <= l; ++m) {
+                    //std::cout << " i " << i << " l " << l << " m " << m << ": idx " << (polyNum_ * i + l*l + l + m) << "\n";
+                    values_[polyNum_ * i + l*l + l + m] = boost::math::legendre_p<double>(l, m, cos(theta));
+                }
+            }
+        }
+    }
+
+    double AssocLegendreCosLUT::eval(int l, int m, double theta) {
+        int i, idxPrev, idxNext;
+        double t;
+
+        i = (int) floor(theta / thetaInc_);
+        t = (theta / thetaInc_ - i);
+        ARS_ASSERT(0 <= i && i <= num_);
+        ARS_ASSERT(0 <= l && l <= lmax_);
+        ARS_ASSERT(-l <= m && m <= l);
+        
+        //ARS_PRINT(t);
+
+        idxPrev = polyNum_ * i + l * l + l + m;
+        if (i == num_) {
+            idxNext = polyNum_ * (i - 1) + l * l + l + m;
+        } else {
+            idxNext = polyNum_ * (i + 1) + l * l + l + m;
+        }
+        ARS_ASSERT(0 <= idxPrev && idxPrev < values_.size());
+        ARS_ASSERT(0 <= idxNext && idxNext < values_.size());
+        return ((1.0 - t) * values_[idxPrev] + t * values_[idxNext]);
     }
 
 } // end of namespace
