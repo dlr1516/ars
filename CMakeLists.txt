@@ -30,6 +30,7 @@ add_library(ars
   src/BBOptimizer1d.cpp
   src/HistogramCircularCorrelation.cpp
   src/HoughSpectrum.cpp
+  src/NonIsotropicKernel.cpp
   src/Profiler.cpp
 )
 
@@ -44,6 +45,9 @@ target_link_libraries(testAnisotropicArs ${ars_LINK_LIBS} ars)
 
 add_executable(testCorrelationArs src/testCorrelationArs.cpp)
 target_link_libraries(testCorrelationArs ${ars_LINK_LIBS} ars)
+
+add_executable(testNonIsotropicKernel src/testNonIsotropicKernel.cpp)
+target_link_libraries(testNonIsotropicKernel ${ars_LINK_LIBS} ars)
 
 # Option "make install": copy binaries
 INSTALL(TARGETS ars 

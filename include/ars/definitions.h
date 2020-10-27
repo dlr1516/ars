@@ -21,15 +21,22 @@
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
 
-#define ARS_PRINT(X) std::cout << __FILE__ << "," << __LINE__ << ": " << (#X) << " " << (X) << std::endl;
+#define ARS_PRINT(MSG) std::cout << __FILE__ << "," << __LINE__ << ": " << MSG << std::endl;
+#define ARS_VARIABLE(X1) std::cout << __FILE__ << "," << __LINE__ << ": " << (#X1) << " " << (X1) << std::endl;
+#define ARS_VARIABLE2(X1,X2) std::cout << __FILE__ << "," << __LINE__ << ": " << (#X1) << " " << (X1) \
+   << ", " << (#X2) << " " << (X2) << std::endl;
+#define ARS_VARIABLE3(X1,X2,X3) std::cout << __FILE__ << "," << __LINE__ << ": " << (#X1) << " " << (X1) \
+   << ", " << (#X2) << " " << (X2) << ", " << (#X3) << " " << (X3) << std::endl;
+#define ARS_VARIABLE4(X1,X2,X3,X4) std::cout << __FILE__ << "," << __LINE__ << ": " << (#X1) << " " << (X1) \
+   << ", " << (#X2) << " " << (X2) << ", " << (#X3) << " " << (X3) << ", " << (#X4) << " " << (X4) << std::endl;
 
 namespace ars {
 
-typedef Eigen::Vector2d Vector2;
+    typedef Eigen::Vector2d Vector2;
 
-typedef std::vector<Vector2, Eigen::aligned_allocator<Vector2> > Vector2Vector;
+    typedef std::vector<Vector2, Eigen::aligned_allocator<Vector2> > Vector2Vector;
 
-typedef Eigen::Matrix2d Matrix2;
+    typedef Eigen::Matrix2d Matrix2;
 
 } // end of namespace
 
