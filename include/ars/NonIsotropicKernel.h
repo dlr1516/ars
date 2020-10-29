@@ -24,49 +24,91 @@
 
 namespace ars {
 
-class NonIsotropicKernel {
-public:
-  /**
-   * Creates a flat kernel
-   */
-  NonIsotropicKernel();
-  
-  /**
-   * Constructor of non-isotropic Kernel of Angular Randon Specturm associated to two Gaussian distributions. 
-   * @param mean1 mean value of first gaussian
-   * @param covar1 covariance matrix of first gaussian
-   * @param mean2 mean value of second gaussian
-   * @param covar2 covariance matrix of second gaussian
-   */
-  NonIsotropicKernel(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2);
-  
-  /**
-   */
-  ~NonIsotropicKernel();
+    class NonIsotropicKernel {
+    public:
+        /**
+         * Creates a flat kernel
+         */
+        NonIsotropicKernel();
 
-  /**
-   * Computes the kernel parameters and save them. 
-   * @param mean1 mean value of first gaussian
-   * @param covar1 covariance matrix of first gaussian
-   * @param mean2 mean value of second gaussian
-   * @param covar2 covariance matrix of second gaussian
-   */
-  void init(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2);
-  
-  inline double value(double t) const {
-      double var = sigmaMod_ * (1.0 + sigmaDif_ * cos(2.0 * t - 2.0 * sigmaAng_));
-      //double mean = muMod_ * cos(2.0 * t - 2.0 * muAng_);
-      return exp(-0.5 * muMod_ * muMod_ * cos(2.0 * t - 2.0 * muAng_) / var) / sqrt(2 * M_PI * var);
-  }
-  
-  void computeFourier(int n, int k, std::vector<double>& coeffs) const;
+        /**
+         * Constructor of non-isotropic Kernel of Angular Randon Specturm associated to two Gaussian distributions. 
+         * @param mean1 mean value of first gaussian
+         * @param covar1 covariance matrix of first gaussian
+         * @param mean2 mean value of second gaussian
+         * @param covar2 covariance matrix of second gaussian
+         */
+        NonIsotropicKernel(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2);
 
-private:
-  double muMod_; 
-  double muAng_;
-  double sigmaMod_;
-  double sigmaAng_;
-  double sigmaDif_;
-};
+        /**
+         */
+        ~NonIsotropicKernel();
+
+        /**
+         * Computes the kernel parameters and save them. 
+         * @param mean1 mean value of first gaussian
+         * @param covar1 covariance matrix of first gaussian
+         * @param mean2 mean value of second gaussian
+         * @param covar2 covariance matrix of second gaussian
+         */
+        void init(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2);
+
+        /**
+         * Returns the module of the sinusoidal numerator. 
+         */
+        double getMuModule() const {
+            return muMod_;
+        }
+
+        /**
+         * Return the phase of the sinusoidal numerator. 
+         * @return 
+         */
+        double getMuPhase() const {
+            return muAng_;
+        }
+
+        /**
+         * Return the average value of the eigenvalues of covariance matrix. 
+         * It also corresponds to the module of sinusoidal denominator.
+         */
+        double getVarianceModule() const {
+            return sigmaMod_;
+        }
+        
+        /**
+         * Return the phase of the sinusoidal denominator.
+         */
+        double getVariancePhase() const {
+            return sigmaAng_;
+        }
+        
+        /**
+         * Returns the "eccentricity" of the eigenvalues of covariance matrix. 
+         */
+        double getVariancePerc() const {
+            return sigmaDif_;
+        }
+
+        /**
+         * Copmputes the value of the non-isotropic kernel at a given angle. 
+         * @param t
+         * @return 
+         */
+        inline double value(double t) const {
+            double var = sigmaMod_ * (1.0 + sigmaDif_ * cos(2.0 * t - 2.0 * sigmaAng_));
+            double mean = 0.5 * muMod_ * muMod_ * (1.0 + cos(2.0 * t - 2.0 * muAng_));
+            return exp(-0.5 * mean / var) / sqrt(2 * M_PI * var);
+        }
+
+        void computeFourier(int n, int k, std::vector<double>& coeffs) const;
+
+    private:
+        double muMod_;
+        double muAng_;
+        double sigmaMod_;
+        double sigmaAng_;
+        double sigmaDif_;
+    };
 
 }

@@ -128,7 +128,7 @@ namespace ars {
     AngularRadonSpectrum2d::~AngularRadonSpectrum2d() {
     }
 
-    void AngularRadonSpectrum2d::insertIsotropicGaussians(const Vector2Vector& means, double sigma) {
+    void AngularRadonSpectrum2d::insertIsotropicGaussians(const VectorVector2& means, double sigma) {
         int kernelNum = means.size();
         //std::cout << "kernelNum " << kernelNum << ", mode_ " << mode_ << " " << MODE_NAME[mode_] << std::endl;
 
@@ -138,7 +138,7 @@ namespace ars {
         }
 
         std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
-//#pragma omp parallel num_threads(threadNumOMP_) shared(means,sigmas,kernelNum) 
+        //#pragma omp parallel num_threads(threadNumOMP_) shared(means,sigmas,kernelNum) 
         double dx, dy, sigma2, lambda, phi, scale, ux, uy;
         for (int i = 0; i < kernelNum; ++i) {
             for (int j = i + 1; j < kernelNum; ++j) {
@@ -151,7 +151,7 @@ namespace ars {
                 ux = dx * scale;
                 uy = dy * scale;
                 lambda = lambda / (2.0 * sigma2);
-//#pragma omp atomic
+                //#pragma omp atomic
                 //std::cout << "i " << i << ", j " << j << ": lambda " << lambda << ", phi " << phi << std::endl;
                 if (mode_ == PNEBI_DOWNWARD) {
                     //updateARSF2CoeffRecursDown(lambda, ux * ux - uy*uy, 2.0 * ux * uy, 1.0, arsfOrder_, coeffs_);
@@ -164,7 +164,7 @@ namespace ars {
         }
     }
 
-    void AngularRadonSpectrum2d::insertIsotropicGaussians(const Vector2Vector& means, const std::vector<double>& sigmas) {
+    void AngularRadonSpectrum2d::insertIsotropicGaussians(const VectorVector2& means, const std::vector<double>& sigmas) {
         int kernelNum = means.size();
 
         if (kernelNum != sigmas.size()) {
@@ -196,6 +196,32 @@ namespace ars {
                     updateARSF2CoeffRecursDown(lambda, ux * ux - uy*uy, 2.0 * ux * uy, 1.0, arsfOrder_, coeffs_);
                 } else {
                     updateARSF2CoeffRecursDownLUT(lambda, ux * ux - uy*uy, 2.0 * ux * uy, 1.0, arsfOrder_, pnebiLut_, coeffs_);
+                }
+            }
+        }
+    }
+
+    void AngularRadonSpectrum2d::insertNonIsotropicGaussian(const VectorVector2& means, const VectorMatrix2& covars) {
+        NonIsotropicKernel nik;
+        std::vector<double> coeffsPartial(arsfOrder_);
+        int kernelNum = means.size();
+
+        if (kernelNum != covars.size()) {
+            std::cerr << __FILE__ << "," << __LINE__ << ": inconsistent vector sizes: found " << means.size()
+                    << " mean values and " << covars.size() << " covariance matrices" << std::endl;
+            return;
+        }
+
+        ARS_ASSERT(coeffs_.size() == arsfOrder_ && coeffsPartial.size() == arsfOrder_);
+        
+        std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
+        for (int i = 0; i < kernelNum; ++i) {
+            for (int j = i + 1; j < kernelNum; ++j) {
+                nik.init(means[i], covars[i], means[j], covars[j]);
+                nik.computeFourier(arsfOrder_, 720, coeffsPartial);
+                
+                for (int f = 0; f < coeffs_.size(); ++f) {
+                    coeffs_[f] += coeffsPartial[f];
                 }
             }
         }

@@ -71,7 +71,7 @@ namespace ars {
         std::vector<double> kernelVal(nRes + 1);
         double sumCos, sumSin, cosCurr, cosNext, cosIncr, sinCurr, sinNext, sinIncr;
         double dt = M_PI / nRes;
-        double dt2 = 0.5 * dt;
+        double h = 0.5 * dt / M_PI;
 
         // Evaluates the kernel function at given intervals
         for (int i = 0; i <= nRes; ++i) {
@@ -84,25 +84,26 @@ namespace ars {
         // Computation of the 0-order coefficient (only for cosine part) using 
         // numerical integration (trapezoid approximation)
         for (int i = 0; i < nRes; ++i) {
-            coeffs[0] += (kernelVal[i] + kernelVal[i + 1]) * dt2;
+            coeffs[0] += (kernelVal[i] + kernelVal[i + 1]) * h;
         }
 
         // Computes the Fourier coefficients of orders greater or equal to 1 
         // according to trapezoidal rule integration
         cosIncr = cos(2.0 * dt);
         sinIncr = sin(2.0 * dt);
+        h = 2.0 * h;
         for (int k = 1; k <= nFourier; ++k) {
             sumCos = 0.0;
             sumSin = 0.0;
             cosCurr = 1.0;
             sinCurr = 0.0;
             for (int i = 0; i < nRes; ++i) {
-                //cosNext = cos(2.0 * dt * (i+1));
-                //sinNext = sin(2.0 * dt * (i+1));
-                cosNext = cosCurr * cosIncr - sinCurr * sinIncr;
-                sinNext = cosCurr * sinIncr + sinCurr * cosIncr;
-                sumCos += (kernelVal[i] * cosCurr + kernelVal[i + 1] * cosNext) * dt2;
-                sumSin += (kernelVal[i] * sinCurr + kernelVal[i + 1] * sinNext) * dt2;
+                cosNext = cos(2.0 * k * dt * (i+1));
+                sinNext = sin(2.0 * k * dt * (i+1));
+                //cosNext = cosCurr * cosIncr - sinCurr * sinIncr;
+                //sinNext = cosCurr * sinIncr + sinCurr * cosIncr;
+                sumCos += (kernelVal[i] * cosCurr + kernelVal[i + 1] * cosNext) * h;
+                sumSin += (kernelVal[i] * sinCurr + kernelVal[i + 1] * sinNext) * h;
                 cosCurr = cosNext;
                 sinCurr = sinNext;
             }

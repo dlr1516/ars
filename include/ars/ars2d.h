@@ -23,6 +23,7 @@
 #include <ars/definitions.h>
 #include <ars/functions.h>
 #include <ars/BBOptimizer1d.h>
+#include <ars/NonIsotropicKernel.h>
 
 namespace ars {
 
@@ -149,11 +150,19 @@ namespace ars {
 
         /** Inserts the given points and computes all the data about point pairs.
          */
-        void insertIsotropicGaussians(const Vector2Vector& means, double sigma);
+        void insertIsotropicGaussians(const VectorVector2& means, double sigma);
 
         /** Inserts the given points and computes all the data about point pairs.
          */
-        void insertIsotropicGaussians(const Vector2Vector& means, const std::vector<double>& sigmas);
+        void insertIsotropicGaussians(const VectorVector2& means, const std::vector<double>& sigmas);
+        
+        /**
+         * Inserts the given non-isotropic gaussians. 
+         * Pre-condition: means.size() == covars.size(). 
+         * @param means the mean values of Gaussians PDF representing points
+         * @param covars the covariance matrices of Gaussians PDF representing point uncertainties
+         */
+        void insertNonIsotropicGaussian(const VectorVector2& means, const VectorMatrix2& covars);
 
         /** Initializes LUT (the LUT is used by initARSFRecursDownLUT).
          */

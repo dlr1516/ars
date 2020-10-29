@@ -43,7 +43,7 @@ double acesRanges1[] = {50.00, 50.00, 50.00, 5.26, 5.21, 5.06, 5.01, 3.01, 2.94,
 double acesRanges2[] = {3.04, 2.94, 2.94, 2.84, 2.79, 2.69, 2.64, 2.59, 2.54, 2.49, 2.44, 2.44, 2.39, 2.34, 2.29, 2.24, 2.24, 2.34, 2.34, 2.49, 2.49, 2.56, 2.61, 2.71, 2.81, 2.81, 2.91, 3.06, 3.21, 3.01, 3.01, 3.01, 3.06, 3.16, 3.21, 6.86, 6.81, 6.76, 6.76, 6.71, 6.66, 6.61, 6.61, 6.61, 6.56, 6.56, 6.51, 6.46, 6.41, 4.26, 6.41, 4.16, 4.01, 3.91, 3.81, 4.86, 4.86, 5.11, 4.76, 3.96, 5.46, 6.21, 6.21, 6.26, 4.46, 6.26, 5.76, 5.76, 4.21, 4.26, 4.31, 4.36, 4.39, 4.37, 5.06, 5.06, 6.51, 4.91, 6.01, 5.76, 5.56, 5.36, 5.16, 5.01, 4.21, 4.11, 3.96, 3.86, 3.56, 3.16, 3.21, 3.16, 3.01, 3.01, 3.26, 3.21, 3.11, 2.11, 2.14, 2.11, 2.16, 2.06, 1.96, 1.96, 1.96, 2.71, 2.81, 2.91, 2.96, 3.06, 3.11, 3.76, 3.81, 7.11, 7.06, 7.01, 6.91, 6.81, 6.81, 4.26, 6.71, 6.61, 6.56, 5.81, 5.36, 5.36, 6.16, 6.26, 6.31, 7.31, 7.36, 50.00, 50.00, 1.91, 1.94, 1.89, 1.94, 14.61, 1.81, 1.84, 1.84, 1.79, 1.91, 20.76, 7.11, 2.11, 2.12, 2.12, 2.09, 2.09, 2.09, 2.09, 2.09, 2.09, 2.09, 2.14, 2.09, 2.14, 2.14, 2.19, 2.19, 2.19, 2.19, 2.24, 2.19, 2.24, 2.24, 2.29, 2.24, 2.29, 2.29, 2.34, 2.34, 2.39, 2.44, 2.44, 2.49, 2.49, 2.54, 2.54};
 
 
-void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, ars::Vector2Vector& points);
+void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, ars::VectorVector2& points);
 
 void plotBranchBoundBox(std::ostream& out, const std::vector<BoundInterval>& bbbs);
 
@@ -53,8 +53,8 @@ int main() {
     ars::HoughSpectrum hs1;
     ars::HoughSpectrum hs2;
     ars::HistogramCircularCorrelation corr;
-    ars::Vector2Vector acesPoints1;
-    ars::Vector2Vector acesPoints2;
+    ars::VectorVector2 acesPoints1;
+    ars::VectorVector2 acesPoints2;
     std::vector<double> correlationFourier;
     std::chrono::system_clock::time_point timeStart, timeStop;
     double sigma = 0.05;
@@ -162,7 +162,7 @@ int main() {
     return 0;
 }
 
-void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, ars::Vector2Vector& points) {
+void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, ars::VectorVector2& points) {
     Eigen::Vector2d p;
     for (int i = 0; i < num; ++i) {
         double a = angleMin + angleRes * i;
