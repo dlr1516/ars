@@ -27,10 +27,10 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 add_library(ars
   src/ars2d.cpp
   src/functions.cpp
+  src/AnisotropicKernel.cpp
   src/BBOptimizer1d.cpp
   src/HistogramCircularCorrelation.cpp
   src/HoughSpectrum.cpp
-  src/NonIsotropicKernel.cpp
   src/Profiler.cpp
 )
 
@@ -46,8 +46,8 @@ target_link_libraries(testAnisotropicArs ${ars_LINK_LIBS} ars)
 add_executable(testCorrelationArs src/testCorrelationArs.cpp)
 target_link_libraries(testCorrelationArs ${ars_LINK_LIBS} ars)
 
-add_executable(testNonIsotropicKernel src/testNonIsotropicKernel.cpp)
-target_link_libraries(testNonIsotropicKernel ${ars_LINK_LIBS} ars)
+add_executable(testAnisotropicKernel src/testAnisotropicKernel.cpp)
+target_link_libraries(testAnisotropicKernel ${ars_LINK_LIBS} ars)
 
 # Option "make install": copy binaries
 INSTALL(TARGETS ars 

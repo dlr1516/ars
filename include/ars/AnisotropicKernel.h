@@ -24,12 +24,12 @@
 
 namespace ars {
 
-    class NonIsotropicKernel {
+    class AnisotropicKernel {
     public:
         /**
          * Creates a flat kernel
          */
-        NonIsotropicKernel();
+        AnisotropicKernel();
 
         /**
          * Constructor of non-isotropic Kernel of Angular Randon Specturm associated to two Gaussian distributions. 
@@ -38,11 +38,11 @@ namespace ars {
          * @param mean2 mean value of second gaussian
          * @param covar2 covariance matrix of second gaussian
          */
-        NonIsotropicKernel(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2);
+        AnisotropicKernel(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2);
 
         /**
          */
-        ~NonIsotropicKernel();
+        ~AnisotropicKernel();
 
         /**
          * Computes the kernel parameters and save them. 

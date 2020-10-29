@@ -1,5 +1,5 @@
 #include <iostream>
-#include <ars/NonIsotropicKernel.h>
+#include <ars/AnisotropicKernel.h>
 #include <ars/definitions.h>
 #include <ars/functions.h>
 #include <ars/thirdparty/gnuplot-iostream.h>
@@ -8,7 +8,7 @@
 const double PLOT_EPS = 1e-4;
 
 int main(int argc, char** argv) {
-    ars::NonIsotropicKernel nik;
+    ars::AnisotropicKernel nik;
     ars::Vector2 mean1, mean2, mean12, v;
     ars::Matrix2 covar1, covar2, covar12;
     std::vector<double> kernelValRaw;
