@@ -17,6 +17,8 @@
  */
 #include <ars/AnisotropicKernel.h>
 
+#include "ars/utils.h"
+
 namespace ars {
 
     AnisotropicKernel::AnisotropicKernel()
@@ -33,7 +35,7 @@ namespace ars {
     void AnisotropicKernel::init(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2) {
         Vector2 mu12;
         Matrix2 sigma12;
-        double a, b, l1, l2, c, s;
+        double a, b, lmax, lmin, c, s;
 
         mu12 = mean2 - mean1;
         muMod_ = mu12.norm();
@@ -41,26 +43,28 @@ namespace ars {
         sigma12 = covar1 + covar2;
 
         // Diagonalizes sigma12
-        a = 0.5 * (sigma12(1, 1) - sigma12(0, 0));
-        b = 0.5 * (sigma12(0, 1) + sigma12(1, 0));
-        ARS_VARIABLE2(a, b);
+        diagonalize(sigma12, lmin, lmax, sigmaAng_);
 
-        sigmaAng_ = 0.5 * atan2(-b, a);
+//        a = 0.5 * (sigma12(1, 1) - sigma12(0, 0));
+//        b = 0.5 * (sigma12(0, 1) + sigma12(1, 0));
+//        ARS_VARIABLE2(a, b);
+//
+//        sigmaAng_ = 0.5 * atan2(-b, a);
+//
+//        c = cos(sigmaAng_);
+//        s = sin(sigmaAng_);
+//        lmax = sigma12(0, 0) * c * c + sigma12(1, 1) * s * s + (sigma12(0, 1) + sigma12(1, 0)) * c * s;
+//        lmin = sigma12(0, 0) * s * s + sigma12(1, 1) * c * c - (sigma12(0, 1) + sigma12(1, 0)) * c * s;
+//        ARS_VARIABLE3(sigmaAng_, lmax, lmin);
+//
+//        if (lmax < lmin) {
+//            sigmaAng_ += 0.5 * M_PI;
+//            std::swap(lmax, lmin);
+//            ARS_PRINT("lmin " << lmin << " < lmax " << lmax << ": swap, sigmaAng_ + PI/2: " << sigmaAng_);
+//        }
 
-        c = cos(sigmaAng_);
-        s = sin(sigmaAng_);
-        l1 = sigma12(0, 0) * c * c + sigma12(1, 1) * s * s + (sigma12(0, 1) + sigma12(1, 0)) * c * s;
-        l2 = sigma12(0, 0) * s * s + sigma12(1, 1) * c * c - (sigma12(0, 1) + sigma12(1, 0)) * c * s;
-        ARS_VARIABLE3(sigmaAng_, l1, l2);
-
-        if (l1 < l2) {
-            sigmaAng_ += 0.5 * M_PI;
-            std::swap(l1, l2);
-            ARS_PRINT("l1 " << l1 << " < l2 " << l2 << ": swap, sigmaAng_ + PI/2: " << sigmaAng_);
-        }
-
-        sigmaMod_ = 0.5 * (l1 + l2);
-        sigmaDif_ = (l1 - l2) / (l1 + l2);
+        sigmaMod_ = 0.5 * (lmax + lmin);
+        sigmaDif_ = (lmax - lmin) / (lmax + lmin);
 
         ARS_PRINT("muMod_ " << muMod_ << ", muAng_[rad] " << muAng_ << " [deg] " << (180.0 / M_PI * muAng_) << "\n"
                 << "sigmaMod_ " << sigmaMod_ << ", sigmaAng_[rad] " << sigmaAng_ << " [deg] " << (180.0 / M_PI * sigmaAng_)

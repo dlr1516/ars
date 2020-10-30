@@ -18,6 +18,7 @@
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
+#include <iostream>
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
 

@@ -21,6 +21,8 @@
 #include <ars/thirdparty/gnuplot-iostream.h>
 #include <ars/Profiler.h>
 
+#include "ars/utils.h"
+
 struct PlotItem {
     std::vector<std::pair<double, double> > values;
     std::string title;
@@ -212,5 +214,17 @@ int main(int argc, char** argv) {
         gp << theta[i] << " " << sinFast[i] << "\n";
     }
     gp << "e\n";
+    
+    // Test diagonlaization
+    ars::Matrix2 l = ars::Matrix2::Zero();
+    ars::Matrix2 v = Eigen::Rotation2Dd(M_PI/180.0 * (-32)).matrix();
+    ars::Matrix2 m;
+    l.diagonal() << 2.0, 5.0;
+    m = v * l * v.transpose();
+    std::cout << "\ninput matrix m:\n" << m << "\ndiagonal l:\n" << l << "\nv:\n" << v << std::endl;
+    
+    ars::diagonalize(m, l, v);
+    std::cout << "\nestimated diagonal l:\n" << l << "\nv:\n" << v << "\nv * l * v':\n" << (v * l * v.transpose()) << std::endl;
+    
     return 0;
 }

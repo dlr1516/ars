@@ -27,8 +27,10 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 add_library(ars
   src/ars2d.cpp
   src/functions.cpp
+  src/utils.cpp
   src/AnisotropicKernel.cpp
   src/BBOptimizer1d.cpp
+  src/GaussianMixtureEstimator.cpp
   src/HistogramCircularCorrelation.cpp
   src/HoughSpectrum.cpp
   src/Profiler.cpp
