@@ -20,6 +20,7 @@
 
 #include <iostream>
 #include <vector>
+#include <deque>
 #include <Eigen/Dense>
 #include <ars/definitions.h>
 
@@ -37,6 +38,14 @@ namespace ars {
     class GaussianMixtureEstimator {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        
+        struct Gaussian {
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+                    
+            Vector2 mean;
+            Matrix2 covar;
+            double weight;
+        };
         
         /**
          * Default constructor.
@@ -59,7 +68,8 @@ namespace ars {
          * @return 
          */
         int size() const {
-            return weights_.size();
+            //return weights_.size();
+            return gaussians_.size();
         }
         
         /**
@@ -68,8 +78,10 @@ namespace ars {
          * @return the mean vector
          */
         const Vector2& mean(int i) const {
-            ARS_ASSERT(0 <= i && i < means_.size());
-            return means_.at(i);
+//            ARS_ASSERT(0 <= i && i < means_.size());
+//            return means_.at(i);
+            ARS_ASSERT(0 <= i && i < gaussians_.size());
+            return gaussians_[i].mean;
         }
         
         /**
@@ -78,8 +90,10 @@ namespace ars {
          * @return the covariance matrix
          */
         const Matrix2& covariance(int i) const {
-            ARS_ASSERT(0 <= i && i < covars_.size());
-            return covars_.at(i);
+//            ARS_ASSERT(0 <= i && i < covars_.size());
+//            return covars_.at(i);
+            ARS_ASSERT(0 <= i && i < gaussians_.size());
+            return gaussians_[i].covar;
         }
         
         /**
@@ -89,14 +103,17 @@ namespace ars {
          * @return the weight
          */
         double weight(int i) const {
-            ARS_ASSERT(0 <= i && i < weights_.size());
-            return weights_.at(i);
+//            ARS_ASSERT(0 <= i && i < weights_.size());
+//            return weights_.at(i);
+            ARS_ASSERT(0 <= i && i < gaussians_.size());
+            return gaussians_[i].weight;
         }
         
     protected:
-        VectorVector2 means_;
-        VectorMatrix2 covars_;
-        std::vector<double> weights_;
+//        VectorVector2 means_;
+//        VectorMatrix2 covars_;
+//        std::vector<double> weights_;
+        std::deque<Gaussian, Eigen::aligned_allocator<Gaussian> > gaussians_;
     };
     
     //-----------------------------------------------------
@@ -107,7 +124,12 @@ namespace ars {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
-        using IndexInterval = std::pair<int, int>;
+        //using IndexInterval = std::pair<int, int>;
+        struct IndexInterval {
+            int first;
+            int last;
+            int num;
+        };
         
         /**
          * Default constructor. 
@@ -119,16 +141,34 @@ namespace ars {
          */
         virtual ~GaussianMixtureEstimatorScan();
         
+        void setDistanceGap(double dg) {
+            distanceGap_ = dg;
+        }
+        
+        void setDistanceSplit(double ds) {
+            distanceSplit_ = ds;
+        }
+        
+        void setSigmaMin(double sm) {
+            sigmaMin_ = sm;
+        }
+        
         /**
          * Computes the Gaussian parameters from the given samples.
          * @param samples sorted in counter-clockwise order
          */
         virtual void compute(const VectorVector2& samples);
         
+        const IndexInterval& interval(int i) const {
+            ARS_ASSERT(0 <= i && i < intervals_.size());
+            return intervals_.at(i);
+        }
+        
     private:
+        std::deque<IndexInterval> intervals_;  // used for debug 
         double distanceGap_;
         double distanceSplit_;
-        double sigmaLow_;
+        double sigmaMin_;
         
         void findFarthest(const VectorVector2& points, int first, int last, int& farthest, double& distMax) const;
         

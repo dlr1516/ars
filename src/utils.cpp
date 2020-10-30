@@ -26,7 +26,7 @@ namespace ars {
         // Diagonalizes sigma12
         a = 0.5 * (m(1, 1) - m(0, 0));
         b = 0.5 * (m(0, 1) + m(1, 0));
-        ARS_VARIABLE2(a, b);
+        //ARS_VARIABLE2(a, b);
 
         theta = 0.5 * atan2(-b, a);
 
@@ -34,12 +34,12 @@ namespace ars {
         s = sin(theta);
         lmax = m(0, 0) * c * c + m(1, 1) * s * s + (m(0, 1) + m(1, 0)) * c * s;
         lmin = m(0, 0) * s * s + m(1, 1) * c * c - (m(0, 1) + m(1, 0)) * c * s;
-        ARS_VARIABLE3(theta, lmax, lmin);
+        //ARS_VARIABLE3(theta, lmax, lmin);
 
         if (lmax < lmin) {
             theta += 0.5 * M_PI;
             std::swap(lmax, lmin);
-            ARS_PRINT("after swap: lmin " << lmin << " < lmax " << lmax << ", theta + PI/2: " << theta);
+            //ARS_PRINT("after swap: lmin " << lmin << " < lmax " << lmax << ", theta + PI/2: " << theta);
         }
     }
     
