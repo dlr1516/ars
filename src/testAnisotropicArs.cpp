@@ -39,6 +39,7 @@ int main(int argc, char** argv) {
     ars::AngularRadonSpectrum2d ars;
     ars::VectorVector2 acesPoints;
     ars::GaussianMixtureEstimatorScan gme;
+    double lmin, lmax, theta;
 
     rangeToPoint(acesRanges, 180, -0.5 * M_PI, M_PI / 180.0 * 1.0, acesPoints);
     acesPoints.push_back(ars::Vector2::Zero());
@@ -60,15 +61,17 @@ int main(int argc, char** argv) {
     gme.compute(acesPoints);
     std::cout << "\nFound GMM with " << gme.size() << " kernels:\n";
     for (int i = 0; i < gme.size(); ++i) {
+        ars::diagonalize(gme.covariance(i), lmin, lmax, theta);
         std::cout << "---\n " << i << ": weight " << gme.weight(i) << ", "
                 << "mean [" << gme.mean(i).transpose() << "], covar\n"
                 << gme.covariance(i) << "\n"
+                << "  (lmin " << lmin << ", lmax " << lmax << ", theta[deg] " << (180.0/M_PI*theta) << ")\n"
                 << "  interval: [" << gme.interval(i).first << ", " << gme.interval(i).last << "] "
                 << "num " << gme.interval(i).num << std::endl;;
     }
 
     Gnuplot gp("gnuplot -persist");
-    //gp << "set term wxt 1\n";
+    gp << "set term wxt 0\n";
     gp << "set xrange [0.0:8.0]\n";
     gp << "set yrange [-8.0:8.0]\n";
     gp << "set size ratio -1\n";

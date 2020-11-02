@@ -29,12 +29,24 @@ namespace ars {
     GaussianMixtureEstimator::~GaussianMixtureEstimator() {
     }
 
+    void GaussianMixtureEstimator::exportGaussians(VectorVector2& means, VectorMatrix2& covariances, std::vector<double>& weights) const {
+        int n = gaussians_.size();
+        means.resize(n);
+        covariances.resize(n);
+        weights.resize(n);
+        for (int i = 0; i < n; ++i) {
+            means[i] = gaussians_[i].mean;
+            covariances[i] = gaussians_[i].covar;
+            weights[i] = gaussians_[i].weight;
+        }
+    }
+
     //-----------------------------------------------------
     // GaussianMixtureEstimatorScan
     //-----------------------------------------------------
 
-    GaussianMixtureEstimatorScan::GaussianMixtureEstimatorScan() 
-     : GaussianMixtureEstimator(), intervals_(), distanceGap_(0.8), distanceSplit_(0.5), sigmaMin_(0.1) {
+    GaussianMixtureEstimatorScan::GaussianMixtureEstimatorScan()
+    : GaussianMixtureEstimator(), intervals_(), distanceGap_(0.8), distanceSplit_(0.5), sigmaMin_(0.1) {
     }
 
     GaussianMixtureEstimatorScan::~GaussianMixtureEstimatorScan() {
@@ -47,7 +59,7 @@ namespace ars {
         IndexInterval interv, interv1, interv2;
         double dist, distMax, w;
         int farthest;
-        
+
         int sum = 0;
 
         // Splits the scan points into intervals when a gap between consecutive 
@@ -57,16 +69,16 @@ namespace ars {
             dist = (samples[i] - samples[i - 1]).norm();
             if (dist > distanceGap_) {
                 interv.last = i - 1;
-                interv.num = interv.last - interv.first + 1; 
+                interv.num = interv.last - interv.first + 1;
                 intervals.push_back(interv);
-                ARS_PRINT("interv [" << interv.first << ", " << interv.last << "] num " << interv.num);
+                //ARS_PRINT("interv [" << interv.first << ", " << interv.last << "] num " << interv.num);
                 interv.first = i;
             }
         }
         interv.last = samples.size() - 1;
-        interv.num = interv.last - interv.first + 1; 
+        interv.num = interv.last - interv.first + 1;
         intervals.push_back(interv);
-        
+
         std::cout << "\n----\n" << std::endl;
 
         // Searches for aligned points in interval 
@@ -85,7 +97,7 @@ namespace ars {
                 //    in the computation of the gaussian!!! So we have an overlap:
                 // - interv1: [interv.first, farthest] (farthest NOT included**)
                 interv1.first = interv.first;
-                interv1.last = farthest;        
+                interv1.last = farthest;
                 interv1.num = farthest - interv.first;
                 interv2.first = farthest;
                 interv2.last = interv.last;
@@ -93,10 +105,11 @@ namespace ars {
                 intervals.push_front(interv1);
                 intervals.push_front(interv2);
             } else {
-                ARS_PRINT("interv [" << interv.first << ", " << interv.last << "] num " << interv.num);
+                //ARS_PRINT("interv [" << interv.first << ", " << interv.last << "] num " << interv.num);
                 Gaussian g;
-                estimateGaussian(samples, interv.first, interv.last, g.mean, g.covar);
-                w = interv.num * 1.0 / samples.size();                
+                //estimateGaussianFromPoints(samples, interv.first, interv.last, g.mean, g.covar);
+                estimateGaussianFromSegment(samples, interv.first, interv.last, g.mean, g.covar);
+                w = interv.num * 1.0 / samples.size();
                 g.weight = w;
                 gaussians_.push_front(g);
                 //means_.push_back(mean);
@@ -106,7 +119,7 @@ namespace ars {
                 sum += interv.num;
             }
         }
-        
+
         ARS_VARIABLE(sum);
     }
 
@@ -131,7 +144,7 @@ namespace ars {
         }
     }
 
-    void GaussianMixtureEstimatorScan::estimateGaussian(const VectorVector2& points, int first, int last, Vector2& mean, Matrix2& covar) const {
+    void GaussianMixtureEstimatorScan::estimateGaussianFromPoints(const VectorVector2& points, int first, int last, Vector2& mean, Matrix2& covar) const {
         Matrix2 l, v;
         Vector2 tmp;
         double sigmaMinSquare = sigmaMin_ * sigmaMin_;
@@ -164,6 +177,59 @@ namespace ars {
             if (l(1, 1) < sigmaMinSquare)
                 l(1, 1) = sigmaMinSquare;
             covar = v * l * v.transpose();
+        }
+    }
+
+    void GaussianMixtureEstimatorScan::estimateGaussianFromSegment(const VectorVector2& points, int first, int last, Vector2& mean, Matrix2& covar) const {
+        Matrix2 v;
+        Vector2 tmp;
+        double lmin, lmax, theta, dfirst, dlast;
+        double sigmaMinSquare = sigmaMin_ * sigmaMin_;
+
+        ARS_ASSERT(first >= 0 && last < points.size());
+
+        // Computes the mean value vector
+        mean = Vector2::Zero();
+        for (int i = first; i <= last; ++i) {
+            mean += points[i];
+        }
+        mean = mean / (last - first + 1);
+
+        // Computes the covariance
+        covar = Matrix2::Zero();
+        for (int i = first; i <= last; ++i) {
+            tmp = (points[i] - mean);
+            covar = tmp * tmp.transpose();
+        }
+
+        if (first == last) {
+            // Only one point: use the point uncertainty
+            covar << sigmaMinSquare, 0.0,
+                    0.0, sigmaMinSquare;
+        } else {
+            covar = covar / (last - first);
+            diagonalize(covar, lmin, lmax, theta);
+            dfirst = cos(theta) * points[first](0) + sin(theta) * points[first](1);
+            dlast = cos(theta) * points[last](0) + sin(theta) * points[last](1);
+            lmax = 0.2 * (dlast - dfirst) * (dlast - dfirst);
+            if (lmin < sigmaMinSquare) {
+                lmin = sigmaMinSquare;
+            }
+            if (lmax < sigmaMinSquare) {
+                lmax = sigmaMinSquare;
+            }
+            covar << lmax, 0.0,
+                    0.0, lmin;
+            v = Eigen::Rotation2Dd(theta);
+            covar = v * covar * v.transpose();
+//            ARS_PRINT("[" << first << "," << last << "]: lmin " << lmin << ", lmax " << lmax << ", theta[deg] " << (180.0 / M_PI * theta)
+//                    << "\ncovar\n" << covar);
+            //            diagonalize(covar, l, v);
+            //            if (l(0, 0) < sigmaMinSquare)
+            //                l(0, 0) = sigmaMinSquare;
+            //            if (l(1, 1) < sigmaMinSquare)
+            //                l(1, 1) = sigmaMinSquare;
+            //            covar = v * l * v.transpose();
         }
     }
 

@@ -109,6 +109,8 @@ namespace ars {
             return gaussians_[i].weight;
         }
         
+        void exportGaussians(VectorVector2& means, VectorMatrix2& covariances, std::vector<double>& weights) const;
+        
     protected:
 //        VectorVector2 means_;
 //        VectorMatrix2 covars_;
@@ -141,14 +143,26 @@ namespace ars {
          */
         virtual ~GaussianMixtureEstimatorScan();
         
+        /**
+         * Sets the threshold above which a gap between consecutive points is detected. 
+         * @param dg the distance gap threshold
+         */
         void setDistanceGap(double dg) {
             distanceGap_ = dg;
         }
         
+        /**
+         * Sets the splitting distance for segment detection
+         * @param ds the distance threshold to split 
+         */
         void setDistanceSplit(double ds) {
             distanceSplit_ = ds;
         }
         
+        /**
+         * Sets the minimum value of standard deviation of Gaussians.
+         * @param sm the minimum standard deviation 
+         */
         void setSigmaMin(double sm) {
             sigmaMin_ = sm;
         }
@@ -159,6 +173,10 @@ namespace ars {
          */
         virtual void compute(const VectorVector2& samples);
         
+        /**
+         * Returns the i-th interval. 
+         * @param i
+         */
         const IndexInterval& interval(int i) const {
             ARS_ASSERT(0 <= i && i < intervals_.size());
             return intervals_.at(i);
@@ -170,9 +188,41 @@ namespace ars {
         double distanceSplit_;
         double sigmaMin_;
         
+        /**
+         * Finds the farthest point in the set from the line through points first and last,
+         * i.e. points[first] and points[last]. 
+         * The farthest index belongs to interval first and last. 
+         * @param points the complete set of points
+         * @param first the index of the first point in the segment interval
+         * @param last the index of the last point in the segment interval
+         * @param farthest the index of the farthest point from the line
+         * @param distMax the distance of the farthest point from the line
+         */
         void findFarthest(const VectorVector2& points, int first, int last, int& farthest, double& distMax) const;
         
-        void estimateGaussian(const VectorVector2& points, int first, int last, Vector2& mean, Matrix2& covar) const;
+        /**
+         * Computes the Gaussian mean and covariance matrix of points in interval
+         * between first and last. 
+         * @param points the set of points
+         * @param first the index of the first point 
+         * @param last the intex of the last point
+         * @param mean the mean vector
+         * @param covar the covariance matrix
+         */
+        void estimateGaussianFromPoints(const VectorVector2& points, int first, int last, Vector2& mean, Matrix2& covar) const;
+        
+        /**
+         * Computes the Gaussian distribution, i.e. its parameters, assuming the input points 
+         * are not samples of the Gaussian, but rather approximately uniform sampled points
+         * on the segment. 
+         * @param points the set of points
+         * @param first the index of the first point 
+         * @param last the intex of the last point
+         * @param mean the mean vector
+         * @param covar the covariance matrix
+         */
+        void estimateGaussianFromSegment(const VectorVector2& points, int first, int last, Vector2& mean, Matrix2& covar) const;
+        
     };
 
 } // end of namespace
