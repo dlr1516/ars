@@ -162,7 +162,7 @@ namespace ars {
          * @param means the mean values of Gaussians PDF representing points
          * @param covars the covariance matrices of Gaussians PDF representing point uncertainties
          */
-        void insertAnisotropicGaussian(const VectorVector2& means, const VectorMatrix2& covars);
+        void insertAnisotropicGaussian(const VectorVector2& means, const VectorMatrix2& covars, const std::vector<double>& weights);
 
         /** Initializes LUT (the LUT is used by initARSFRecursDownLUT).
          */

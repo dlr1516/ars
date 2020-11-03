@@ -36,13 +36,16 @@ void plotEllipse(std::ostream& out, int idx, const ars::Vector2& mean, const ars
 void plotEllipses(std::ostream& out, const ars::VectorVector2& means, const ars::VectorMatrix2& covars);
 
 int main(int argc, char** argv) {
-    ars::AngularRadonSpectrum2d ars;
-    ars::VectorVector2 acesPoints;
+    ars::AngularRadonSpectrum2d ars1;
+    ars::AngularRadonSpectrum2d ars2;
+    ars::VectorVector2 acesPoints, means;
+    ars::VectorMatrix2 covars;
+    std::vector<double> weights;
     ars::GaussianMixtureEstimatorScan gme;
     double lmin, lmax, theta;
 
     rangeToPoint(acesRanges, 180, -0.5 * M_PI, M_PI / 180.0 * 1.0, acesPoints);
-    acesPoints.push_back(ars::Vector2::Zero());
+    acesPoints.push_back(ars1::Vector2::Zero());
     std::cout << "Number of input points: " << acesPoints.size() << std::endl;
     //    ars::Vector2 mean1, mean2;
     //    ars::Matrix2 covar1, covar2;
@@ -61,7 +64,7 @@ int main(int argc, char** argv) {
     gme.compute(acesPoints);
     std::cout << "\nFound GMM with " << gme.size() << " kernels:\n";
     for (int i = 0; i < gme.size(); ++i) {
-        ars::diagonalize(gme.covariance(i), lmin, lmax, theta);
+        ars1::diagonalize(gme.covariance(i), lmin, lmax, theta);
         std::cout << "---\n " << i << ": weight " << gme.weight(i) << ", "
                 << "mean [" << gme.mean(i).transpose() << "], covar\n"
                 << gme.covariance(i) << "\n"
@@ -83,6 +86,10 @@ int main(int argc, char** argv) {
         gp << p.x() << " " << p.y() << "\n";
     }
     gp << "e\n";
+    
+    // Computes ARS
+    gme.exportGaussians(means, covars, weights);
+    ars1.insertAnisotropicGaussian()
 
     return 0;
 }

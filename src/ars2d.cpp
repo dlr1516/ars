@@ -201,10 +201,11 @@ namespace ars {
         }
     }
 
-    void AngularRadonSpectrum2d::insertAnisotropicGaussian(const VectorVector2& means, const VectorMatrix2& covars) {
+    void AngularRadonSpectrum2d::insertAnisotropicGaussian(const VectorVector2& means, const VectorMatrix2& covars, const std::vector<double>& weights) {
         AnisotropicKernel nik;
         std::vector<double> coeffsPartial(arsfOrder_);
         int kernelNum = means.size();
+        double wij;
 
         if (kernelNum != covars.size()) {
             std::cerr << __FILE__ << "," << __LINE__ << ": inconsistent vector sizes: found " << means.size()
@@ -220,8 +221,9 @@ namespace ars {
                 nik.init(means[i], covars[i], means[j], covars[j]);
                 nik.computeFourier(arsfOrder_, 720, coeffsPartial);
                 
+                wij = weights[i] * weights[j];
                 for (int f = 0; f < coeffs_.size(); ++f) {
-                    coeffs_[f] += coeffsPartial[f];
+                    coeffs_[f] += wij * coeffsPartial[f];
                 }
             }
         }
