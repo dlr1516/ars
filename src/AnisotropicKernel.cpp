@@ -66,9 +66,9 @@ namespace ars {
         sigmaMod_ = 0.5 * (lmax + lmin);
         sigmaDif_ = (lmax - lmin) / (lmax + lmin);
 
-        ARS_PRINT("muMod_ " << muMod_ << ", muAng_[rad] " << muAng_ << " [deg] " << (180.0 / M_PI * muAng_) << "\n"
-                << "sigmaMod_ " << sigmaMod_ << ", sigmaAng_[rad] " << sigmaAng_ << " [deg] " << (180.0 / M_PI * sigmaAng_)
-                << ", sigmaDif_ " << sigmaDif_ << "\n");
+//        ARS_PRINT("muMod_ " << muMod_ << ", muAng_[rad] " << muAng_ << " [deg] " << (180.0 / M_PI * muAng_) << "\n"
+//                << "sigmaMod_ " << sigmaMod_ << ", sigmaAng_[rad] " << sigmaAng_ << " [deg] " << (180.0 / M_PI * sigmaAng_)
+//                << ", sigmaDif_ " << sigmaDif_ << "\n");
     }
 
     void AnisotropicKernel::computeFourier(int nFourier, int nRes, std::vector<double>& coeffs) const {

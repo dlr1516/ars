@@ -128,12 +128,32 @@ namespace ars {
             threadNumOMP_ = tno;
         }
 
+        /**
+         * Sets the mode for computing ARS coefficients in the case of isotropic kernels. 
+         * @param mode the desired mode
+         */
         void setComputeMode(ComputeMode mode) {
             mode_ = mode;
         }
 
+        /**
+         * Returns a string description of the current mode. 
+         * @return 
+         */
         const std::string& getComputeModeName() const {
             return MODE_NAME[mode_];
+        }
+        
+        /**
+         * Sets the number of intervals used in the computation of Fourier coeffcients 
+         * of anisotropic kernels. 
+         * Since the closed-form equation of Fourier coefficients is unknown in 
+         * anisotropic case, the numerical integration with step M_PI / anisotropicStep_
+         * is used instead. 
+         * @param as
+         */
+        void setAnisotropicStep(int as) {
+            anisotropicStep_ = as;
         }
 
         /** Returns const reference to ARSF coefficients obtained from downward recursion. 
@@ -225,6 +245,8 @@ namespace ars {
         // PNEBI LUT
         PnebiLUT pnebiLut_;
         ComputeMode mode_;
+        // Parameters for computation of the Fourier coefficients of anisotropic kernels
+        int anisotropicStep_;
     };
 
 } // end of namespace

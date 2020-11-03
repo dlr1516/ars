@@ -117,12 +117,12 @@ namespace ars {
 
     AngularRadonSpectrum2d::AngularRadonSpectrum2d()
     : coeffs_(), arsfOrder_(0),
-    thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4), pnebiLut_(), mode_(PNEBI_LUT) {
+    thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4), pnebiLut_(), mode_(PNEBI_LUT), anisotropicStep_(720) {
     }
 
     AngularRadonSpectrum2d::AngularRadonSpectrum2d(const std::vector<double>& coeffs)
     : coeffs_(coeffs), arsfOrder_(0),
-    thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4), pnebiLut_(), mode_(PNEBI_LUT) {
+    thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4), pnebiLut_(), mode_(PNEBI_LUT), anisotropicStep_(720) {
     }
 
     AngularRadonSpectrum2d::~AngularRadonSpectrum2d() {
@@ -130,6 +130,7 @@ namespace ars {
 
     void AngularRadonSpectrum2d::insertIsotropicGaussians(const VectorVector2& means, double sigma) {
         int kernelNum = means.size();
+        double w = 1.0 / (kernelNum * kernelNum);
         //std::cout << "kernelNum " << kernelNum << ", mode_ " << mode_ << " " << MODE_NAME[mode_] << std::endl;
 
         if (pnebiLut_.getOrderMax() < arsfOrder_) {
@@ -155,10 +156,10 @@ namespace ars {
                 //std::cout << "i " << i << ", j " << j << ": lambda " << lambda << ", phi " << phi << std::endl;
                 if (mode_ == PNEBI_DOWNWARD) {
                     //updateARSF2CoeffRecursDown(lambda, ux * ux - uy*uy, 2.0 * ux * uy, 1.0, arsfOrder_, coeffs_);
-                    updateARSF2CoeffRecursDown(lambda, phi, 1.0, arsfOrder_, coeffs_);
+                    updateARSF2CoeffRecursDown(lambda, phi, w, arsfOrder_, coeffs_);
                 } else if (mode_ == PNEBI_LUT) {
                     //updateARSF2CoeffRecursDownLUT(lambda, ux * ux - uy*uy, 2.0 * ux * uy, 1.0, arsfOrder_, pnebiLut_, coeffs_);
-                    updateARSF2CoeffRecursDownLUT(lambda, phi, 1.0, arsfOrder_, pnebiLut_, coeffs_);
+                    updateARSF2CoeffRecursDownLUT(lambda, phi, w, arsfOrder_, pnebiLut_, coeffs_);
                 }
             }
         }
@@ -213,13 +214,15 @@ namespace ars {
             return;
         }
 
-        ARS_ASSERT(coeffs_.size() == arsfOrder_ && coeffsPartial.size() == arsfOrder_);
+        //ARS_ASSERT(coeffs_.size() == 2 * arsfOrder_ && coeffsPartial.size() == 2 * arsfOrder_);
+        coeffs_.resize(2 * arsfOrder_ + 2);
+        coeffsPartial.resize(2 * arsfOrder_ + 2);
         
         std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
         for (int i = 0; i < kernelNum; ++i) {
             for (int j = i + 1; j < kernelNum; ++j) {
                 nik.init(means[i], covars[i], means[j], covars[j]);
-                nik.computeFourier(arsfOrder_, 720, coeffsPartial);
+                nik.computeFourier(arsfOrder_, anisotropicStep_, coeffsPartial);
                 
                 wij = weights[i] * weights[j];
                 for (int f = 0; f < coeffs_.size(); ++f) {
