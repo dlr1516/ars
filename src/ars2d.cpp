@@ -130,7 +130,7 @@ namespace ars {
 
     void AngularRadonSpectrum2d::insertIsotropicGaussians(const VectorVector2& means, double sigma) {
         int kernelNum = means.size();
-        double w = 1.0 / (kernelNum * kernelNum);
+        double w = 1.0; // / (kernelNum * kernelNum);
         //std::cout << "kernelNum " << kernelNum << ", mode_ " << mode_ << " " << MODE_NAME[mode_] << std::endl;
 
         if (pnebiLut_.getOrderMax() < arsfOrder_) {
@@ -167,6 +167,7 @@ namespace ars {
 
     void AngularRadonSpectrum2d::insertIsotropicGaussians(const VectorVector2& means, const std::vector<double>& sigmas) {
         int kernelNum = means.size();
+        double w = 1.0; // / (kernelNum * kernelNum);
 
         if (kernelNum != sigmas.size()) {
             std::cerr << __FILE__ << "," << __LINE__ << ": inconsistent vector sizes: found " << means.size()
@@ -194,9 +195,9 @@ namespace ars {
                 lambda = lambda / (2.0 * sigma2);
 #pragma omp atomic
                 if (mode_ == PNEBI_DOWNWARD) {
-                    updateARSF2CoeffRecursDown(lambda, ux * ux - uy*uy, 2.0 * ux * uy, 1.0, arsfOrder_, coeffs_);
+                    updateARSF2CoeffRecursDown(lambda, ux * ux - uy*uy, 2.0 * ux * uy, w, arsfOrder_, coeffs_);
                 } else {
-                    updateARSF2CoeffRecursDownLUT(lambda, ux * ux - uy*uy, 2.0 * ux * uy, 1.0, arsfOrder_, pnebiLut_, coeffs_);
+                    updateARSF2CoeffRecursDownLUT(lambda, ux * ux - uy*uy, 2.0 * ux * uy, w, arsfOrder_, pnebiLut_, coeffs_);
                 }
             }
         }

@@ -24,6 +24,18 @@
 
 namespace ars {
 
+    /**
+     * Class AnisotropicKernel computes and handles the kernel of Angular Radon Spectrum (ARS)
+     * associated to a pair of Gaussian distributions in a Gaussian mixture. 
+     * A Gaussian distribution is isotropic if its covariance matrix C is
+     *      C = sigma^2 * I
+     * i.e. C is diagonal with equal values of variance in all the directions. 
+     * The ARS kernal of isotropic distributions can be expanded in Fourier series 
+     * whose coefficients have a closed-form formula. 
+     * The present anisotropic case has no known closed-form formula and, thus, 
+     * the coeffients are computed through numerical integration. 
+     * (Hence, the need to provide the 
+     */
     class AnisotropicKernel {
     public:
         /**
@@ -41,6 +53,7 @@ namespace ars {
         AnisotropicKernel(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2);
 
         /**
+         * Destructor. 
          */
         ~AnisotropicKernel();
 
@@ -101,6 +114,15 @@ namespace ars {
             return exp(-0.5 * mean / var) / sqrt(2 * M_PI * var);
         }
 
+        /**
+         * Computes the coefficients of Fourier series expansion of the kernel. 
+         * The series is truncated to n-th order. 
+         * The M_PI period of the kernel is divided into k intervals to compute 
+         * the coefficients using numeric integration. 
+         * @param n maximum order of the Fourier series 
+         * @param k number of intervals used in numeric integration
+         * @param coeffs the computed coefficients 
+         */
         void computeFourier(int n, int k, std::vector<double>& coeffs) const;
 
     private:

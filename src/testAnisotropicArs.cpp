@@ -40,14 +40,15 @@ int main(int argc, char** argv) {
     ars::AngularRadonSpectrum2d ars1;
     ars::AngularRadonSpectrum2d ars2;
     ars::VectorVector2 acesPoints, means;
-    ars::VectorMatrix2 covars;
-    std::vector<double> weights;
+    ars::VectorMatrix2 covars, covarsUniform;
+    ars::Matrix2 covarUniform;
+    std::vector<double> weights, weightsUniform;
     ars::GaussianMixtureEstimatorScan gme;
     double distanceGap, distanceSplit, sigmaMin, weightSum, lmin, lmax, theta, th;
     int arsOrder, arsStep;
     ars::ParamMap params;
     std::string filenameCfg;
-    
+
     // Reads params from command line
     params.read(argc, argv);
     params.getParam("cfg", filenameCfg, std::string(""));
@@ -58,7 +59,7 @@ int main(int argc, char** argv) {
     params.getParam<double>("sigmaMin", sigmaMin, double(0.05));
     params.getParam<int>("arsOrder", arsOrder, int(20));
     params.getParam<int>("arsStep", arsStep, int(720));
-    
+
     std::cout << "\nParams:" << std::endl;
     params.write(std::cout);
     std::cout << "-------\n" << std::endl;
@@ -96,38 +97,54 @@ int main(int argc, char** argv) {
     std::cout << "***\nweight sum: " << weightSum << std::endl;
 
     Gnuplot gp("gnuplot -persist");
-//    gp << "set term wxt 0 title \"GMM\"\n";
-//    gp << "set xrange [0.0:8.0]\n";
-//    gp << "set yrange [-8.0:8.0]\n";
-//    gp << "set size ratio -1\n";
-//    for (int i = 0; i < gme.size(); ++i) {
-//        plotEllipse(gp, i + 1, gme.mean(i), gme.covariance(i));
-//    }
-//    gp << "plot '-' title \"scan\" w p pt 7 ps 0.5\n";
-//    for (auto& p : acesPoints) {
-//        gp << p.x() << " " << p.y() << "\n";
-//    }
-//    gp << "e\n";
+    //    gp << "set term wxt 0 title \"GMM\"\n";
+    //    gp << "set xrange [0.0:8.0]\n";
+    //    gp << "set yrange [-8.0:8.0]\n";
+    //    gp << "set size ratio -1\n";
+    //    for (int i = 0; i < gme.size(); ++i) {
+    //        plotEllipse(gp, i + 1, gme.mean(i), gme.covariance(i));
+    //    }
+    //    gp << "plot '-' title \"scan\" w p pt 7 ps 0.5\n";
+    //    for (auto& p : acesPoints) {
+    //        gp << p.x() << " " << p.y() << "\n";
+    //    }
+    //    gp << "e\n";
 
     // Computes ARS
     gme.exportGaussians(means, covars, weights);
+
     
+    covarsUniform.resize(acesPoints.size());
+    weightsUniform.resize(acesPoints.size()); 
+    covarUniform << sigmaMin * sigmaMin, 0.0,
+            0.0, sigmaMin * sigmaMin;
+    std::fill(covarsUniform.begin(), covarsUniform.end(), covarUniform);
+    double w = 1.0 / acesPoints.size();
+    std::fill(weightsUniform.begin(), weightsUniform.end(), w);
+    for (int i = 0; i < acesPoints.size(); ++i) {
+        std::cout << "  weightsUniform[" << i << "] " << weightsUniform[i] << ", covarsuniform[" << i << "]\n"
+                << covarsUniform[i] << "\n";
+        //covarsUniform.pop_back(covarUniform);
+    }
+
+
     ars1.setARSFOrder(arsOrder);
     ars1.setAnisotropicStep(arsStep);
-    ars1.insertAnisotropicGaussian(means, covars, weights);
-    
+    //ars1.insertAnisotropicGaussian(means, covars, weights);
+    ars1.insertAnisotropicGaussian(acesPoints, covarsUniform, weightsUniform);
+
     ars2.setARSFOrder(arsOrder);
     ars2.initLUT(0.0001);
     ars2.setComputeMode(ars::AngularRadonSpectrum2d::PNEBI_LUT);
-    ars2.insertIsotropicGaussians(acesPoints, 0.01 * sigmaMin);
-    
+    ars2.insertIsotropicGaussians(acesPoints, sigmaMin);
+
     std::cout << "\n\n";
     ARS_VARIABLE2(ars1.coefficients().size(), ars2.coefficients().size());
     std::cout << "\tnum\tanisotr\tisotr\n";
     for (int i = 0; i < ars1.coefficients().size() && i < ars2.coefficients().size(); ++i) {
         std::cout << "\t" << i << "\t" << ars1.coefficients()[i] << "\t" << ars2.coefficients()[i] << "\n";
     }
-    
+
     gp << "set term wxt 1 title \"ARS\"\n";
     gp << "clear\n";
     gp << "plot '-' title \"anisotropic\" w l, '-' title \"isotropic\" w l\n";

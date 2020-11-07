@@ -84,6 +84,7 @@ namespace ars {
 
         // Evaluates each of the Fourier coefficients
         coeffs.resize(2 * nFourier + 2, 0.0);
+        std::fill(coeffs.begin(), coeffs.end(), 0.0);
 
         // Computation of the 0-order coefficient (only for cosine part) using 
         // numerical integration (trapezoid approximation)
