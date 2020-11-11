@@ -33,6 +33,7 @@ add_library(ars
   src/GaussianMixtureEstimator.cpp
   src/HistogramCircularCorrelation.cpp
   src/HoughSpectrum.cpp
+  src/IsotropicKernel.cpp
   src/ParamMap.cpp
   src/Profiler.cpp
 )

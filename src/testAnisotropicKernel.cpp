@@ -1,5 +1,6 @@
 #include <iostream>
 #include <ars/AnisotropicKernel.h>
+#include <ars/IsotropicKernel.h>
 #include <ars/ars2d.h>
 #include <ars/definitions.h>
 #include <ars/functions.h>
@@ -10,7 +11,8 @@
 const double PLOT_EPS = 1e-4;
 
 int main(int argc, char** argv) {
-    ars::AnisotropicKernel nik;
+    ars::AnisotropicKernel ak;
+    ars::IsotropicKernel ik;
     ars::Vector2 mean1, mean2, mean12, v;
     ars::Matrix2 covar1, covar2, covar12;
     std::vector<double> kernelValRaw;
@@ -20,7 +22,7 @@ int main(int argc, char** argv) {
     std::vector<double> varianceValCos;
     std::vector<double> meanSqValRaw;
     std::vector<double> meanSqValCos;
-    std::vector<double> fourierCoeffs, fourierCoeffsIsot;
+    std::vector<double> fourierCoeffsAnisot, fourierCoeffsIsotRaw, fourierCoeffsIsot;
     double t, fmuDirect, fvarDirect, sigmaVal, sigmaValSq, lambdaSqNorm, phi, normalizer, plotEps;
     int plotStep, arsOrder, arsStep;
     ars::ParamMap params;
@@ -32,7 +34,7 @@ int main(int argc, char** argv) {
     params.read(filenameCfg);
     params.read(argc, argv);
     params.getParam<double>("sigmaVal", sigmaVal, double(0.08));
-    params.getParam<int>("arsOrder", arsOrder, int(20));
+    params.getParam<int>("arsOrder", arsOrder, int(35));
     params.getParam<int>("arsStep", arsStep, int(720));
     params.getParam<int>("plotStep", plotStep, int(1440));
     params.getParam<double>("plotEps", plotEps, double(1e-3));
@@ -65,13 +67,14 @@ int main(int argc, char** argv) {
             << "Gaussian2: mu " << mean2.transpose() << "\ncovar:\n" << covar2 << "\n"
             << "Sum covariance matrix:\n" << covar12 << "\n";
 
-    nik.init(mean1, covar1, mean2, covar2);
-    nik.computeFourier(arsOrder, arsStep, fourierCoeffs);
+    ak.setIntervalNum(arsStep);
+    ak.init(mean1, covar1, mean2, covar2);
+    ak.computeFourier(arsOrder, fourierCoeffsAnisot);
 
     std::cout << "Fourier coefficients:\n";
     for (int f = 0; f < arsOrder; ++f) {
-        std::cout << "  " << f << " cos: " << fourierCoeffs[2 * f] << "\n"
-                << "  " << f << " sin: " << fourierCoeffs[2 * f + 1] << "\n";
+        std::cout << "  " << f << " cos: " << fourierCoeffsAnisot[2 * f] << "\n"
+                << "  " << f << " sin: " << fourierCoeffsAnisot[2 * f + 1] << "\n";
     }
     std::cout << std::endl;
 
@@ -86,16 +89,16 @@ int main(int argc, char** argv) {
         kernelValRaw[it] = exp(-0.5 * fmuDirect * fmuDirect / fvarDirect) / sqrt(2.0 * M_PI * fvarDirect);
 
         // Computes the polar value
-        kernelValPolar[it] = nik.value(t);
+        kernelValPolar[it] = ak.value(t);
 
         // Computes the Fourier value
-        kernelValFourier[it] = ars::evaluateFourier(fourierCoeffs, 2.0 * t);
+        kernelValFourier[it] = ars::evaluateFourier(fourierCoeffsAnisot, 2.0 * t);
 
         // Debug partial
         meanSqValRaw[it] = fmuDirect * fmuDirect;
-        meanSqValCos[it] = 0.5 * nik.getMuModule() * nik.getMuModule() * (1.0 + cos(2.0 * t - 2.0 * nik.getMuPhase()));
+        meanSqValCos[it] = 0.5 * ak.getMuModule() * ak.getMuModule() * (1.0 + cos(2.0 * t - 2.0 * ak.getMuPhase()));
         varianceValRaw[it] = fvarDirect;
-        varianceValCos[it] = nik.getVarianceModule() * (1.0 + nik.getVariancePerc() * cos(2.0 * t - 2.0 * nik.getVariancePhase()));
+        varianceValCos[it] = ak.getVarianceModule() * (1.0 + ak.getVariancePerc() * cos(2.0 * t - 2.0 * ak.getVariancePhase()));
     }
 
     // Plot
@@ -140,36 +143,57 @@ int main(int argc, char** argv) {
             << "Gaussian1: mu " << mean1.transpose() << "\ncovar:\n" << covar1 << "\n"
             << "Gaussian2: mu " << mean2.transpose() << "\ncovar:\n" << covar2 << "\n";
 
-    nik.init(mean1, covar1, mean2, covar2);
-    nik.computeFourier(arsOrder, arsStep, fourierCoeffs);
+    ak.setIntervalNum(arsStep);
+    ak.init(mean1, covar1, mean2, covar2);
+    ak.computeFourier(arsOrder, fourierCoeffsAnisot);
     ARS_PRINT("Anisotropic kernel computed parameters:\n"
-            << "  muMod_ " << nik.getMuModule()
-            << ", muAng_[rad] " << nik.getMuPhase() << " [deg] " << (180.0 / M_PI * nik.getMuPhase()) << "\n"
-            << "  sigmaMod_ " << nik.getVarianceModule()
-            << ", sigmaAng_[rad] " << nik.getVariancePhase() << " [deg] " << (180.0 / M_PI * nik.getVariancePhase())
-            << ", sigmaDif_ " << nik.getVariancePerc()
-            << ", sqrt(2 * M_PI * sigmaMod_) " << sqrt(2 * M_PI * nik.getVarianceModule())
+            << "  muMod_ " << ak.getMuModule()
+            << ", muAng_[rad] " << ak.getMuPhase() << " [deg] " << (180.0 / M_PI * ak.getMuPhase()) << "\n"
+            << "  sigmaMod_ " << ak.getVarianceModule()
+            << ", sigmaAng_[rad] " << ak.getVariancePhase() << " [deg] " << (180.0 / M_PI * ak.getVariancePhase())
+            << ", sigmaDif_ " << ak.getVariancePerc()
+            << ", sqrt(2 * M_PI * sigmaMod_) " << sqrt(2 * M_PI * ak.getVarianceModule())
             << "\n");
 
-    fourierCoeffsIsot.resize(2 * arsOrder + 2, 0.0);
-    ars::updateARSF2CoeffRecursDown(lambdaSqNorm, phi, 1.0, arsOrder, fourierCoeffsIsot);
-    ARS_PRINT("Isotropic kernel computed parameters:\n"
+    fourierCoeffsIsotRaw.resize(2 * arsOrder + 2, 0.0);
+    ars::updateARSF2CoeffRecursDown(lambdaSqNorm, phi, 1.0, arsOrder, fourierCoeffsIsotRaw);
+    ARS_PRINT("Isotropic kernel raw computed parameters:\n"
             << " 2 * sigmaVal^2 " << (2.0 * sigmaVal * sigmaVal)
             << ", lambda " << sqrt(mean12.dot(mean12))
             << ", lambda^2 / (8 * sigmaVal^2) " << lambdaSqNorm
-            << ", phi[rad] " << phi << " [deg] " << (180.0 / M_PI * phi));
-
+            << ", phi[rad] " << phi << " [deg] " << (180.0 / M_PI * phi)
+            << ", normalization const " << normalizer 
+            << "\n");
+    
+    ik.init(mean1, mean2, sigmaVal);
+    ik.setComputeMode(ars::IsotropicKernel::ComputeMode::PNEBI_DOWNWARD);
+    ik.computeFourier(arsOrder, fourierCoeffsIsot);
+    ARS_PRINT("IsotropicKernel class parameters:\n"
+            << " variance " << ik.getVariance()
+            << ", lambdaSqNorm " << ik.getLambdaNorm()
+            << ", phi[rad] " << ik.getPhi() << " [deg] " << (180.0 / M_PI * ik.getPhi())
+            << "\n");
+    
     std::cout << "Fourier coefficients (anisotropic - isotropic): "
-            << "fourierCoeffs.size() " << fourierCoeffs.size()
-            << ", fourierCoeffsIsot.size() " << fourierCoeffsIsot.size() << "\n";
+            << "fourierCoeffsAnisot.size() " << fourierCoeffsAnisot.size()
+            << ", fourierCoeffsIsotRaw.size() " << fourierCoeffsIsotRaw.size() 
+            << ", fourierCoeffsIsot.size() " << fourierCoeffsIsot.size() 
+            << "\n";
     for (int f = 0; f < arsOrder; ++f) {
-        std::cout << "  " << f << " cos: \t" << fourierCoeffs[2 * f] << "\t" << normalizer * fourierCoeffsIsot[2 * f] << "\n"
-                << "  " << f << " sin: \t" << fourierCoeffs[2 * f + 1] << "\t" << normalizer * fourierCoeffsIsot[2 * f + 1] << "\n";
+        std::cout << "  " << f << " cos: \t" << fourierCoeffsAnisot[2 * f] 
+                << "\t" << normalizer * fourierCoeffsIsotRaw[2 * f] 
+                << "\t" << fourierCoeffsIsot[2 * f] 
+                << "\n"
+                << "  " << f << " sin: \t" << fourierCoeffsAnisot[2 * f + 1] 
+                << "\t" << normalizer * fourierCoeffsIsotRaw[2 * f + 1] 
+                << "\t" << fourierCoeffsIsot[2 * f + 1] 
+                << "\n";
     }
     std::cout << std::endl;
 
     gp << "set term wxt 1 title \"iso-aniso\"\n";
     gp << "plot '-' title \"direct isotr.\" w l, "
+            << "'-' title \"direct isotr. class\" w l, "
             << "'-' title \"direct anisotr.\" w l, "
             << "'-' title \"isotropic\" w l, "
             << "'-' title \"anisotropic\" w l"
@@ -183,17 +207,22 @@ int main(int argc, char** argv) {
     gp << "e\n";
     for (int it = 0; it <= plotStep; ++it) {
         t = M_PI * it / plotStep;
-        gp << (180.0 / M_PI * t) << " " << nik.value(t) + plotEps << "\n";
+        gp << (180.0 / M_PI * t) << " " << ik.value(t) - plotEps << "\n";
     }
     gp << "e\n";
     for (int it = 0; it <= plotStep; ++it) {
         t = M_PI * it / plotStep;
-        gp << (180.0 / M_PI * t) << " " << normalizer * ars::evaluateFourier(fourierCoeffsIsot, 2.0 * t) + 2.0 * plotEps << "\n";
+        gp << (180.0 / M_PI * t) << " " << ak.value(t) + plotEps << "\n";
     }
     gp << "e\n";
     for (int it = 0; it <= plotStep; ++it) {
         t = M_PI * it / plotStep;
-        gp << (180.0 / M_PI * t) << " " << ars::evaluateFourier(fourierCoeffs, 2.0 * t) + 3.0 * plotEps << "\n";
+        gp << (180.0 / M_PI * t) << " " << normalizer * ars::evaluateFourier(fourierCoeffsIsotRaw, 2.0 * t) + 2.0 * plotEps << "\n";
+    }
+    gp << "e\n";
+    for (int it = 0; it <= plotStep; ++it) {
+        t = M_PI * it / plotStep;
+        gp << (180.0 / M_PI * t) << " " << ars::evaluateFourier(fourierCoeffsAnisot, 2.0 * t) + 3.0 * plotEps << "\n";
     }
     gp << "e\n";
 

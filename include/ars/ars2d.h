@@ -23,54 +23,10 @@
 #include <ars/definitions.h>
 #include <ars/functions.h>
 #include <ars/BBOptimizer1d.h>
+#include <ars/IsotropicKernel.h>
 #include <ars/AnisotropicKernel.h>
 
 namespace ars {
-
-    // --------------------------------------------------------
-    // ARS-2D FUNCTIONS
-    // --------------------------------------------------------
-
-    /** Computes the contribution of term (lambda,phi) to the Angular Radon Spectrum Fourier (ARSF) 
-     * coefficients computed with downward recursion of modified Bessel functions. 
-     * The vector of coefficients coeffs[i] are used in Fourier series:
-     *   S(x) = \sum_{i=0}^{n} ( coeffs[2*i] * cos(2*i*x) + coeffs[2*i+1] * sin(2*i*x) )
-     */
-    void updateARSF2CoeffRecursDown(double lambda, double cth2, double sth2, double factor, int n, std::vector<double>& coeffs);
-
-    /** Computes the contribution of term (lambda,phi) to the Angular Radon Spectrum Fourier (ARSF) 
-     * coefficients computed with downward recursion of modified Bessel functions. 
-     * The vector of coefficients coeffs[i] are used in Fourier series:
-     *   S(x) = \sum_{i=0}^{n} ( coeffs[2*i] * cos(2*i*x) + coeffs[2*i+1] * sin(2*i*x) )
-     */
-    inline void updateARSF2CoeffRecursDown(double lambda, double phi, double factor, int n, std::vector<double>& coeffs) {
-        double cth2, sth2;
-        cth2 = cos(2.0 * phi);
-        sth2 = sin(2.0 * phi);
-        updateARSF2CoeffRecursDown(lambda, cth2, sth2, factor, n, coeffs);
-    }
-
-    /** Computes the contribution of term (lambda,phi) to the Angular Radon Spectrum Fourier (ARSF) 
-     * coefficients computed with downward recursion of modified Bessel functions.
-     * Values are computed using LUT!
-     * The vector of coefficients coeffs[i] are used in Fourier series:
-     *   S(x) = \sum_{i=0}^{n} ( coeffs[2*i] * cos(2*i*x) + coeffs[2*i+1] * sin(2*i*x) )
-     */
-    void updateARSF2CoeffRecursDownLUT(double lambda, double cth2, double sth2, double factor, int n, const PnebiLUT& pnebiLUT, std::vector<double>& coeffs);
-
-    /** Computes the contribution of term (lambda,phi) to the Angular Radon Spectrum Fourier (ARSF) 
-     * coefficients computed with downward recursion of modified Bessel functions.
-     * Values are computed using LUT!
-     * The vector of coefficients coeffs[i] are used in Fourier series:
-     *   S(x) = \sum_{i=0}^{n} ( coeffs[2*i] * cos(2*i*x) + coeffs[2*i+1] * sin(2*i*x) )
-     */
-    inline void updateARSF2CoeffRecursDownLUT(double lambda, double phi, double factor, int n, const PnebiLUT& pnebiLUT, std::vector<double>& coeffs) {
-        double cth2, sth2;
-        //fastCosSin(2.0 * phi, cth2, sth2); 
-        cth2 = cos(2.0 * phi);
-        sth2 = sin(2.0 * phi);
-        updateARSF2CoeffRecursDownLUT(lambda, cth2, sth2, factor, n, pnebiLUT, coeffs);
-    }
 
     /** Computes coeffients of Fourier series Correlation. 
      * Given two series Fsrc(t) and Fdst(t) with coefficients:

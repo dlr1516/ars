@@ -65,6 +65,15 @@ namespace ars {
          * @param covar2 covariance matrix of second gaussian
          */
         void init(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2);
+        
+        /**
+         * Sets the number of discrete intervals used in numerical integration of over 
+         * the period M_PI.
+         * @param nRes number of interval 
+         */
+        void setIntervalNum(int nRes) {
+            nRes_ = nRes_;
+        }
 
         /**
          * Returns the module of the sinusoidal numerator. 
@@ -119,11 +128,23 @@ namespace ars {
          * The series is truncated to n-th order. 
          * The M_PI period of the kernel is divided into k intervals to compute 
          * the coefficients using numeric integration. 
-         * @param n maximum order of the Fourier series 
-         * @param k number of intervals used in numeric integration
+         * @param nFourier maximum order of the Fourier series 
+         * @param nRes number of intervals used in numeric integration
          * @param coeffs the computed coefficients 
          */
-        void computeFourier(int n, int k, std::vector<double>& coeffs) const;
+        void computeFourier(int nFourier, std::vector<double>& coeffs) const;
+        
+        /**
+         * Computes the coefficients of Fourier series expansion of the kernel 
+         * and ADD them to the passed ones. (It does not reset them to zero!)
+         * The series is truncated to n-th order. 
+         * The M_PI period of the kernel is divided into k intervals to compute 
+         * the coefficients using numeric integration. 
+         * @param nFourier maximum order of the Fourier series 
+         * @param nRes number of intervals used in numeric integration
+         * @param coeffs the computed coefficients 
+         */
+        void updateFourier(int nFourier, std::vector<double>& coeffs) const;
 
     private:
         double muMod_;
@@ -131,6 +152,7 @@ namespace ars {
         double sigmaMod_;
         double sigmaAng_;
         double sigmaDif_;
+        int nRes_;
     };
 
 }
