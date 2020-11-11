@@ -47,9 +47,9 @@ namespace ars {
     class AngularRadonSpectrum2d {
     public:
 
-        enum ComputeMode {
-            PNEBI_DOWNWARD, PNEBI_LUT
-        };
+//        enum ComputeMode {
+//            PNEBI_DOWNWARD, PNEBI_LUT
+//        };
 
         /** Default constructor. 
          */
@@ -88,8 +88,9 @@ namespace ars {
          * Sets the mode for computing ARS coefficients in the case of isotropic kernels. 
          * @param mode the desired mode
          */
-        void setComputeMode(ComputeMode mode) {
-            mode_ = mode;
+        void setComputeMode(IsotropicKernel::ComputeMode mode) {
+            //mode_ = mode;
+            isotropicKer_.setComputeMode(mode);
         }
 
         /**
@@ -97,7 +98,8 @@ namespace ars {
          * @return 
          */
         const std::string& getComputeModeName() const {
-            return MODE_NAME[mode_];
+            //return MODE_NAME[mode_];
+            return isotropicKer_.getComputeModeName();
         }
         
         /**
@@ -143,7 +145,8 @@ namespace ars {
         /** Initializes LUT (the LUT is used by initARSFRecursDownLUT).
          */
         void initLUT(double precision = 0.001) {
-            pnebiLut_.init(arsfOrder_, precision);
+            //pnebiLut_.init(arsfOrder_, precision);
+            isotropicKer_.initPnebiLut(arsfOrder_, precision);
         }
 
         /** Evaluates the ARSF using the coefficients obtained from downward recursion. 
@@ -192,15 +195,17 @@ namespace ars {
         }
 
     protected:
-        static std::array<std::string, 2> const MODE_NAME;
+//        static std::array<std::string, 2> const MODE_NAME;
 
         std::vector<double> coeffs_;
+        IsotropicKernel isotropicKer_;
+        AnisotropicKernel anisotropicKer_;
         int arsfOrder_;
         double thetaToll_;
         int threadNumOMP_;
         // PNEBI LUT
-        PnebiLUT pnebiLut_;
-        ComputeMode mode_;
+//        PnebiLUT pnebiLut_;
+//        ComputeMode mode_;
         // Parameters for computation of the Fourier coefficients of anisotropic kernels
         int anisotropicStep_;
     };

@@ -49,7 +49,7 @@ namespace ars {
         pnebiLut_.init(n, tol);
     }
 
-    void IsotropicKernel::computeFourier(int nFourier, std::vector<double>& coeffs) const {
+    void IsotropicKernel::computeFourier(int nFourier, std::vector<double>& coeffs) {
         if (coeffs.size() != 2 * nFourier + 2) {
             coeffs.resize(2 * nFourier + 2);
         }
@@ -57,12 +57,21 @@ namespace ars {
 
         updateFourier(nFourier, coeffs);
     }
+    
+    void IsotropicKernel::updateFourier(int nFourier, std::vector<double>& coeffs) {
+        updateFourier(nFourier, coeffs, 1.0);
+    }
 
-    void IsotropicKernel::updateFourier(int nFourier, std::vector<double>& coeffs) const {
-        double w = 1.0 / sqrt(2.0 * M_PI * sigmaValSq_);
+    void IsotropicKernel::updateFourier(int nFourier, std::vector<double>& coeffs, double weight) {
+        double w = weight / sqrt(2.0 * M_PI * sigmaValSq_);
         
         if (coeffs.size() != 2 * nFourier + 2) {
             coeffs.resize(2 * nFourier + 2);
+        }
+        
+        if (pnebiLut_.getOrderMax() < nFourier) {
+            ARS_ERROR("LUT not initialized to right order. Initialized now.");
+            pnebiLut_.init(nFourier, 0.0001);
         }
 
         if (mode_ == ComputeMode::PNEBI_DOWNWARD) {

@@ -113,16 +113,16 @@ namespace ars {
     // ARS 2D CLASS
     // --------------------------------------------------------
 
-    std::array<std::string, 2> const AngularRadonSpectrum2d::MODE_NAME{"PNEBI_DOWNWARD", "PNEBI_LUT"};
+//    std::array<std::string, 2> const AngularRadonSpectrum2d::MODE_NAME{"PNEBI_DOWNWARD", "PNEBI_LUT"};
 
     AngularRadonSpectrum2d::AngularRadonSpectrum2d()
-    : coeffs_(), arsfOrder_(0),
-    thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4), pnebiLut_(), mode_(PNEBI_LUT), anisotropicStep_(720) {
+    : coeffs_(), isotropicKer_(), anisotropicKer_(), arsfOrder_(0),
+    thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4), anisotropicStep_(720) {    // pnebiLut_(), mode_(PNEBI_LUT),
     }
 
     AngularRadonSpectrum2d::AngularRadonSpectrum2d(const std::vector<double>& coeffs)
-    : coeffs_(coeffs), arsfOrder_(0),
-    thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4), pnebiLut_(), mode_(PNEBI_LUT), anisotropicStep_(720) {
+    : coeffs_(coeffs), isotropicKer_(), anisotropicKer_(), arsfOrder_(0),
+    thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4), anisotropicStep_(720) {  // pnebiLut_(), mode_(PNEBI_LUT),
     }
 
     AngularRadonSpectrum2d::~AngularRadonSpectrum2d() {
@@ -130,37 +130,43 @@ namespace ars {
 
     void AngularRadonSpectrum2d::insertIsotropicGaussians(const VectorVector2& means, double sigma) {
         int kernelNum = means.size();
-        double w = 1.0; // / (kernelNum * kernelNum);
+        double w = 1.0 / (kernelNum * kernelNum);
         //std::cout << "kernelNum " << kernelNum << ", mode_ " << mode_ << " " << MODE_NAME[mode_] << std::endl;
 
-        if (pnebiLut_.getOrderMax() < arsfOrder_) {
-            std::cerr << __FILE__ << "," << __LINE__ << ": LUT not initialized to right order. Initialized now." << std::endl;
-            pnebiLut_.init(arsfOrder_, 0.0001);
+//        if (pnebiLut_.getOrderMax() < arsfOrder_) {
+//            std::cerr << __FILE__ << "," << __LINE__ << ": LUT not initialized to right order. Initialized now." << std::endl;
+//            pnebiLut_.init(arsfOrder_, 0.0001);
+//        }
+        
+        if (coeffs_.size() != 2 * arsfOrder_ + 2) {
+            coeffs_.resize(2 * arsfOrder_ + 2);
         }
 
         std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
         //#pragma omp parallel num_threads(threadNumOMP_) shared(means,sigmas,kernelNum) 
-        double dx, dy, sigma2, lambda, phi, scale, ux, uy;
+        //double dx, dy, sigma2, lambda, phi, scale, ux, uy;
         for (int i = 0; i < kernelNum; ++i) {
             for (int j = i + 1; j < kernelNum; ++j) {
-                dx = means[i].x() - means[j].x();
-                dy = means[i].y() - means[j].y();
-                sigma2 = 2.0 * sigma * sigma;
-                lambda = (dx * dx + dy * dy);
-                phi = atan2(dy, dx);
-                scale = 1.0 / sqrt(lambda);
-                ux = dx * scale;
-                uy = dy * scale;
-                lambda = lambda / (2.0 * sigma2);
-                //#pragma omp atomic
-                //std::cout << "i " << i << ", j " << j << ": lambda " << lambda << ", phi " << phi << std::endl;
-                if (mode_ == PNEBI_DOWNWARD) {
-                    //updateARSF2CoeffRecursDown(lambda, ux * ux - uy*uy, 2.0 * ux * uy, 1.0, arsfOrder_, coeffs_);
-                    updateARSF2CoeffRecursDown(lambda, phi, w, arsfOrder_, coeffs_);
-                } else if (mode_ == PNEBI_LUT) {
-                    //updateARSF2CoeffRecursDownLUT(lambda, ux * ux - uy*uy, 2.0 * ux * uy, 1.0, arsfOrder_, pnebiLut_, coeffs_);
-                    updateARSF2CoeffRecursDownLUT(lambda, phi, w, arsfOrder_, pnebiLut_, coeffs_);
-                }
+                isotropicKer_.init(means[i], means[j], sigma);
+                isotropicKer_.updateFourier(arsfOrder_, coeffs_);
+//                dx = means[i].x() - means[j].x();
+//                dy = means[i].y() - means[j].y();
+//                sigma2 = 2.0 * sigma * sigma;
+//                lambda = (dx * dx + dy * dy);
+//                phi = atan2(dy, dx);
+//                scale = 1.0 / sqrt(lambda);
+//                ux = dx * scale;
+//                uy = dy * scale;
+//                lambda = lambda / (2.0 * sigma2);
+//                //#pragma omp atomic
+//                //std::cout << "i " << i << ", j " << j << ": lambda " << lambda << ", phi " << phi << std::endl;
+//                if (mode_ == PNEBI_DOWNWARD) {
+//                    //updateARSF2CoeffRecursDown(lambda, ux * ux - uy*uy, 2.0 * ux * uy, 1.0, arsfOrder_, coeffs_);
+//                    updateARSF2CoeffRecursDown(lambda, phi, w, arsfOrder_, coeffs_);
+//                } else if (mode_ == PNEBI_LUT) {
+//                    //updateARSF2CoeffRecursDownLUT(lambda, ux * ux - uy*uy, 2.0 * ux * uy, 1.0, arsfOrder_, pnebiLut_, coeffs_);
+//                    updateARSF2CoeffRecursDownLUT(lambda, phi, w, arsfOrder_, pnebiLut_, coeffs_);
+//                }
             }
         }
     }
@@ -174,31 +180,36 @@ namespace ars {
                     << " mean values and " << sigmas.size() << " standard deviations" << std::endl;
             return;
         }
-
-        if (pnebiLut_.getOrderMax() < arsfOrder_) {
-            //std::cerr << __FILE__ << "," << __LINE__ << ": LUT not initialized to right order. Initialized now." << std::endl;
-            pnebiLut_.init(arsfOrder_, 0.005);
+        
+        if (coeffs_.size() != 2 * arsfOrder_ + 2) {
+            coeffs_.resize(2 * arsfOrder_ + 2);
         }
+
+//        if (pnebiLut_.getOrderMax() < arsfOrder_) {
+//            std::cerr << __FILE__ << "," << __LINE__ << ": LUT not initialized to right order. Initialized now." << std::endl;
+//            pnebiLut_.init(arsfOrder_, 0.005);
+//        }
 
         std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
 #pragma omp parallel num_threads(threadNumOMP_) shared(means,sigmas,kernelNum) 
-        double dx, dy, sigma2, lambda, scale, ux, uy;
+//        double dx, dy, sigma2, lambda, scale, ux, uy;
         for (int i = 0; i < kernelNum; ++i) {
             for (int j = i + 1; j < kernelNum; ++j) {
-                dx = means[i].x() - means[j].x();
-                dy = means[i].y() - means[j].y();
-                sigma2 = sigmas[i] * sigmas[i] + sigmas[j] * sigmas[j];
-                lambda = (dx * dx + dy * dy);
-                scale = 1.0 / sqrt(lambda);
-                ux = dx * scale;
-                uy = dy * scale;
-                lambda = lambda / (2.0 * sigma2);
+                isotropicKer_.init(means[i], means[j], sigmas[i], sigmas[j]);
+//                dx = means[i].x() - means[j].x();
+//                dy = means[i].y() - means[j].y();
+//                sigma2 = sigmas[i] * sigmas[i] + sigmas[j] * sigmas[j];
+//                lambda = (dx * dx + dy * dy);
+//                scale = 1.0 / sqrt(lambda);
+//                ux = dx * scale;
+//                uy = dy * scale;
+//                lambda = lambda / (2.0 * sigma2);
 #pragma omp atomic
-                if (mode_ == PNEBI_DOWNWARD) {
-                    updateARSF2CoeffRecursDown(lambda, ux * ux - uy*uy, 2.0 * ux * uy, w, arsfOrder_, coeffs_);
-                } else {
-                    updateARSF2CoeffRecursDownLUT(lambda, ux * ux - uy*uy, 2.0 * ux * uy, w, arsfOrder_, pnebiLut_, coeffs_);
-                }
+//                if (mode_ == PNEBI_DOWNWARD) {
+//                    updateARSF2CoeffRecursDown(lambda, ux * ux - uy*uy, 2.0 * ux * uy, w, arsfOrder_, coeffs_);
+//                } else {
+//                    updateARSF2CoeffRecursDownLUT(lambda, ux * ux - uy*uy, 2.0 * ux * uy, w, arsfOrder_, pnebiLut_, coeffs_);
+//                }
             }
         }
     }

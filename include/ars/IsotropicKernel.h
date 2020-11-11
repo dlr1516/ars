@@ -185,16 +185,27 @@ namespace ars {
          * @param nFourier maximum order of the Fourier series 
          * @param coeffs the computed coefficients 
          */
-        void computeFourier(int nFourier, std::vector<double>& coeffs) const;
+        void computeFourier(int nFourier, std::vector<double>& coeffs);
         
         /**
-//         * Computes the coefficients of Fourier series expansion of the kernel 
+         * Computes the coefficients of Fourier series expansion of the kernel 
          * and ADD them to the passed ones. (It does not reset them to zero!)
          * The series is truncated to n-th order. 
          * @param nFourier maximum order of the Fourier series 
          * @param coeffs the computed coefficients 
          */
-        void updateFourier(int nFourier, std::vector<double>& coeffs) const;
+        void updateFourier(int nFourier, std::vector<double>& coeffs);
+        
+        /**
+         * Computes the coefficients of Fourier series expansion of the kernel 
+         * and ADD them to the passed ones. (It does not reset them to zero!)
+         * The series is truncated to n-th order. 
+         * The addeted coefficients are multiplied by w. 
+         * @param nFourier maximum order of the Fourier series 
+         * @param coeffs the computed coefficients 
+         * @param weight the weight of this specific kernel
+         */
+        void updateFourier(int nFourier, std::vector<double>& coeffs, double weight);
         
         /**
          * Copmputes the value of the isotropic kernel at a given angle. 

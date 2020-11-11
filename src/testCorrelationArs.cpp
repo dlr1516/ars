@@ -78,13 +78,13 @@ int main() {
 
 
     ars1.initLUT(0.0001);
-    ars1.setComputeMode(ars::AngularRadonSpectrum2d::PNEBI_LUT);
+    ars1.setComputeMode(ars::IsotropicKernel::ComputeMode::PNEBI_LUT);
     ars1.insertIsotropicGaussians(acesPoints1, sigma);
     arsMax1 = ars1.findMax(thetaMax1);
     std::cout << "ars1: maximum " << arsMax1 << " in " << (180.0 / M_PI * thetaMax1) << " [deg]" << std::endl;
 
     ars2.initLUT(0.0001);
-    ars2.setComputeMode(ars::AngularRadonSpectrum2d::PNEBI_LUT);
+    ars2.setComputeMode(ars::IsotropicKernel::ComputeMode::PNEBI_LUT);
     ars2.insertIsotropicGaussians(acesPoints2, sigma);
     arsMax2 = ars2.findMax(thetaMax2);
     std::cout << "ars2: maximum " << arsMax2 << " in " << (180.0 / M_PI * thetaMax2) << " [deg]" << std::endl;

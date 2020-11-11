@@ -121,11 +121,11 @@ int main(int argc, char** argv) {
     std::fill(covarsUniform.begin(), covarsUniform.end(), covarUniform);
     double w = 1.0 / acesPoints.size();
     std::fill(weightsUniform.begin(), weightsUniform.end(), w);
-    for (int i = 0; i < acesPoints.size(); ++i) {
-        std::cout << "  weightsUniform[" << i << "] " << weightsUniform[i] << ", covarsuniform[" << i << "]\n"
-                << covarsUniform[i] << "\n";
-        //covarsUniform.pop_back(covarUniform);
-    }
+//    for (int i = 0; i < acesPoints.size(); ++i) {
+//        std::cout << "  weightsUniform[" << i << "] " << weightsUniform[i] << ", covarsuniform[" << i << "]\n"
+//                << covarsUniform[i] << "\n";
+//        //covarsUniform.pop_back(covarUniform);
+//    }
 
 
     ars1.setARSFOrder(arsOrder);
@@ -135,7 +135,7 @@ int main(int argc, char** argv) {
 
     ars2.setARSFOrder(arsOrder);
     ars2.initLUT(0.0001);
-    ars2.setComputeMode(ars::AngularRadonSpectrum2d::PNEBI_LUT);
+    ars2.setComputeMode(ars::IsotropicKernel::ComputeMode::PNEBI_LUT);
     ars2.insertIsotropicGaussians(acesPoints, sigmaMin);
 
     std::cout << "\n\n";
