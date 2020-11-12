@@ -135,7 +135,7 @@ int main(int argc, char** argv) {
 
     ars2.setARSFOrder(arsOrder);
     ars2.initLUT(0.0001);
-    ars2.setComputeMode(ars::IsotropicKernel::ComputeMode::PNEBI_LUT);
+    ars2.setComputeMode(ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT);
     ars2.insertIsotropicGaussians(acesPoints, sigmaMin);
 
     std::cout << "\n\n";

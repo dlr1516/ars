@@ -16,23 +16,22 @@
  * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <ars/ArsKernelAnisotropic2d.h>
-
-#include "ars/utils.h"
+#include <ars/utils.h>
 
 namespace ars {
 
-    AnisotropicKernel::AnisotropicKernel()
+    ArsKernelAnisotropic2d::ArsKernelAnisotropic2d()
     : muMod_(0.0), muAng_(0.0), sigmaMod_(0.0), sigmaAng_(0.0), sigmaDif_(0.0), nRes_(720) {
     }
 
-    AnisotropicKernel::AnisotropicKernel(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2) : nRes_(720) {
+    ArsKernelAnisotropic2d::ArsKernelAnisotropic2d(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2) : nRes_(720) {
         init(mean1, covar1, mean2, covar2);
     }
 
-    AnisotropicKernel::~AnisotropicKernel() {
+    ArsKernelAnisotropic2d::~ArsKernelAnisotropic2d() {
     }
 
-    void AnisotropicKernel::init(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2) {
+    void ArsKernelAnisotropic2d::init(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2) {
         Vector2 mu12;
         Matrix2 sigma12;
         double a, b, lmax, lmin, c, s;
@@ -71,7 +70,7 @@ namespace ars {
         //                << ", sigmaDif_ " << sigmaDif_ << "\n");
     }
 
-    void AnisotropicKernel::computeFourier(int nFourier, std::vector<double>& coeffs) const {
+    void ArsKernelAnisotropic2d::computeFourier(int nFourier, std::vector<double>& coeffs) const {
         if (coeffs.size() != 2 * nFourier + 2) {
             coeffs.resize(2 * nFourier + 2);
         }
@@ -80,7 +79,7 @@ namespace ars {
         updateFourier(nFourier, coeffs);
     }
 
-    void AnisotropicKernel::updateFourier(int nFourier, std::vector<double>& coeffs) const {
+    void ArsKernelAnisotropic2d::updateFourier(int nFourier, std::vector<double>& coeffs) const {
         std::vector<double> kernelVal(nRes_ + 1);
         double sumCos, sumSin, cosCurr, cosNext, cosIncr, sinCurr, sinNext, sinIncr;
         double dt = M_PI / nRes_;

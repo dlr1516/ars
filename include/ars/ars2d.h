@@ -88,7 +88,7 @@ namespace ars {
          * Sets the mode for computing ARS coefficients in the case of isotropic kernels. 
          * @param mode the desired mode
          */
-        void setComputeMode(IsotropicKernel::ComputeMode mode) {
+        void setComputeMode(ArsKernelIsotropic2d::ComputeMode mode) {
             //mode_ = mode;
             isotropicKer_.setComputeMode(mode);
         }
@@ -221,8 +221,8 @@ namespace ars {
 //        static std::array<std::string, 2> const MODE_NAME;
 
         std::vector<double> coeffs_;
-        IsotropicKernel isotropicKer_;
-        AnisotropicKernel anisotropicKer_;
+        ArsKernelIsotropic2d isotropicKer_;
+        ArsKernelAnisotropic2d anisotropicKer_;
         int arsfOrder_;
         double thetaToll_;
         int threadNumOMP_;

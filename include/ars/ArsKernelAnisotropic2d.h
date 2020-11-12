@@ -36,12 +36,12 @@ namespace ars {
      * the coeffients are computed through numerical integration. 
      * (Hence, the need to provide the 
      */
-    class AnisotropicKernel {
+    class ArsKernelAnisotropic2d {
     public:
         /**
          * Creates a flat kernel
          */
-        AnisotropicKernel();
+        ArsKernelAnisotropic2d();
 
         /**
          * Constructor of non-isotropic Kernel of Angular Randon Specturm associated to two Gaussian distributions. 
@@ -50,12 +50,12 @@ namespace ars {
          * @param mean2 mean value of second gaussian
          * @param covar2 covariance matrix of second gaussian
          */
-        AnisotropicKernel(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2);
+        ArsKernelAnisotropic2d(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2);
 
         /**
          * Destructor. 
          */
-        ~AnisotropicKernel();
+        ~ArsKernelAnisotropic2d();
 
         /**
          * Computes the kernel parameters and save them. 

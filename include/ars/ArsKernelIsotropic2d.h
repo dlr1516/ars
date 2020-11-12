@@ -77,7 +77,7 @@ namespace ars {
     // CLASS ISOTROPIC KERNEL 
     // --------------------------------------------------------
 
-    class IsotropicKernel {
+    class ArsKernelIsotropic2d {
     public:
 
         enum class ComputeMode : unsigned int {
@@ -87,7 +87,7 @@ namespace ars {
         /**
          * Default constructor.
          */
-        IsotropicKernel();
+        ArsKernelIsotropic2d();
 
         /**
          * Initializes the isotropic kernel of the given pair of identical isotropic
@@ -97,7 +97,7 @@ namespace ars {
          * @param mean2 mean value of second Gaussian 
          * @param sigma the standard deviation of the two identical Gaussian
          */
-        IsotropicKernel(const Vector2& mean1, const Vector2& mean2, double sigma);
+        ArsKernelIsotropic2d(const Vector2& mean1, const Vector2& mean2, double sigma);
 
         /**
          * Initializes the isotropic kernel of the given pair of isotropic Gaussians
@@ -107,12 +107,12 @@ namespace ars {
          * @param sigma1 the standard deviation of the first Gaussian
          * @param sigma2 the standard deviation of the second Gaussian
          */
-        IsotropicKernel(const Vector2& mean1, const Vector2& mean2, double sigma1, double sigma2);
+        ArsKernelIsotropic2d(const Vector2& mean1, const Vector2& mean2, double sigma1, double sigma2);
 
         /**
          * Destructor. 
          */
-        virtual ~IsotropicKernel();
+        virtual ~ArsKernelIsotropic2d();
 
         /**
          * Initializes the isotropic kernel of the given pair of identical isotropic

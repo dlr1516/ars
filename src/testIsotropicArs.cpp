@@ -62,7 +62,7 @@ int main() {
 
     const int trialNum = 1;
     ars1.initLUT(0.0001);
-    ars1.setComputeMode(ars::IsotropicKernel::ComputeMode::PNEBI_DOWNWARD);
+    ars1.setComputeMode(ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD);
     for (int threadNum = 1; threadNum <= 1; ++threadNum) {
         ars1.setThreadNumOMP(threadNum);
         timeStart = std::chrono::system_clock::now();
@@ -78,7 +78,7 @@ int main() {
 
     std::cout << "\n------\n" << std::endl;
 
-    ars2.setComputeMode(ars::IsotropicKernel::ComputeMode::PNEBI_LUT);
+    ars2.setComputeMode(ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT);
     for (int threadNum = 1; threadNum <= 1; ++threadNum) {
         ars2.setThreadNumOMP(threadNum);
         timeStart = std::chrono::system_clock::now();

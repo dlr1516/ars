@@ -11,8 +11,8 @@
 const double PLOT_EPS = 1e-4;
 
 int main(int argc, char** argv) {
-    ars::AnisotropicKernel ak;
-    ars::IsotropicKernel ik;
+    ars::ArsKernelAnisotropic2d ak;
+    ars::ArsKernelIsotropic2d ik;
     ars::Vector2 mean1, mean2, mean12, v;
     ars::Matrix2 covar1, covar2, covar12;
     std::vector<double> kernelValRaw;
@@ -166,7 +166,7 @@ int main(int argc, char** argv) {
             << "\n");
     
     ik.init(mean1, mean2, sigmaVal);
-    ik.setComputeMode(ars::IsotropicKernel::ComputeMode::PNEBI_DOWNWARD);
+    ik.setComputeMode(ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD);
     ik.computeFourier(arsOrder, fourierCoeffsIsot);
     ARS_PRINT("IsotropicKernel class parameters:\n"
             << " variance " << ik.getVariance()

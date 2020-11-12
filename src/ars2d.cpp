@@ -218,7 +218,7 @@ namespace ars {
     }
 
     void AngularRadonSpectrum2d::insertAnisotropicGaussian(const VectorVector2& means, const VectorMatrix2& covars, const std::vector<double>& weights) {
-        AnisotropicKernel nik;
+        ArsKernelAnisotropic2d nik;
         std::vector<double> coeffsPartial(arsfOrder_);
         int kernelNum = means.size();
         double wij;
