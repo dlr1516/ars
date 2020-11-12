@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <ars/AnisotropicKernel.h>
+#include <ars/ArsKernelAnisotropic2d.h>
 
 #include "ars/utils.h"
 

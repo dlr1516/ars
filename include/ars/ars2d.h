@@ -23,8 +23,8 @@
 #include <ars/definitions.h>
 #include <ars/functions.h>
 #include <ars/BBOptimizer1d.h>
-#include <ars/IsotropicKernel.h>
-#include <ars/AnisotropicKernel.h>
+#include <ars/ArsKernelIsotropic2d.h>
+#include <ars/ArsKernelAnisotropic2d.h>
 
 namespace ars {
 
@@ -126,13 +126,36 @@ namespace ars {
             coeffs_ = coeffs;
         }
 
-        /** Inserts the given points and computes all the data about point pairs.
+        /** * Inserts the given points and computes all the data about point pairs and 
+         * computes the coefficients of the Fourier series representing the ARS 
+         * of the point set.
+         * All the Gaussian distributions are isotropic, have the same standard deviation 
+         * and the same weight in the mixture. 
+         * @param means mean values of the distributions
+         * @param sigma the standard deviation (not variance!) of the identical isotropic distributions
          */
         void insertIsotropicGaussians(const VectorVector2& means, double sigma);
 
-        /** Inserts the given points and computes all the data about point pairs.
+        /**
+         * Inserts the given points and computes all the data about point pairs and 
+         * computes the coefficients of the Fourier series representing the ARS 
+         * of the point set.
+         * Hypothesis: the weights of the input Gaussian distributions of the mixture
+         * are assumed to be equal. 
+         * @param means mean values of the distributions
+         * @param sigmas standard deviations (not variances!) of the isotropic distributions
          */
         void insertIsotropicGaussians(const VectorVector2& means, const std::vector<double>& sigmas);
+        
+        /**
+         * Inserts the given points and computes all the data about point pairs and 
+         * computes the coefficients of the Fourier series representing the ARS 
+         * of the point set.
+         * @param means mean values of the distributions
+         * @param sigmas standard deviations (not variances!) of the isotropic distributions
+         * @param weights the weights of each distribution of the mixture
+         */
+        void insertIsotropicGaussians(const VectorVector2& means, const std::vector<double>& sigmas, const std::vector<double>& weights);
         
         /**
          * Inserts the given anisotropic gaussians. 

@@ -1,6 +1,6 @@
 #include <iostream>
-#include <ars/AnisotropicKernel.h>
-#include <ars/IsotropicKernel.h>
+#include <ars/ArsKernelIsotropic2d.h>
+#include <ars/ArsKernelAnisotropic2d.h>
 #include <ars/ars2d.h>
 #include <ars/definitions.h>
 #include <ars/functions.h>

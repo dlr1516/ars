@@ -148,7 +148,7 @@ namespace ars {
         for (int i = 0; i < kernelNum; ++i) {
             for (int j = i + 1; j < kernelNum; ++j) {
                 isotropicKer_.init(means[i], means[j], sigma);
-                isotropicKer_.updateFourier(arsfOrder_, coeffs_);
+                isotropicKer_.updateFourier(arsfOrder_, coeffs_, w);
 //                dx = means[i].x() - means[j].x();
 //                dy = means[i].y() - means[j].y();
 //                sigma2 = 2.0 * sigma * sigma;
@@ -172,8 +172,11 @@ namespace ars {
     }
 
     void AngularRadonSpectrum2d::insertIsotropicGaussians(const VectorVector2& means, const std::vector<double>& sigmas) {
+    }
+    
+    void AngularRadonSpectrum2d::insertIsotropicGaussians(const VectorVector2& means, const std::vector<double>& sigmas, const std::vector<double>& weights) {
         int kernelNum = means.size();
-        double w = 1.0; // / (kernelNum * kernelNum);
+        double w = 1.0 / (kernelNum * kernelNum);
 
         if (kernelNum != sigmas.size()) {
             std::cerr << __FILE__ << "," << __LINE__ << ": inconsistent vector sizes: found " << means.size()

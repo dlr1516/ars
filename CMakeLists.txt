@@ -28,12 +28,12 @@ add_library(ars
   src/ars2d.cpp
   src/functions.cpp
   src/utils.cpp
-  src/AnisotropicKernel.cpp
+  src/ArsKernelAnisotropic2d.cpp
+  src/ArsKernelIsotropic2d.cpp
   src/BBOptimizer1d.cpp
   src/GaussianMixtureEstimator.cpp
   src/HistogramCircularCorrelation.cpp
   src/HoughSpectrum.cpp
-  src/IsotropicKernel.cpp
   src/ParamMap.cpp
   src/Profiler.cpp
 )
@@ -41,8 +41,8 @@ add_library(ars
 add_executable(testFunctions src/testFunctions.cpp )
 target_link_libraries(testFunctions ${ars_LINK_LIBS} ars)
 
-add_executable(testIsotropicARS src/testIsotropicARS.cpp )
-target_link_libraries(testIsotropicARS ${ars_LINK_LIBS} ars)
+add_executable(testIsotropicArs src/testIsotropicArs.cpp )
+target_link_libraries(testIsotropicArs ${ars_LINK_LIBS} ars)
 
 add_executable(testAnisotropicArs src/testAnisotropicArs.cpp)
 target_link_libraries(testAnisotropicArs ${ars_LINK_LIBS} ars)

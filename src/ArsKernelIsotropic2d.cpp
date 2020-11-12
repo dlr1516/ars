@@ -11,7 +11,7 @@
  * Created on November 9, 2020, 11:59 AM
  */
 
-#include <ars/IsotropicKernel.h>
+#include <ars/ArsKernelIsotropic2d.h>
 
 namespace ars {
 
