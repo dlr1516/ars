@@ -63,7 +63,7 @@ namespace ars {
          */
         ~AngularRadonSpectrum2d();
 
-        /** Sets the order of Fourier approximation of ARS.
+        /** Sets the order of truncated Fourier series expansion of ARS.
          * WARNING: It resets the coefficients!
          */
         void setARSFOrder(int n) {
@@ -114,13 +114,20 @@ namespace ars {
             anisotropicStep_ = as;
         }
 
-        /** Returns const reference to ARSF coefficients obtained from downward recursion. 
+        /** Returns const reference to ARS Fourier coefficients. 
+         * Coefficients are obtained from a Gaussian Mixture Model (GMM) representing
+         * a point set distribution with uncertainty. 
          */
         const std::vector<double>& coefficients() const {
             return coeffs_;
         }
         
-        /** Sets the ARSF coefficients. 
+        /**
+         * Sets the ARS Fourier coefficients. 
+         * @warning This method is a "backdoor" w.r.t. the insert methods that 
+         * computes the coefficients directly from the point set in GMM form. 
+         * Accordingly it should be used carefully to avoid inconsistencies. 
+         * @param coeffs the coefficients
          */
         void setCoefficients(const std::vector<double>& coeffs) {
             coeffs_ = coeffs;
@@ -172,11 +179,11 @@ namespace ars {
             isotropicKer_.initPnebiLut(arsfOrder_, precision);
         }
 
-        /** Evaluates the ARSF using the coefficients obtained from downward recursion. 
+        /** Evaluates the ARS Fourier using the coefficients obtained from downward recursion. 
          */
         double eval(double theta) const;
 
-        /** Finds the maximum of ARSF.
+        /** Finds the maximum of ARS Fourier.
          */
         double findMax() const {
             double arsfMax, thetaMax;
@@ -184,7 +191,7 @@ namespace ars {
             return arsfMax;
         }
 
-        /** Finds the maximum of ARSF.
+        /** Finds the maximum of ARS Fourier.
          */
         double findMax(double& thetaMax) const {
             double arsfMax;
@@ -193,7 +200,7 @@ namespace ars {
         }
         
         /**
-         * Finds the maximum of ARSF on the given interval [thetaLow, thetaUpp].
+         * Finds the maximum of ARS Fourier on the given interval [thetaLow, thetaUpp].
          * @param thetaLow
          * @param thetaUpp
          * @return the maximum value of correlation function. 
@@ -205,7 +212,7 @@ namespace ars {
         }
         
         /**
-         *  Finds the maximum of ARSF on the given interval.
+         *  Finds the maximum of ARS Fourier on the given interval.
          * @param thetaOpt
          * @param thetaMin
          * @param thetaMax
@@ -218,17 +225,12 @@ namespace ars {
         }
 
     protected:
-//        static std::array<std::string, 2> const MODE_NAME;
-
         std::vector<double> coeffs_;
         ArsKernelIsotropic2d isotropicKer_;
         ArsKernelAnisotropic2d anisotropicKer_;
         int arsfOrder_;
         double thetaToll_;
         int threadNumOMP_;
-        // PNEBI LUT
-//        PnebiLUT pnebiLut_;
-//        ComputeMode mode_;
         // Parameters for computation of the Fourier coefficients of anisotropic kernels
         int anisotropicStep_;
     };

@@ -222,8 +222,8 @@ namespace ars {
                     0.0, lmin;
             v = Eigen::Rotation2Dd(theta);
             covar = v * covar * v.transpose();
-//            ARS_PRINT("[" << first << "," << last << "]: lmin " << lmin << ", lmax " << lmax << ", theta[deg] " << (180.0 / M_PI * theta)
-//                    << "\ncovar\n" << covar);
+            //            ARS_PRINT("[" << first << "," << last << "]: lmin " << lmin << ", lmax " << lmax << ", theta[deg] " << (180.0 / M_PI * theta)
+            //                    << "\ncovar\n" << covar);
             //            diagonalize(covar, l, v);
             //            if (l(0, 0) < sigmaMinSquare)
             //                l(0, 0) = sigmaMinSquare;
@@ -232,6 +232,21 @@ namespace ars {
             //            covar = v * l * v.transpose();
         }
     }
+
+    //-----------------------------------------------------
+    // GaussianMixtureEstimatorHierarchical
+    //-----------------------------------------------------
+
+    GaussianMixtureEstimatorHierarchical::GaussianMixtureEstimatorHierarchical() {
+    }
+    
+    GaussianMixtureEstimatorHierarchical::~GaussianMixtureEstimatorHierarchical() {
+    }
+    
+    void GaussianMixtureEstimatorHierarchical::compute(const VectorVector2& samples) {
+    }
+    
+
 
 }
 

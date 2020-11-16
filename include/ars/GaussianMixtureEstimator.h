@@ -109,6 +109,13 @@ namespace ars {
             return gaussians_[i].weight;
         }
         
+        /**
+         * Exports the Gaussian mixture parameters, i.e. means, covariances and weights, 
+         * into separate vectors. 
+         * @param means std::vector of mean vectors
+         * @param covariances std::vector of covariance matrices
+         * @param weights std::vector of weights
+         */
         void exportGaussians(VectorVector2& means, VectorMatrix2& covariances, std::vector<double>& weights) const;
         
     protected:
@@ -223,6 +230,42 @@ namespace ars {
          */
         void estimateGaussianFromSegment(const VectorVector2& points, int first, int last, Vector2& mean, Matrix2& covar) const;
         
+    };
+    
+    
+    //-----------------------------------------------------
+    // GaussianMixtureEstimatorHierarchical
+    //-----------------------------------------------------
+    
+    class GaussianMixtureEstimatorHierarchical : public GaussianMixtureEstimator {
+    public: 
+        
+        /**
+         * Default constructor.
+         */
+        GaussianMixtureEstimatorHierarchical();
+        
+        /**
+         * Destructor. 
+         */
+        virtual ~GaussianMixtureEstimatorHierarchical();
+        
+        /**
+         * Sets the minimum value of standard deviation of Gaussians.
+         * @param sm the minimum standard deviation 
+         */
+        void setSigmaMin(double sm) {
+            sigmaMin_ = sm;
+        }
+        
+        /**
+         * Computes the Gaussian parameters from the given samples.
+         * @param samples sorted in counter-clockwise order
+         */
+        virtual void compute(const VectorVector2& samples);
+        
+    private:
+        double sigmaMin_; 
     };
 
 } // end of namespace
