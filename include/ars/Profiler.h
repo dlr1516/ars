@@ -1,6 +1,6 @@
 /**
  * LIRE - LIdar 3D REgistration
- * Copyright (C) 2018 Dario Lodi Rizzini, Fabio Riccardo Turdo
+ * Copyright (C) 2018-2020 Dario Lodi Rizzini, Fabio Riccardo Turdo
  *
  * LIRE is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by

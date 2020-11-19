@@ -34,6 +34,8 @@ add_library(ars
   src/GaussianMixtureEstimator.cpp
   src/HistogramCircularCorrelation.cpp
   src/HoughSpectrum.cpp
+  #src/MortonOrderedPoints2d.cpp
+  src/MortonOrderedPoints.cpp
   src/ParamMap.cpp
   src/Profiler.cpp
 )
