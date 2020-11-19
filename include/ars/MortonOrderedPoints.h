@@ -25,10 +25,26 @@
 #include <vector>
 #include <algorithm>
 #include <Eigen/Dense>
-
-//#include "MortonOrderedPoints2d.h"
+#include <ars/definitions.h>
 
 namespace ars {
+    
+    template <typename Integer, unsigned int N>
+    void convertIntegerToBitset(Integer i, std::bitset<N>& bs) {
+        unsigned int bitNum = 8 * sizeof(Integer);
+        bs.reset();
+        for (unsigned int b = 0; b < N && b < bitNum; ++b) {
+            bs[b] = i & (1 << b);
+        }
+    }
+    
+    template <unsigned int N>
+    bool compareBitsets(const std::bitset<N>& bs1, const std::bitset<N>& bs2) {
+        for (unsigned int b = N - 1; b >= 0; --b) {
+            if (bs1[b] ^ bs2[b]) return bs2[b];
+        }
+        return false;
+    }
 
     /**
      * Class MortonOrderedPoints provides a simple data structure for sorting the points 
@@ -50,7 +66,8 @@ namespace ars {
 
         using SimpleIndex = std::bitset<SIMPLE_INDEX_BITNUM>;
         using MultiIndex = std::bitset<MULTI_INDEX_BITNUM>;
-        using ArrayIndex = std::array<SimpleIndex, Dim>;
+        using ArraySimpleIndex = std::array<SimpleIndex, Dim>;
+        using ArrayMultiIndex = std::array<MultiIndex, Dim>;
 
         using Point = Eigen::Matrix<Scalar, Dim, 1>;
         using VectorPoint = std::vector<Point, Eigen::aligned_allocator<Point> >;
@@ -67,23 +84,32 @@ namespace ars {
 
         void getInterval(unsigned int level, unsigned int quadrant, ConstIterator& beg, ConstIterator& end) const;
 
-        static MultiIndex encode(const ArrayIndex& indices);
+        static MultiIndex encode(const ArraySimpleIndex& indices);
 
-        static ArrayIndex decode(const MultiIndex& mindex);
-
-    protected:
-        VectorPoint points_;
-        Point pmin_;
-        Scalar length_;
-
+        static ArraySimpleIndex decode(const MultiIndex& mindex);
+        
         static MultiIndex enlarge(const SimpleIndex& si);
 
         static SimpleIndex truncate(const MultiIndex& mi);
 
         inline MultiIndex pointToMorton(const Point& p) const;
 
-        static bool compare(const MultiIndex& mi1, const MultiIndex& mi2);
+//        static bool compare(const MultiIndex& mi1, const MultiIndex& mi2);
+
+    protected:
+        VectorPoint points_;
+        Point pmin_;
+        Scalar length_;
     };
+    
+    using MortonOrderedPoints2f4h = MortonOrderedPoints<2, 4, float>;
+    using MortonOrderedPoints2d4h = MortonOrderedPoints<2, 4, double>;
+    using MortonOrderedPoints2f8h = MortonOrderedPoints<2, 8, float>;
+    using MortonOrderedPoints2d8h = MortonOrderedPoints<2, 8, double>;
+    using MortonOrderedPoints2f16h = MortonOrderedPoints<2, 16, float>;
+    using MortonOrderedPoints2d16h = MortonOrderedPoints<2, 16, double>;
+    using MortonOrderedPoints2f24h = MortonOrderedPoints<2, 24, float>;
+    using MortonOrderedPoints2d24h = MortonOrderedPoints<2, 24, double>;
 
     // ------------------------------------------------------------------------
     // IMPLEMENTATION OF PUBLIC MEMBERS 
@@ -146,14 +172,16 @@ namespace ars {
         std::sort(points_.begin(), points_.end(),
                 [&](const Point& p1, const Point & p2) -> bool {
                     //return pointToMorton(p1) < pointToMorton(p2);
-                    return compare(pointToMorton(p1), pointToMorton(p2));
+                    return compareBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p1), pointToMorton(p2));
                 });
     }
 
     template <unsigned int Dim, unsigned int Height, typename Scalar>
     void MortonOrderedPoints<Dim, Height, Scalar>::getInterval(unsigned int level, unsigned int octant, ConstIterator& beg, ConstIterator& end) const {
-        MultiIndex miBeg, miEnd, prefix;
-        unsigned int octantNum = getOctantNum(level);
+        MultiIndex miBeg, miEnd; //, prefix;
+        unsigned int octantNum, octantBitStart;
+        
+        octantNum = getOctantNum(level);
 
         if (octant < 0 || octant >= octantNum) {
             std::cerr << __FILE__ << "," << __LINE__ << ": octant index " << octant << " overflow:"
@@ -163,34 +191,38 @@ namespace ars {
 
         miBeg.reset();
         miEnd.set();
-        prefix.to_ulong() = octant;
-        for (int b = MULTI_INDEX_BITNUM - 1; b >= MULTI_INDEX_BITNUM - 1 - level; --b) {
+        //prefix.to_ulong() = octant;
+        octantBitStart = MULTI_INDEX_BITNUM - 1 - level;
+        for (unsigned int b = MULTI_INDEX_BITNUM - 1; b >= octantBitStart; --b) {
             if (b < level) {
-                miBeg[b] = prefix[MULTI_INDEX_BITNUM - 1 - b];
-                miEnd[b] = prefix[MULTI_INDEX_BITNUM - 1 - b];
+//                miBeg[b] = prefix[MULTI_INDEX_BITNUM - 1 - b];
+//                miEnd[b] = prefix[MULTI_INDEX_BITNUM - 1 - b];
+                miBeg[b] = (octant & (1 << (b - octantBitStart)));
+                miEnd[b] = miBeg[b];
             }
         }
 
         beg = std::find_if(points_.begin(), points_.end(),
                 [&](const Point & p) {
-                    return compare(pointToMorton(p), miBeg); });
+                    return compareBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p), miBeg); });
         end = std::find_if(points_.begin(), points_.end(),
                 [&](const Point & p) {
-                    return compare(pointToMorton(p), miEnd); });
+                    return compareBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p), miEnd); });
     }
 
     template <unsigned int Dim, unsigned int Height, typename Scalar>
     typename MortonOrderedPoints<Dim, Height, Scalar>::MultiIndex
-    MortonOrderedPoints<Dim, Height, Scalar>::encode(const ArrayIndex& indices) {
+    MortonOrderedPoints<Dim, Height, Scalar>::encode(const ArraySimpleIndex& indices) {
         MultiIndex res;
-        MultiIndex one;
+//        MultiIndex one;
 
         res.reset();
-        one.reset();
-        one.set(0) = 1;
+//        one.reset();
+//        one.set(0) = 1;
         for (unsigned int b = 0; b < SIMPLE_INDEX_BITNUM; ++b) {
             for (unsigned int d = 0; d < Dim; ++d) {
-                res |= (enlarge(indices(d)) & (one << b)) << b;
+                //res |= (enlarge(indices[d]) & (one << b)) << b;
+                res[Dim * b + d] = indices[d][b];
             }
         }
 
@@ -198,23 +230,25 @@ namespace ars {
     }
 
     template <unsigned int Dim, unsigned int Height, typename Scalar>
-    typename MortonOrderedPoints<Dim, Height, Scalar>::ArrayIndex
+    typename MortonOrderedPoints<Dim, Height, Scalar>::ArraySimpleIndex
     MortonOrderedPoints<Dim, Height, Scalar>::decode(const MultiIndex& mindex) {
-        ArrayIndex indices;
-        MultiIndex one;
+        ArraySimpleIndex indices;
+//        MultiIndex one;
 
         // Resets the indices
-        one.reset();
-        one.set(0) = 1;
-        for (unsigned int d = 0; d < Dim; ++d) {
-            indices[d].reset();
-        }
+//        one.reset();
+//        one.set(0) = 1;
+//        for (unsigned int d = 0; d < Dim; ++d) {
+//            indices[d].reset();
+//        }
 
         for (unsigned int b = 0; b < SIMPLE_INDEX_BITNUM; ++b) {
             for (unsigned int d = 0; d < Dim; ++d) {
-                indices[d] |= truncate((mindex & (one << (Dim * b + d))) >> (b + d));
+//                indices[d] |= truncate((mindex & (one << (Dim * b + d))) >> (b + d));
+                indices[d][b] = mindex[Dim * b + d];
             }
         }
+        return indices;
     }
 
     // ------------------------------------------------------------------------
@@ -226,39 +260,41 @@ namespace ars {
     MortonOrderedPoints<Dim, Height, Scalar>::enlarge(const SimpleIndex& si) {
         MultiIndex mi;
         mi.reset();
-
         for (unsigned int b = 0; b < SIMPLE_INDEX_BITNUM; ++b) {
             mi[b] = si[b];
         }
+        return mi;
     }
 
     template <unsigned int Dim, unsigned int Height, typename Scalar>
     typename MortonOrderedPoints<Dim, Height, Scalar>::SimpleIndex
     MortonOrderedPoints<Dim, Height, Scalar>::truncate(const MultiIndex& mi) {
         SimpleIndex si;
-
         for (unsigned int b = 0; b < SIMPLE_INDEX_BITNUM; ++b) {
             si[b] = mi[b];
         }
+        return si;
     }
 
     template <unsigned int Dim, unsigned int Height, typename Scalar>
     typename MortonOrderedPoints<Dim, Height, Scalar>::MultiIndex
     MortonOrderedPoints<Dim, Height, Scalar>::pointToMorton(const Point& p) const {
-        ArrayIndex indices;
+        ArraySimpleIndex indices;
+        unsigned int coordIndex;
         for (int d = 0; d < Dim; ++d) {
-            indices[d].to_ullong() = (unsigned int) floor((p(d) - pmin_(d)) / length_ * SIMPLE_INDEX_BITNUM);
+            coordIndex = (unsigned int) floor((p(d) - pmin_(d)) / length_ * SIMPLE_INDEX_BITNUM);
+            convertIntegerToBitset<unsigned int, SIMPLE_INDEX_BITNUM>(coordIndex, indices[d]);
         }
         return encode(indices);
     }
 
-    template <unsigned int Dim, unsigned int Height, typename Scalar>
-    bool MortonOrderedPoints<Dim, Height, Scalar>::compare(const MultiIndex& mi1, const MultiIndex& mi2) {
-        for (int b = MULTI_INDEX_BITNUM - 1; b >= 0; --b) {
-            if (mi1[b] ^ mi2[b]) return mi2[b];
-        }
-        return false;
-    }
+//    template <unsigned int Dim, unsigned int Height, typename Scalar>
+//    bool MortonOrderedPoints<Dim, Height, Scalar>::compare(const MultiIndex& mi1, const MultiIndex& mi2) {
+//        for (int b = MULTI_INDEX_BITNUM - 1; b >= 0; --b) {
+//            if (mi1[b] ^ mi2[b]) return mi2[b];
+//        }
+//        return false;
+//    }
 
 } // end of namespace
 
