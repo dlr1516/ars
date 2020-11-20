@@ -10,15 +10,18 @@ int main(int argc, char** argv) {
     Morton mop;
     ArrayIndex ai;
     MultiIndex mi;
-    
+    Morton::ConstIterator beg, end;
+    ars::VectorVector2 points;
+    ars::Vector2 p;
+
     ai[0] = SimpleIndex("0110");
     ai[1] = SimpleIndex("1011");
     mi = Morton::encode(ai);
-    
+
     ARS_VARIABLE2(ai[0], ai[1]);
-    ARS_VARIABLE2(Morton::enlarge(ai[0]), Morton::enlarge(ai[1]))
+    //ARS_VARIABLE2(Morton::enlarge(ai[0]), Morton::enlarge(ai[1]))
     std::cout << "Morton encoded: mi " << mi << std::endl;
-    
+
     ai[0].reset();
     ai[1].reset();
     std::cout << "Cleared ai[]:\n";
@@ -26,7 +29,46 @@ int main(int argc, char** argv) {
     std::cout << "After ai = Morton::decode(mi):\n";
     ai = Morton::decode(mi);
     ARS_VARIABLE2(ai[0], ai[1]);
-    ARS_VARIABLE(Morton::truncate(mi));
-            
+    ARS_VARIABLE(mi);
+
+    // Insert test points
+    p << -2.0, -2.0;
+    points.push_back(p);
+    p << -1.5, -1.8;
+    points.push_back(p);
+    p << -1.5, -1.5;
+    points.push_back(p);
+    p << 0.5, 0.3;
+    points.push_back(p);
+    p << 0.1, 0.1;
+    points.push_back(p);
+    p << 0.1, 0.7;
+    points.push_back(p);
+    p << 1.6, -0.4;
+    points.push_back(p);
+    p << 2.0, -0.8;
+    points.push_back(p);
+    p << -2.0, 2.0;
+    points.push_back(p);
+    
+    mop.insert(points);
+    
+    std::cout << "\nTest point set:\n";
+    for (auto& pi : points) {
+        std::cout << "  [" << pi.transpose() << "] -> " << mop.pointToMorton(pi) << "\n";
+    }
+
+    std::cout << "\nVisit levels with levelMax " << mop.getLevelMax() << std::endl;
+    for (int level = 0; level < mop.getLevelMax() && level < 3; ++level) {
+        std::cout << "level " << level << ", octant num " << mop.getOctantNum(level) << ":\n";
+        for (int octant = 0; octant < mop.getOctantNum(level); ++octant) {
+            std::cout << "  octant " << octant << " / " << mop.getOctantNum(level) << "\n";
+            mop.getInterval(level, octant, beg, end);
+        }
+    }
+    
+    
+    
+
     return 0;
 }

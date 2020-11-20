@@ -19,12 +19,6 @@
 
 namespace ars {
     
-//    using MortonOrderedPoints2f8h = MortonOrderedPoints<2, 8, float>;
-//    using MortonOrderedPoints2d8h = MortonOrderedPoints<2, 8, double>;
-//    using MortonOrderedPoints2f16h = MortonOrderedPoints<2, 16, float>;
-//    using MortonOrderedPoints2d16h = MortonOrderedPoints<2, 16, double>;
-//    using MortonOrderedPoints2f24h = MortonOrderedPoints<2, 24, float>;
-//    using MortonOrderedPoints2d24h = MortonOrderedPoints<2, 24, double>;
     template class MortonOrderedPoints<2, 4, float>;
     template class MortonOrderedPoints<2, 4, double>;
     template class MortonOrderedPoints<2, 8, float>;
@@ -33,5 +27,17 @@ namespace ars {
     template class MortonOrderedPoints<2, 16, double>;
     template class MortonOrderedPoints<2, 24, float>;
     template class MortonOrderedPoints<2, 24, double>;
+    template class MortonOrderedPoints<2, 32, float>;
+    template class MortonOrderedPoints<2, 32, double>;
     
+    template class MortonOrderedPoints<3, 4, float>;
+    template class MortonOrderedPoints<3, 4, double>;
+    template class MortonOrderedPoints<3, 8, float>;
+    template class MortonOrderedPoints<3, 8, double>;
+    template class MortonOrderedPoints<3, 16, float>;
+    template class MortonOrderedPoints<3, 16, double>;
+    template class MortonOrderedPoints<3, 24, float>;
+    template class MortonOrderedPoints<3, 24, double>;
+    template class MortonOrderedPoints<3, 32, float>;
+    template class MortonOrderedPoints<3, 32, double>;
 };
