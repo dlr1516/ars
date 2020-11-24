@@ -30,6 +30,8 @@ int main(int argc, char** argv) {
     ai = Morton::decode(mi);
     ARS_VARIABLE2(ai[0], ai[1]);
     ARS_VARIABLE(mi);
+    
+    ARS_VARIABLE(ars::lessBitsets<Morton::MULTI_INDEX_BITNUM>(mi, mi));
 
     // Insert test points
     p << -2.0, -2.0;
@@ -50,13 +52,17 @@ int main(int argc, char** argv) {
     points.push_back(p);
     p << -2.0, 2.0;
     points.push_back(p);
+    p << 1.5, 1.8;
+    points.push_back(p);
+    p << 1.8, 1.8;
+    points.push_back(p);
     
     mop.insert(points);
     
     std::cout << "\nTest point set:\n";
-    for (auto& pi : points) {
-        std::cout << "  [" << pi.transpose() << "] -> " << mop.pointToMorton(pi) << "\n";
-    }
+//    for (auto& pi : points) {
+//        std::cout << "  [" << pi.transpose() << "] -> " << mop.pointToMorton(pi) << "\n";
+//    }
 
     std::cout << "\nVisit levels with levelMax " << mop.getLevelMax() << std::endl;
     for (int level = 0; level < mop.getLevelMax() && level < 3; ++level) {
@@ -64,6 +70,9 @@ int main(int argc, char** argv) {
         for (int octant = 0; octant < mop.getOctantNum(level); ++octant) {
             std::cout << "  octant " << octant << " / " << mop.getOctantNum(level) << "\n";
             mop.getInterval(level, octant, beg, end);
+            for (auto it = beg; it != end; ++it) {
+                std::cout << "  [" << it->transpose() << "] code " << mop.pointToMorton(*it) << std::endl;
+            }
         }
     }
     
