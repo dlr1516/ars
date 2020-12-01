@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
     MultiIndex mi;
     Morton::ConstIterator beg, end;
     ars::VectorVector2 points;
-    ars::Vector2 p;
+    ars::Vector2 p, octMin, octMax;
 
     ai[0] = SimpleIndex("0110");
     ai[1] = SimpleIndex("1011");
@@ -68,10 +68,13 @@ int main(int argc, char** argv) {
     for (int level = 0; level < mop.getLevelMax() && level < 3; ++level) {
         std::cout << "level " << level << ", octant num " << mop.getOctantNum(level) << ":\n";
         for (int octant = 0; octant < mop.getOctantNum(level); ++octant) {
-            std::cout << "  octant " << octant << " / " << mop.getOctantNum(level) << "\n";
-            mop.getInterval(level, octant, beg, end);
+            mop.getOctantBounds(level, octant, octMin, octMax);
+            std::cout << "  octant " << octant << " / " << mop.getOctantNum(level) 
+                    << ", bounds [" << octMin.transpose() << "][" << octMax.transpose() << "]\n";
+            mop.getOctantPoints(level, octant, beg, end);
             for (auto it = beg; it != end; ++it) {
-                std::cout << "  [" << it->transpose() << "] code " << mop.pointToMorton(*it) << std::endl;
+                std::cout << "  [" << it->second.transpose() << "] code "  
+                        << it->first << " (check " << mop.pointToMorton(it->second) << ")"<< std::endl;
             }
         }
     }

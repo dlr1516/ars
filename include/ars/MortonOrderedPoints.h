@@ -23,6 +23,7 @@
 #include <bitset>
 #include <array>
 #include <vector>
+#include <map>
 #include <algorithm>
 #include <type_traits> // for static_assert()
 
@@ -69,12 +70,20 @@ namespace ars {
      */
     template <unsigned int N>
     bool lessBitsets(const std::bitset<N>& bs1, const std::bitset<N>& bs2) {
-        for (int b = (int)N - 1; b >= 0; --b) {
+        for (int b = (int) N - 1; b >= 0; --b) {
             //ARS_VARIABLE4(b, bs1[b], bs2[b], bs1[b] ^ bs2[b]);
             if (bs1[b] ^ bs2[b]) return bs2[b];
         }
         return false;
     }
+
+    template <unsigned int N>
+    struct LessBitsets {
+
+        bool operator()(const std::bitset<N>& bs1, const std::bitset<N>& bs2) const {
+            return lessBitsets<N>(bs1, bs2);
+        }
+    };
 
     /**
      * Class MortonOrderedPoints provides a simple data structure for sorting the points 
@@ -101,20 +110,30 @@ namespace ars {
 
         using Point = Eigen::Matrix<Scalar, Dim, 1>;
         using VectorPoint = std::vector<Point, Eigen::aligned_allocator<Point> >;
-        using Iterator = typename VectorPoint::iterator;
-        using ConstIterator = typename VectorPoint::const_iterator;
+        using MapPoint = std::multimap<
+                MultiIndex,
+                Point,
+                LessBitsets<MULTI_INDEX_BITNUM>,
+                Eigen::aligned_allocator<std::pair<MultiIndex, Point> >
+                >;
+        using Iterator = typename MapPoint::iterator;
+        using ConstIterator = typename MapPoint::const_iterator;
 
         MortonOrderedPoints();
 
         ~MortonOrderedPoints();
 
-        void insert(const VectorPoint& points);
+        void insert(const VectorPoint& points, bool initBounds = true);
+
+        void setBounds(const Point& pmin, const Scalar& length);
 
         unsigned int getLevelMax() const;
 
         unsigned int getOctantNum(unsigned int level) const;
 
-        void getInterval(unsigned int level, unsigned int octant, ConstIterator& beg, ConstIterator& end) const;
+        void getOctantBounds(unsigned int level, unsigned int octant, Point& pmin, Point& pmax) const;
+
+        void getOctantPoints(unsigned int level, unsigned int octant, ConstIterator& beg, ConstIterator& end) const;
 
         static MultiIndex encode(const ArraySimpleIndex& indices);
 
@@ -126,10 +145,13 @@ namespace ars {
 
         inline MultiIndex pointToMorton(const Point& p) const;
 
+        //        ConstIterator findLower(ConstIterator& beg, ConstIterator& end, const MultiIndex& miTarget) const;
+
         //        static bool compare(const MultiIndex& mi1, const MultiIndex& mi2);
 
     protected:
-        VectorPoint points_;
+        //VectorPoint points_;
+        MapPoint points_;
         Point pmin_;
         Scalar length_;
         uint64_t binNum_;
@@ -168,8 +190,8 @@ namespace ars {
     template <unsigned int Dim, unsigned int Height, typename Scalar>
     MortonOrderedPoints<Dim, Height, Scalar>::MortonOrderedPoints() : points_(), pmin_(Point::Zero()), length_(0) {
         static_assert(Dim > 0, "Dimension must be greater than or equal to 1");
-        
-        binNum_ = (uint64_t)(1) << (uint32_t)Height;
+
+        binNum_ = (uint64_t) (1) << (uint32_t) Height;
     }
 
     template <unsigned int Dim, unsigned int Height, typename Scalar>
@@ -177,7 +199,7 @@ namespace ars {
     }
 
     template <unsigned int Dim, unsigned int Height, typename Scalar>
-    void MortonOrderedPoints<Dim, Height, Scalar>::insert(const VectorPoint& points) {
+    void MortonOrderedPoints<Dim, Height, Scalar>::insert(const VectorPoint& points, bool initBounds) {
         Point pmax;
         Scalar l;
 
@@ -189,47 +211,67 @@ namespace ars {
 
         // Copies the points into an internal vector and computes the min and max 
         // coordinates into pmin_ and pmax vectors
-        points_ = points;
-        pmin_ = points_[0];
-        pmax = points_[0];
-        for (int i = 0; i < points_.size(); ++i) {
-            for (unsigned int d = 0; d < Dim; ++d) {
-                if (points_[i](d) < pmin_(d))
-                    pmin_[i] = points_[i](d);
-                if (points_[i](d) > pmax(d))
-                    pmax(d) = points_[i](d);
-            }
-        }
-        ARS_VARIABLE2(pmin_.transpose(), pmax.transpose());
+        //points_ = points;
 
-        // Computes the largest dimension
-        length_ = 0.0;
-        for (int d = 0; d < Dim; ++d) {
-            l = pmax(d) - pmin_(d);
-            if (l > length_)
-                length_ = l;
+        if (initBounds) {
+            pmin_ = points[0];
+            pmax = points[0];
+            for (int i = 0; i < points.size(); ++i) {
+                for (unsigned int d = 0; d < Dim; ++d) {
+                    if (points[i](d) < pmin_(d))
+                        pmin_(d) = points[i](d);
+                    if (points[i](d) > pmax(d))
+                        pmax(d) = points[i](d);
+                }
+            }
+            ARS_VARIABLE2(pmin_.transpose(), pmax.transpose());
+
+            // Computes the largest dimension
+            length_ = 0.0;
+            for (int d = 0; d < Dim; ++d) {
+                l = pmax(d) - pmin_(d);
+                if (l > length_)
+                    length_ = l;
+            }
+            ARS_VARIABLE(length_);
         }
-        ARS_VARIABLE(length_);
-        
-//        ARS_PRINT("point morton hash:");
-//        for (auto& p : points) {
-//            std::cout << "  " << p.transpose() << " -> " << pointToMorton(p) << "\n";
-//        }
-//
+
+        for (auto it = points.begin(); it != points.end(); ++it) {
+            std::cout << "  inserting point [" << it->transpose() << "] with code " << pointToMorton(*it)
+                    << " points_.size() " << points_.size() << "\n";
+            points_.insert(std::make_pair(pointToMorton(*it), *it));
+        }
+
+        ARS_PRINT("visiting the points inserted in Morton order:");
+        for (auto it = points_.begin(); it != points_.end(); ++it) {
+            std::cout << "  " << it->first << ": [" << it->second.transpose() << "]\n";
+        }
+
+        //        ARS_PRINT("point morton hash:");
+        //        for (auto& p : points) {
+        //            std::cout << "  " << p.transpose() << " -> " << pointToMorton(p) << "\n";
+        //        }
+        //
         // Sorts the points according to Morton order
-        std::sort(points_.begin(), points_.end(),
-                [&](const Point& p1, const Point & p2) -> bool {
-                    //return pointToMorton(p1) < pointToMorton(p2);
-//                    ARS_PRINT("compare p1 " << p1.transpose() << " (" << pointToMorton(p1) << ") "
-//                            << ", p2 " << p2.transpose() << " (" << pointToMorton(p2) << "): "
-//                            << "less(p1, p2) " << lessBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p1), pointToMorton(p2)) << ", "
-//                            << "less(p2, p1) " << lessBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p2), pointToMorton(p1))
-//                            );
-//                    ARS_ASSERT(!(lessBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p1), pointToMorton(p2)) && 
-//                               lessBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p2), pointToMorton(p1))));
-                    return lessBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p1), pointToMorton(p2));
-                });
-//        ARS_PRINT("sorted pointset");
+        //        std::sort(points_.begin(), points_.end(),
+        //                [&](const Point& p1, const Point & p2) -> bool {
+        //                    //return pointToMorton(p1) < pointToMorton(p2);
+        //                    //                    ARS_PRINT("compare p1 " << p1.transpose() << " (" << pointToMorton(p1) << ") "
+        //                    //                            << ", p2 " << p2.transpose() << " (" << pointToMorton(p2) << "): "
+        //                    //                            << "less(p1, p2) " << lessBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p1), pointToMorton(p2)) << ", "
+        //                    //                            << "less(p2, p1) " << lessBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p2), pointToMorton(p1))
+        //                    //                            );
+        //                    //                    ARS_ASSERT(!(lessBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p1), pointToMorton(p2)) && 
+        //                    //                               lessBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p2), pointToMorton(p1))));
+        //                    return lessBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p1), pointToMorton(p2));
+        //                });
+        //        ARS_PRINT("sorted pointset");
+    }
+
+    template <unsigned int Dim, unsigned int Height, typename Scalar>
+    void MortonOrderedPoints<Dim, Height, Scalar>::setBounds(const Point& pmin, const Scalar& length) {
+        pmin_ = pmin;
+        length_ = length;
     }
 
     template <unsigned int Dim, unsigned int Height, typename Scalar>
@@ -253,9 +295,35 @@ namespace ars {
     }
 
     template <unsigned int Dim, unsigned int Height, typename Scalar>
-    void MortonOrderedPoints<Dim, Height, Scalar>::getInterval(unsigned int level, unsigned int octant, ConstIterator& beg, ConstIterator& end) const {
-        MultiIndex miBeg, miEnd;
+    void MortonOrderedPoints<Dim, Height, Scalar>::getOctantBounds(unsigned int level, unsigned int octant, Point& pmin, Point& pmax) const {
+        ArraySimpleIndex indices;
+        MultiIndex mi;
+        Scalar octantLen;
+
+        mi.reset();
+        convertIntegerToBitset<unsigned int, MULTI_INDEX_BITNUM>(octant, mi);
+        //mi = mi << (MULTI_INDEX_BITNUM - Dim * level);
+        indices = decode(mi);
+
+        octantLen = length_ / (1 << level);
+
+        //        std::cout << "\n";
+        //        ARS_VARIABLE2(mi, octantLen);
+        for (int d = 0; d < Dim; ++d) {
+            pmin(d) = pmin_(d) + octantLen * indices[d].to_ulong();
+            pmax(d) = pmin(d) + octantLen;
+            //            ARS_VARIABLE3(d, indices[d].to_ulong(), center(d));
+        }
+
+    }
+
+    template <unsigned int Dim, unsigned int Height, typename Scalar>
+    void MortonOrderedPoints<Dim, Height, Scalar>::getOctantPoints(unsigned int level, unsigned int octant, ConstIterator& octBeg, ConstIterator& octEnd) const {
+        MultiIndex miBeg, miEnd, miIt;
         unsigned int octantNum, octantBitStart;
+        int count, step;
+        ConstIterator octIt;
+        //Point pOctMin, pOctMax;
 
         octantNum = getOctantNum(level);
 
@@ -265,20 +333,41 @@ namespace ars {
             return;
         }
 
+        //        getOctantBounds(level, octant, pOctMin, pOctMax);
+        //        beg = std::lower_bound(points_.begin(), points_.end(), pOctMin,
+        //                [&](const Point& p1, const Point & p2) -> bool {
+        //
+        //                    return lessBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p1), pointToMorton(p2));
+        //                });
+        //        end = std::lower_bound(points_.begin(), points_.end(), pOctMax,
+        //                [&](const Point& p1, const Point & p2) -> bool {
+        //
+        //                    return lessBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p1), pointToMorton(p2));
+        //                });
+
         miBeg.reset();
         convertIntegerToBitset<unsigned int, MULTI_INDEX_BITNUM>(octant, miBeg);
         miBeg = miBeg << (MULTI_INDEX_BITNUM - Dim * level);
-        
+
         miEnd.set();
         miEnd = (miEnd >> (Dim * level)) | miBeg;
-        ARS_VARIABLE2(miBeg, miEnd);
 
-        beg = std::find_if(points_.begin(), points_.end(),
-                [&](const Point & p) {
-                    return !lessBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p), miBeg); });
-        end = std::find_if(points_.begin(), points_.end(),
-                [&](const Point & p) {
-                    return lessBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p), miEnd); });
+        octBeg = points_.lower_bound(miBeg);
+        octEnd = points_.upper_bound(miEnd);
+
+        //ARS_VARIABLE4(miBeg, octBeg->first, miEnd, octEnd->first);
+
+        //octBeg = findLower(points_.begin(), points_.end(), miBeg);
+        //octEnd = findLower(octBeg, std::end(points_), miEnd);
+
+        //        ARS_VARIABLE4(miBeg, pointToMorton(pOctMin), miEnd, pointToMorton(pOctMax));
+        //
+        //        beg = std::find_if(points_.begin(), points_.end(),
+        //                [&](const Point & p) {
+        //                    return !lessBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p), miBeg); });
+        //        end = std::find_if(points_.begin(), points_.end(),
+        //                [&](const Point & p) {
+        //                    return lessBitsets<MULTI_INDEX_BITNUM>(pointToMorton(p), miEnd); });
     }
 
     template <unsigned int Dim, unsigned int Height, typename Scalar>
@@ -352,30 +441,40 @@ namespace ars {
     MortonOrderedPoints<Dim, Height, Scalar>::pointToMorton(const Point& p) const {
         ArraySimpleIndex indices;
         unsigned int coordIndex;
-        
+
         for (int d = 0; d < Dim; ++d) {
             coordIndex = (unsigned int) floor((p(d) - pmin_(d)) / length_ * binNum_);
+            if (coordIndex >= binNum_) {
+                coordIndex = binNum_ - 1;
+            }
             convertIntegerToBitset<unsigned int, SIMPLE_INDEX_BITNUM>(coordIndex, indices[d]);
             //ARS_VARIABLE4(d, p(d), coordIndex, indices[d]);
         }
         //ARS_VARIABLE(encode(indices));
         return encode(indices);
     }
-    
-    template <unsigned int Dim, unsigned int Height, typename Scalar>
-    typename MortonOrderedPoints<Dim, Height, Scalar>::MultiIndex
-    MortonOrderedPoints<Dim, Height, Scalar>::pointToMorton(const Point& p) const {
-        ArraySimpleIndex indices;
-        unsigned int coordIndex;
-        
-        for (int d = 0; d < Dim; ++d) {
-            coordIndex = (unsigned int) floor((p(d) - pmin_(d)) / length_ * binNum_);
-            convertIntegerToBitset<unsigned int, SIMPLE_INDEX_BITNUM>(coordIndex, indices[d]);
-            //ARS_VARIABLE4(d, p(d), coordIndex, indices[d]);
-        }
-        //ARS_VARIABLE(encode(indices));
-        return encode(indices);
-    }
+
+    //    template <unsigned int Dim, unsigned int Height, typename Scalar>
+    //    typename MortonOrderedPoints<Dim, Height, Scalar>::ConstIterator
+    //    MortonOrderedPoints<Dim, Height, Scalar>::findLower(ConstIterator& beg, ConstIterator& end, const MultiIndex& miTarget) const {
+    //        ConstIterator it;
+    //        MultiIndex miIt;
+    //        typename std::iterator_traits<ConstIterator>::difference_type count, step;
+    //        count = std::distance(beg, end);
+    //
+    //        while (count > 0) {
+    //            it = beg;
+    //            step = count / 2;
+    //            std::advance(it, step);
+    //            miIt = pointToMorton(*it);
+    //            if (!lessBitsets<MULTI_INDEX_BITNUM>(miTarget, miIt)) {
+    //                beg = ++it;
+    //                count -= step + 1;
+    //            } else
+    //                count = step;
+    //        }
+    //        return beg;
+    //    }
 
     //    template <unsigned int Dim, unsigned int Height, typename Scalar>
     //    bool MortonOrderedPoints<Dim, Height, Scalar>::compare(const MultiIndex& mi1, const MultiIndex& mi2) {
