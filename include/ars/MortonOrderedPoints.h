@@ -100,15 +100,16 @@ namespace ars {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-                static const unsigned int SIMPLE_INDEX_BITNUM = Height;
-        static const unsigned int MULTI_INDEX_BITNUM = Dim * Height;
+        
+        static const unsigned int SIMPLE_INDEX_BITNUM = Height;           // number of bits to represent one coordinate
+        static const unsigned int MULTI_INDEX_BITNUM = Dim * Height;      // number of bits to represent Morton code
 
-        using SimpleIndex = std::bitset<SIMPLE_INDEX_BITNUM>;
-        using MultiIndex = std::bitset<MULTI_INDEX_BITNUM>;
-        using ArraySimpleIndex = std::array<SimpleIndex, Dim>;
-        using ArrayMultiIndex = std::array<MultiIndex, Dim>;
+        using SimpleIndex = std::bitset<SIMPLE_INDEX_BITNUM>;             // bitset for a single coordinate
+        using MultiIndex = std::bitset<MULTI_INDEX_BITNUM>;               // bitset for Morton code
+        using ArraySimpleIndex = std::array<SimpleIndex, Dim>;            // Dim-array of SimpleIndex
+        using ArrayMultiIndex = std::array<MultiIndex, Dim>;              // Dim-array of MultiIndex
 
-        using Point = Eigen::Matrix<Scalar, Dim, 1>;
+        using Point = Eigen::Matrix<Scalar, Dim, 1>;                      // vector type to represent a point
         using VectorPoint = std::vector<Point, Eigen::aligned_allocator<Point> >;
         using MapPoint = std::multimap<
                 MultiIndex,
@@ -119,30 +120,99 @@ namespace ars {
         using Iterator = typename MapPoint::iterator;
         using ConstIterator = typename MapPoint::const_iterator;
 
+        /**
+         * Defaul constructor.
+         */
         MortonOrderedPoints();
 
+        /**
+         * Destructor. 
+         */
         ~MortonOrderedPoints();
 
+        /**
+         * Inserts the given vector of points and, if initBounds is set true, 
+         * computes the minimum hypercube containing the input points. 
+         * @param points the input point set
+         * @param initBounds the flag that force computation of point region bounds
+         */
         void insert(const VectorPoint& points, bool initBounds = true);
 
+        /**
+         * Sets the bounds of the hypercube region of the point set
+         * @param pmin vector of minimum coordinates
+         * @param length size of the hypercube size
+         */
         void setBounds(const Point& pmin, const Scalar& length);
+        
+        /**
+         * Returns the number of points in the data structure.
+         * @return 
+         */
+        size_t size() const;
 
+        /**
+         * Returns the maximum number of levels of the octree implicitly associated to 
+         * MortonOrderedPoints. 
+         */
         unsigned int getLevelMax() const;
 
+        /**
+         * Returns the number of octants for a given level. At a given level
+         * each dimension is divided in 2^level bins and there are dim dimentions. 
+         * Hence, octantNum = (2^level)^dim = 2^(level * dim)
+         * E.g. l=1, d=2 (level 1 of quadtree) there are 4 octants (aka quadrants in two dimension) 
+         *      l=2, d=2 (level 1 of quadtree) there are 16 octants, etc.
+         * @param level
+         * @return 
+         */
         unsigned int getOctantNum(unsigned int level) const;
 
+        /**
+         * Returns the minimum and maximum coordinates of the hyper-cube region 
+         * delimiting an octant. 
+         * @param level the level of the octree
+         * @param octant the octant id 
+         * @param pmin vector of minimum coordinates
+         * @param pmax vector of maximum coordinates
+         */
         void getOctantBounds(unsigned int level, unsigned int octant, Point& pmin, Point& pmax) const;
 
+        /**
+         * Returns the begin and end iterators to the points in the given hyper-cube 
+         * octant. 
+         * @param level the level of the octree
+         * @param octant the octant id 
+         * @param beg begin iterator
+         * @param end end iterator
+         */
         void getOctantPoints(unsigned int level, unsigned int octant, ConstIterator& beg, ConstIterator& end) const;
 
+        /**
+         * Encodes the input coordinate indices to an interlaced Morton code. 
+         * @param indices the input array of indices (in bitset format)
+         * @return 
+         */
         static MultiIndex encode(const ArraySimpleIndex& indices);
 
+        /**
+         * Decode the interlaced Morton into an array of coordinate indices
+         * @param mindex the input Morton interlaced code
+         * @return 
+         */
         static ArraySimpleIndex decode(const MultiIndex& mindex);
 
         //static MultiIndex enlarge(const SimpleIndex& si);
 
         //static SimpleIndex truncate(const MultiIndex& mi);
 
+        /**
+         * Converts a point in scalar coordinates to interlaced Morton code.
+         * The conversion is based on discretization on Hypercube (supposedly) 
+         * containing all the points 
+         * @param p the point vector
+         * @return 
+         */
         inline MultiIndex pointToMorton(const Point& p) const;
 
         //        ConstIterator findLower(ConstIterator& beg, ConstIterator& end, const MultiIndex& miTarget) const;
@@ -242,7 +312,7 @@ namespace ars {
             points_.insert(std::make_pair(pointToMorton(*it), *it));
         }
 
-        ARS_PRINT("visiting the points inserted in Morton order:");
+        ARS_PRINT("visiting the " << size() << " points inserted in Morton order:");
         for (auto it = points_.begin(); it != points_.end(); ++it) {
             std::cout << "  " << it->first << ": [" << it->second.transpose() << "]\n";
         }
@@ -272,6 +342,12 @@ namespace ars {
     void MortonOrderedPoints<Dim, Height, Scalar>::setBounds(const Point& pmin, const Scalar& length) {
         pmin_ = pmin;
         length_ = length;
+    }
+    
+    template <unsigned int Dim, unsigned int Height, typename Scalar>
+    size_t
+    MortonOrderedPoints<Dim, Height, Scalar>::size() const {
+        return points_.size();
     }
 
     template <unsigned int Dim, unsigned int Height, typename Scalar>
