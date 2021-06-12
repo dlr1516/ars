@@ -1,23 +1,30 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/* 
- * File:   GaussianMixtureEstimator.cpp
- * Author: pmicelli
+/**
+ * ARS - Angular Radon Spectrum 
+ * Copyright (C) 2017 Dario Lodi Rizzini.
+ *           (C) 2021 Dario Lodi Rizzini, Ernesto Fontana.
+ *
+ * ARS is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  * 
- * Created on October 30, 2020, 8:33 AM
+ * ARS is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include <ars/GaussianMixtureEstimator.h>
 #include <vector>
 #include <deque>
+#include <signal.h>
 
 #include "ars/utils.h"
 
 namespace ars {
+
 
     //-----------------------------------------------------
     // GaussianMixtureEstimator
@@ -38,6 +45,49 @@ namespace ars {
             means[i] = gaussians_[i].mean;
             covariances[i] = gaussians_[i].covar;
             weights[i] = gaussians_[i].weight;
+        }
+    }
+
+    void GaussianMixtureEstimator::executeEM(const VectorVector2& samples, int stepNum) {
+        Eigen::MatrixXd c(samples.size(), gaussians_.size());
+        //Eigen::VectorXd sumC(gaussians_.size());
+        double sumC;
+
+        for (int step = 0; step < stepNum; ++step) {
+
+            // Expectation
+            for (int i = 0; i < samples.size(); ++i) {
+                sumC = 0.0;
+                for (int j = 0; j < gaussians_.size(); ++j) {
+                    c(i, j) = gaussians_[j].weight * gaussians_[j].eval(samples[i]);
+                    sumC += c(i, j);
+                }
+                for (int j = 0; j < gaussians_.size(); ++j) {
+                    c(i, j) = c(i, j) / sumC;
+                }
+            }
+
+            // Maximization
+            for (int j = 0; j < gaussians_.size(); ++j) {
+                gaussians_[j].mean = Vector2::Zero();
+                gaussians_[j].covar = Matrix2::Zero();
+                gaussians_[j].weight = 0.0;
+                sumC = 0.0;
+
+                // Computes the mean value
+                for (int i = 0; i < samples.size(); ++i) {
+                    gaussians_[j].mean += samples[i] * c(i, j);
+                    sumC += c(i, j);
+                }
+                gaussians_[j].mean = gaussians_[j].mean / sumC;
+                gaussians_[j].weight = sumC / samples.size();
+
+                // Computes the covariance
+                for (int i = 0; i < samples.size(); ++i) {
+                    gaussians_[j].covar += (samples[i] - gaussians_[j].mean) * (samples[i] - gaussians_[j].mean).transpose() * c(i, j);
+                }
+                gaussians_[j].covar = gaussians_[j].covar / sumC;
+            }
         }
     }
 
@@ -234,19 +284,178 @@ namespace ars {
     }
 
     //-----------------------------------------------------
+    // GaussianMixtureEstimatorMeanShift
+    //-----------------------------------------------------
+
+    GaussianMixtureEstimatorMeanShift::GaussianMixtureEstimatorMeanShift()
+    : kernelNum_(0), sigmaMin_(0.1), clusterDist_(4.0), meanShiftTol_(2.0) {
+    }
+
+    GaussianMixtureEstimatorMeanShift::~GaussianMixtureEstimatorMeanShift() {
+    }
+
+    void GaussianMixtureEstimatorMeanShift::compute(const VectorVector2& samples) {
+        VectorVector2 meansCurr = samples;
+        VectorVector2 meansNext(samples.size());
+        DisjointSet clusterLabels;
+        std::vector<double> clusterIntraDistanceMax;
+        std::vector<DisjointSet::id_type> clusterIds;
+        double intraDistMaxMax;
+        
+        ARS_ASSERT(meanShiftTol_ < clusterDist_);
+
+        intraDistMaxMax = std::numeric_limits<double>::max();
+        while (intraDistMaxMax < meanShiftTol_) {
+            updateMeans(meansCurr, meansNext, clusterLabels, clusterIntraDistanceMax);
+            
+            clusterLabels.parents(std::back_inserter(clusterIds));
+            ARS_PRINT("Clusters: ");
+            intraDistMaxMax = 0.0;
+            for (auto& cid : clusterIds) {
+                std::cout << "  cluster " << cid << ": max intra-distance " << clusterIntraDistanceMax[cid] << "\n";
+                if (clusterIntraDistanceMax[cid] > intraDistMaxMax) {
+                    intraDistMaxMax = clusterIntraDistanceMax[cid];
+                }
+            }
+            std::swap(meansCurr, meansNext);
+        }
+
+    }
+
+    void GaussianMixtureEstimatorMeanShift::updateMeans(const VectorVector2& meansCurr, VectorVector2& meansNext, DisjointSet& clusterLabels, std::vector<double>& clusterIntraDistMax) const {
+        int n = meansCurr.size();
+        std::vector<double> weights(n, 1.0); // evalKernel(0.0) = 1.0
+        double d, w;
+
+        clusterLabels.initSets(n);
+        clusterIntraDistMax.resize(n);
+        std::fill(std::begin(clusterIntraDistMax), std::end(clusterIntraDistMax), 0.0);
+
+        // Update rule of means:
+        //
+        //   meansNext[i] = (\sum_{j} meansCurr[j] * w(i,j)) / (\sum_{j} w(i,j))
+        //
+        // where w(i,j) = K(meansCurr[j] - meansCurr[i]) and w(i,j) = w(j,i). 
+        // To avoid to recompute the kernel of pairwise distance twice, 
+        // when it evaluates pair (i,j) both the i-th and the j-th terms are updated. 
+        //    weights[i] += w(i,j);
+        for (int i = 0; i < n; ++i) {
+            meansNext[i] = meansCurr[i];
+            for (int j = i + 1; j < n; ++j) {
+                d = (meansCurr[j] - meansCurr[i]).norm() / sigmaMin_;
+                w = exp(-d * d);
+                meansNext[i] += meansCurr[j] * w;
+                weights[i] += w;
+                meansNext[j] += meansCurr[i] * w;
+                weights[j] += w;
+
+                // UPDATE of clusters and intra-cluster max distance.
+                // a) Case items i and j belong to the same cluster. 
+                //    It updates the maximum intra-cluster distance.
+                // b) Case join clusters of items i and j if their distance is 
+                //    less than threshold. 
+                int clusterI = clusterLabels.find(i);
+                int clusterJ = clusterLabels.find(j);
+                if (clusterI == clusterJ) {
+                    if (d > clusterIntraDistMax[clusterI]) {
+                        clusterIntraDistMax[clusterI] = d;
+                    }
+                }
+                else if (d < clusterDist_) {
+                    double distMaxI = clusterIntraDistMax[clusterI];
+                    double distMaxJ = clusterIntraDistMax[clusterJ];
+                    int clusterJoined = clusterLabels.join(i, j);
+                    if (d > distMaxI && d > distMaxJ) {
+                        clusterIntraDistMax[clusterJoined] = d;
+                    }
+                    else if (distMaxI > distMaxJ) {
+                        clusterIntraDistMax[clusterJoined] = distMaxI;
+                    }
+                    else {
+                        clusterIntraDistMax[clusterJoined] = distMaxJ;
+                    }
+                }
+            }
+            meansNext[i] = meansNext[i] / weights[i];
+        }
+    }
+
+    //-----------------------------------------------------
     // GaussianMixtureEstimatorHierarchical
     //-----------------------------------------------------
 
-    GaussianMixtureEstimatorHierarchical::GaussianMixtureEstimatorHierarchical() {
-    }
-    
-    GaussianMixtureEstimatorHierarchical::~GaussianMixtureEstimatorHierarchical() {
-    }
-    
-    void GaussianMixtureEstimatorHierarchical::compute(const VectorVector2& samples) {
-    }
-    
+    //    GaussianMixtureEstimatorHierarchical::GaussianMixtureEstimatorHierarchical() : data_(), sigmaMin_(0.1) {
+    //    }
+    //
+    //    GaussianMixtureEstimatorHierarchical::~GaussianMixtureEstimatorHierarchical() {
+    //    }
+    //
+    //    void GaussianMixtureEstimatorHierarchical::compute(const VectorVector2& samples) {
+    //        ConstIterator octBeg, octEnd;
+    //
+    //        struct OctantIdx {
+    //            unsigned int level;
+    //            unsigned int octant;
+    //
+    //            OctantIdx(unsigned int l, unsigned int o) : level(l), octant(o) {
+    //            }
+    //        };
+    //        std::deque<OctantIdx> queue;
+    //        Vector2 mean;
+    //        Matrix2 covar;
+    //
+    //        // Creates a quad-tree (aka 2 dimension octree)
+    //        data_.insert(samples, true);
+    //
+    //        // Visits the branches of quadtree to reduce 
+    //        queue.push_back(OctantIdx(0, 0));
+    //        while (!queue.empty()) {
+    //            auto curr = queue.back();
+    //            queue.pop_back();
+    //
+    //            data_.getOctantPoints(curr.level, curr.octant, octBeg, octEnd);
+    //            estimateGaussianFromPoints(octBeg, octEnd, mean, covar);
+    //        }
+    //    }
+    //
+    //    void GaussianMixtureEstimatorHierarchical::estimateGaussianFromPoints(const ConstIterator& beg, const ConstIterator& end, Vector2& mean, Matrix2& covar) const {
+    //        Matrix2 l, v;
+    //        Vector2 tmp;
+    //        double sigmaMinSquare = sigmaMin_ * sigmaMin_;
+    //        int num;
+    //
+    //        // Computes the mean value vector
+    //        mean = Vector2::Zero();
+    //        num = 0;
+    //        for (auto it = beg; it != end; ++it) {
+    //            mean += it->second;
+    //            num++;
+    //        }
+    //        mean = mean / num;
+    //
+    //        // Computes the covariance
+    //        covar = Matrix2::Zero();
+    //        for (auto it = beg; it != end; ++it) {
+    //            tmp = (it->second - mean);
+    //            covar = tmp * tmp.transpose();
+    //        }
+    //
+    //        if (num < 1) {
+    //            // Only one point: use the point uncertainty
+    //            covar << sigmaMinSquare, 0.0,
+    //                    0.0, sigmaMinSquare;
+    //        } else {
+    //            covar = covar / num;
+    //            diagonalize(covar, l, v);
+    //            if (l(0, 0) < sigmaMinSquare)
+    //                l(0, 0) = sigmaMinSquare;
+    //            if (l(1, 1) < sigmaMinSquare)
+    //                l(1, 1) = sigmaMinSquare;
+    //            covar = v * l * v.transpose();
+    //        }
+    //
+    //
+    //    }
 
-
-}
+} // end of namespace
 

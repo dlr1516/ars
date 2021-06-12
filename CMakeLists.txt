@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(ars)
 add_definitions(-std=c++0x)
 
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 
 # Set the output directory for the build executables and libraries
 SET(ars_RUNTIME_OUTPUT_DIRECTORY ${ars_SOURCE_DIR}/bin CACHE PATH "Target for the binaries")
@@ -31,6 +31,7 @@ add_library(ars
   src/ArsKernelAnisotropic2d.cpp
   src/ArsKernelIsotropic2d.cpp
   src/BBOptimizer1d.cpp
+  src/DisjointSet.cpp
   src/GaussianMixtureEstimator.cpp
   src/HistogramCircularCorrelation.cpp
   src/HoughSpectrum.cpp

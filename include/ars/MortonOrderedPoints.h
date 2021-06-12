@@ -100,16 +100,17 @@ namespace ars {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        
-        static const unsigned int SIMPLE_INDEX_BITNUM = Height;           // number of bits to represent one coordinate
-        static const unsigned int MULTI_INDEX_BITNUM = Dim * Height;      // number of bits to represent Morton code
 
-        using SimpleIndex = std::bitset<SIMPLE_INDEX_BITNUM>;             // bitset for a single coordinate
-        using MultiIndex = std::bitset<MULTI_INDEX_BITNUM>;               // bitset for Morton code
-        using ArraySimpleIndex = std::array<SimpleIndex, Dim>;            // Dim-array of SimpleIndex
-        using ArrayMultiIndex = std::array<MultiIndex, Dim>;              // Dim-array of MultiIndex
+                static const unsigned int SIMPLE_INDEX_BITNUM = Height; // number of bits to represent one coordinate
+        static const unsigned int MULTI_INDEX_BITNUM = Dim * Height; // number of bits to represent Morton code
+        static const unsigned int BRANCH_NUM = (1 << Dim); // number of children/branches of each node/octant
 
-        using Point = Eigen::Matrix<Scalar, Dim, 1>;                      // vector type to represent a point
+        using SimpleIndex = std::bitset<SIMPLE_INDEX_BITNUM>; // bitset for a single coordinate
+        using MultiIndex = std::bitset<MULTI_INDEX_BITNUM>; // bitset for Morton code
+        using ArraySimpleIndex = std::array<SimpleIndex, Dim>; // Dim-array of SimpleIndex
+        using ArrayMultiIndex = std::array<MultiIndex, Dim>; // Dim-array of MultiIndex
+
+        using Point = Eigen::Matrix<Scalar, Dim, 1>; // vector type to represent a point
         using VectorPoint = std::vector<Point, Eigen::aligned_allocator<Point> >;
         using MapPoint = std::multimap<
                 MultiIndex,
@@ -139,17 +140,29 @@ namespace ars {
         void insert(const VectorPoint& points, bool initBounds = true);
 
         /**
+         * Returns the number of points in the data structure.
+         * @return 
+         */
+        size_t size() const;
+        
+        /**
+         * Returns the iterator to the first point according to Morton order.
+         * @return 
+         */
+        ConstIterator begin() const;
+        
+        /**
+         * Returns the iterator to the end of point set according to Morton order.
+         * @return 
+         */
+        ConstIterator end() const;
+
+        /**
          * Sets the bounds of the hypercube region of the point set
          * @param pmin vector of minimum coordinates
          * @param length size of the hypercube size
          */
         void setBounds(const Point& pmin, const Scalar& length);
-        
-        /**
-         * Returns the number of points in the data structure.
-         * @return 
-         */
-        size_t size() const;
 
         /**
          * Returns the maximum number of levels of the octree implicitly associated to 
@@ -167,6 +180,13 @@ namespace ars {
          * @return 
          */
         unsigned int getOctantNum(unsigned int level) const;
+
+        /**
+         * Returns the indices of the children nodes/octants of a given node/octant. 
+         * @param octantParent
+         * @param octantChildren
+         */
+        void getOctantChildren(unsigned int octantParent, std::array<unsigned int, BRANCH_NUM>& octantChildren) const;
 
         /**
          * Returns the minimum and maximum coordinates of the hyper-cube region 
@@ -343,11 +363,23 @@ namespace ars {
         pmin_ = pmin;
         length_ = length;
     }
-    
+
     template <unsigned int Dim, unsigned int Height, typename Scalar>
     size_t
     MortonOrderedPoints<Dim, Height, Scalar>::size() const {
         return points_.size();
+    }
+    
+    template <unsigned int Dim, unsigned int Height, typename Scalar>
+    typename MortonOrderedPoints<Dim, Height, Scalar>::ConstIterator
+    MortonOrderedPoints<Dim, Height, Scalar>::begin() const {
+        return points_.begin();
+    }
+    
+    template <unsigned int Dim, unsigned int Height, typename Scalar>
+    typename MortonOrderedPoints<Dim, Height, Scalar>::ConstIterator
+    MortonOrderedPoints<Dim, Height, Scalar>::end() const {
+        return points_.end();
     }
 
     template <unsigned int Dim, unsigned int Height, typename Scalar>
@@ -368,6 +400,14 @@ namespace ars {
         //        //ARS_VARIABLE3(childrenNum, octantNum, level);
         //        return octantNum;
         return (1 << (Dim * level));
+    }
+
+    template <unsigned int Dim, unsigned int Height, typename Scalar>
+    void MortonOrderedPoints<Dim, Height, Scalar>::getOctantChildren(unsigned int octantParent, std::array<unsigned int, BRANCH_NUM>& octantChildren) const {
+        octantChildren[0] = octantParent << Dim;
+        for (unsigned int c = 1; c < BRANCH_NUM; ++c) {
+            octantChildren[c] = octantChildren[0] + c;
+        }
     }
 
     template <unsigned int Dim, unsigned int Height, typename Scalar>

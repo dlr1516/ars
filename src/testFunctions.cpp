@@ -87,9 +87,9 @@ int main(int argc, char** argv) {
     PlotItem plitem;
     int pnebiOrder = std::min(5, pnebiLUT.getOrderMax());
     for (int k = 0; k < pnebiOrder; ++k) {
-        plitem.title = "pnebi_" + std::to_string(k) + "_pol";
+        plitem.title = "pnebi_" + std::to_string(k) + " pol";
         plotPnebiPol.push_back(plitem);
-        plitem.title = "pnebi_" + std::to_string(k) + "_lut";
+        plitem.title = "pnebi_" + std::to_string(k) + " lut";
         plotPnebiLUT.push_back(plitem);
     }
 

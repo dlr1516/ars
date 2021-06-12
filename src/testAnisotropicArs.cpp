@@ -97,18 +97,18 @@ int main(int argc, char** argv) {
     std::cout << "***\nweight sum: " << weightSum << std::endl;
 
     Gnuplot gp("gnuplot -persist");
-    //    gp << "set term wxt 0 title \"GMM\"\n";
-    //    gp << "set xrange [0.0:8.0]\n";
-    //    gp << "set yrange [-8.0:8.0]\n";
-    //    gp << "set size ratio -1\n";
-    //    for (int i = 0; i < gme.size(); ++i) {
-    //        plotEllipse(gp, i + 1, gme.mean(i), gme.covariance(i));
-    //    }
-    //    gp << "plot '-' title \"scan\" w p pt 7 ps 0.5\n";
-    //    for (auto& p : acesPoints) {
-    //        gp << p.x() << " " << p.y() << "\n";
-    //    }
-    //    gp << "e\n";
+//    gp << "set term wxt 0 title \"GMM\"\n";
+//    gp << "set xrange [0.0:8.0]\n";
+//    gp << "set yrange [-8.0:8.0]\n";
+//    gp << "set size ratio -1\n";
+//    for (int i = 0; i < gme.size(); ++i) {
+//        plotEllipse(gp, i + 1, gme.mean(i), gme.covariance(i));
+//    }
+//    gp << "plot '-' title \"scan\" w p pt 7 ps 0.5\n";
+//    for (auto& p : acesPoints) {
+//        gp << p.x() << " " << p.y() << "\n";
+//    }
+//    gp << "e\n";
 
     // Computes ARS
     gme.exportGaussians(means, covars, weights);
