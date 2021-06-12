@@ -308,6 +308,14 @@ namespace ars {
         void setMeanShiftTol(double mst) {
             meanShiftTol_ = mst;
         }
+        
+        /**
+         * Sets the maximum number of iterations of mean-shift clustering algorithm. 
+         * @param inmax
+         */
+        void setIterationNumMax(int inmax) {
+            iterationNumMax_ = inmax;
+        }
 
         /**
          * Computes the Gaussian parameters from the given samples.
@@ -321,6 +329,7 @@ namespace ars {
         double sigmaMin_;
         double clusterDist_;
         double meanShiftTol_;
+        int iterationNumMax_;
 
         void updateMeans(const VectorVector2& meansCurr, VectorVector2& meansNext, DisjointSet& clusterLabels, std::vector<double>& clusterIntraDistMax) const;
     };

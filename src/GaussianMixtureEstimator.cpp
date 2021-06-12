@@ -288,7 +288,7 @@ namespace ars {
     //-----------------------------------------------------
 
     GaussianMixtureEstimatorMeanShift::GaussianMixtureEstimatorMeanShift()
-    : kernelNum_(0), sigmaMin_(0.1), clusterDist_(4.0), meanShiftTol_(2.0) {
+    : kernelNum_(0), sigmaMin_(0.1), clusterDist_(4.0), meanShiftTol_(2.0), iterationNumMax_(30) {
     }
 
     GaussianMixtureEstimatorMeanShift::~GaussianMixtureEstimatorMeanShift() {
@@ -301,24 +301,31 @@ namespace ars {
         std::vector<double> clusterIntraDistanceMax;
         std::vector<DisjointSet::id_type> clusterIds;
         double intraDistMaxMax;
+        int iterNum;
         
         ARS_ASSERT(meanShiftTol_ < clusterDist_);
 
         intraDistMaxMax = std::numeric_limits<double>::max();
-        while (intraDistMaxMax < meanShiftTol_) {
+        iterNum = 0;
+        ARS_VARIABLE4(intraDistMaxMax, meanShiftTol_, iterNum, iterationNumMax_);
+        while (intraDistMaxMax > meanShiftTol_ && iterNum < iterationNumMax_) {
             updateMeans(meansCurr, meansNext, clusterLabels, clusterIntraDistanceMax);
             
+            clusterIds.clear();
             clusterLabels.parents(std::back_inserter(clusterIds));
-            ARS_PRINT("Clusters: ");
+            ARS_PRINT("Iteration " << iterNum << ": " << clusterIds.size() << " clusters: ");
             intraDistMaxMax = 0.0;
             for (auto& cid : clusterIds) {
-                std::cout << "  cluster " << cid << ": max intra-distance " << clusterIntraDistanceMax[cid] << "\n";
+                std::cout << "  cluster " << cid << " samples " << clusterLabels.size(cid) << ": "
+                        << "max intra-distance " << clusterIntraDistanceMax[cid] << "\n";
                 if (clusterIntraDistanceMax[cid] > intraDistMaxMax) {
                     intraDistMaxMax = clusterIntraDistanceMax[cid];
                 }
             }
             std::swap(meansCurr, meansNext);
+            iterNum++;
         }
+        ARS_PRINT("Found " << clusterLabels.setNum() << " clusters");
 
     }
 

@@ -56,6 +56,9 @@ target_link_libraries(testCorrelationArs ${ars_LINK_LIBS} ars)
 add_executable(testAnisotropicKernel src/testAnisotropicKernel.cpp)
 target_link_libraries(testAnisotropicKernel ${ars_LINK_LIBS} ars)
 
+add_executable(testGaussianMixtureEstimator src/testGaussianMixtureEstimator.cpp)
+target_link_libraries(testGaussianMixtureEstimator ${ars_LINK_LIBS} ars)
+
 add_executable(testMortonOrderedPoints src/testMortonOrderedPoints.cpp)
 target_link_libraries(testMortonOrderedPoints ${ars_LINK_LIBS} ars)
 
