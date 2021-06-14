@@ -15,24 +15,27 @@ void plotEllipses(std::ostream& out, const ars::VectorVector2& means, const ars:
 int main(int argc, char** argv) {
     ars::VectorVector2 acesPoints, means;
     ars::VectorMatrix2 covars, covarsUniform;
-    ars::GaussianMixtureEstimatorScan gmeScan;
-    ars::GaussianMixtureEstimatorMeanShift gmeMean;
-    double sigmaMin, clusterDist, meanShiftTol, distanceGap, distanceSplit;
+    ars::GaussianMixtureEstimator* gme = nullptr;
+    ars::GaussianMixtureEstimatorScan* gmeScan = nullptr;
+    ars::GaussianMixtureEstimatorMeanShift* gmeMean = nullptr;
+    double sigmaMin, clusterDist, meanShiftTol, distanceGap, distanceSplit, weightSum, lmin, lmax, theta;
+    ;
     int iterationNumMax;
     ars::ParamMap params;
-    std::string filenameCfg;
+    std::string filenameCfg, clusterAlg;
 
     // Reads params from command line
     params.read(argc, argv);
     params.getParam("cfg", filenameCfg, std::string(""));
     params.read(filenameCfg);
     params.read(argc, argv);
-    params.getParam<double>("sigmaMin", sigmaMin, double(0.05));
+    params.getParam<double>("sigmaMin", sigmaMin, double(0.025));
     params.getParam<double>("clusterDist", clusterDist, double(4.0));
     params.getParam<double>("meanShiftTol", meanShiftTol, double(2.0));
     params.getParam<int>("iterationNumMax", iterationNumMax, int(30));
     params.getParam<double>("distanceGap", distanceGap, double(0.6));
     params.getParam<double>("distanceSplit", distanceSplit, double(0.2));
+    params.getParam<std::string>("clusterAlg", clusterAlg, std::string("scan"));
 
     std::cout << "\nParams:" << std::endl;
     params.write(std::cout);
@@ -42,45 +45,43 @@ int main(int argc, char** argv) {
     acesPoints.push_back(ars::Vector2::Zero());
     std::cout << "Number of input points: " << acesPoints.size() << std::endl;
 
-    std::cout << "\n---\nTesting GaussianMixtureEstimatorMeanShift:" << std::endl;
-    gmeScan.setSigmaMin(sigmaMin);
-    gmeScan.setDistanceGap(distanceGap);
-    gmeScan.setDistanceSplit(distanceSplit);
-    gmeScan.compute(acesPoints);
-    std::cout << "Found " << gmeScan.size() << " clusters" << std::endl;
-
-    std::cout << "\n---\nTesting GaussianMixtureEstimatorMeanShift:" << std::endl;
-    gmeMean.setSigmaMin(sigmaMin);
-    gmeMean.setClusterDistance(clusterDist);
-    gmeMean.setMeanShiftTol(meanShiftTol);
-    gmeMean.setIterationNumMax(iterationNumMax);
-    gmeMean.compute(acesPoints);
-
-    {
-        double weightSum, lmin, lmax, theta;
-        
-        weightSum = 0.0;
-        std::cout << "\nFound GMM with " << gmeMean.size() << " kernels:\n";
-
-        for (int i = 0; i < gmeMean.size(); ++i) {
-            ars::diagonalize(gmeMean.covariance(i), lmin, lmax, theta);
-            std::cout << "---\n " << i << ": weight " << gmeMean.weight(i) << ", "
-                    << "mean [" << gmeMean.mean(i).transpose() << "], covar\n"
-                    << gmeMean.covariance(i) << "\n"
-                    << "  (lmin " << lmin << ", lmax " << lmax << ", theta[deg] " << (180.0 / M_PI * theta) << ")\n";
-            weightSum += gmeMean.weight(i);
-        }
-        std::cout << "***\nweight sum: " << weightSum << std::endl;
+    if (clusterAlg == "scan") {
+        std::cout << "\n---\nTesting GaussianMixtureEstimatorMeanShift:" << std::endl;
+        gmeScan = new ars::GaussianMixtureEstimatorScan;
+        gmeScan->setDistanceGap(distanceGap);
+        gmeScan->setDistanceSplit(distanceSplit);
+        gmeScan->setSigmaMin(sigmaMin);
+        gme = gmeScan;
+    } else {
+        std::cout << "\n---\nTesting GaussianMixtureEstimatorMeanShift:" << std::endl;
+        gmeMean = new ars::GaussianMixtureEstimatorMeanShift;
+        gmeMean->setSigmaMin(sigmaMin);
+        gme = gmeMean;
     }
+    gme->compute(acesPoints);
+    std::cout << "Found " << gme->size() << " clusters" << std::endl;
 
-    
+
+
+    weightSum = 0.0;
+    std::cout << "\nFound GMM with " << gme->size() << " kernels:\n";
+    for (int i = 0; i < gme->size(); ++i) {
+        ars::diagonalize(gme->covariance(i), lmin, lmax, theta);
+        std::cout << "---\n " << i << ": weight " << gme->weight(i) << ", "
+                << "mean [" << gme->mean(i).transpose() << "], covar\n"
+                << gme->covariance(i) << "\n"
+                << "  (lmin " << lmin << ", lmax " << lmax << ", theta[deg] " << (180.0 / M_PI * theta) << ")\n";
+        weightSum += gme->weight(i);
+    }
+    std::cout << "***\nweight sum: " << weightSum << std::endl;
+
     Gnuplot gp("gnuplot -persist");
     gp << "set term wxt 0 title \"GMM\"\n";
     gp << "set xrange [0.0:8.0]\n";
     gp << "set yrange [-8.0:8.0]\n";
     gp << "set size ratio -1\n";
-    for (int i = 0; i < gmeMean.size(); ++i) {
-        plotEllipse(gp, i + 1, gmeMean.mean(i), gmeMean.covariance(i));
+    for (int i = 0; i < gme->size(); ++i) {
+        plotEllipse(gp, i + 1, gme->mean(i), gme->covariance(i));
     }
     gp << "plot '-' title \"scan\" w p pt 7 ps 0.5\n";
     for (auto& p : acesPoints) {
@@ -113,7 +114,6 @@ void plotEllipse(std::ostream& out, int idx, const ars::Vector2& mean, const ars
             << " size " << sqrt(5.991 * lmax) << ", " << sqrt(5.991 * lmin) << " angle " << (180.0 / M_PI * angle)
             << " front fs empty bo 3\n";
 }
-
 
 void plotEllipses(std::ostream& out, const ars::VectorVector2& means, const ars::VectorMatrix2& covars) {
     for (int i = 0; i < means.size() && i < covars.size(); ++i) {
