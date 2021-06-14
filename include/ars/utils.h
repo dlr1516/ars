@@ -46,6 +46,13 @@ namespace ars {
      */
     void diagonalize(const Matrix2& m, Matrix2& l, Matrix2& v);
     
+    /**
+     * Saturates the eigenvalues of the input covariance matrix. 
+     * @param covar
+     * @param sigmaMinSquare
+     */
+    void saturateEigenvalues(Matrix2& covar, double sigmaMinSquare);
+    
 } // end of namespace
 
 #endif /* UTILS_H */

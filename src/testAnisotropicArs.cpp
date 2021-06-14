@@ -43,11 +43,14 @@ int main(int argc, char** argv) {
     ars::VectorMatrix2 covars, covarsUniform;
     ars::Matrix2 covarUniform;
     std::vector<double> weights, weightsUniform;
-    ars::GaussianMixtureEstimatorScan gme;
-    double distanceGap, distanceSplit, sigmaMin, weightSum, lmin, lmax, theta, th;
+    //ars::GaussianMixtureEstimatorScan gme;
+    ars::GaussianMixtureEstimator* gme = nullptr;
+    ars::GaussianMixtureEstimatorScan* gmeScan = nullptr;
+    ars::GaussianMixtureEstimatorMeanShift* gmeMean = nullptr;
+    double distanceGap, distanceSplit, clusterDist, meanShiftTol, sigmaMin, weightSum, lmin, lmax, theta, th;
     int arsOrder, arsStep;
     ars::ParamMap params;
-    std::string filenameCfg;
+    std::string filenameCfg, clusterAlg;
 
     // Reads params from command line
     params.read(argc, argv);
@@ -57,8 +60,11 @@ int main(int argc, char** argv) {
     params.getParam<double>("distanceGap", distanceGap, double(0.6));
     params.getParam<double>("distanceSplit", distanceSplit, double(0.2));
     params.getParam<double>("sigmaMin", sigmaMin, double(0.05));
+    params.getParam<double>("clusterDist", clusterDist, double(4.0));
+    params.getParam<double>("meanShiftTol", meanShiftTol, double(2.0));
     params.getParam<int>("arsOrder", arsOrder, int(20));
     params.getParam<int>("arsStep", arsStep, int(720));
+    params.getParam<std::string>("clusterAlg", clusterAlg, std::string("scan"));
 
     std::cout << "\nParams:" << std::endl;
     params.write(std::cout);
@@ -78,54 +84,68 @@ int main(int argc, char** argv) {
     //    std::cout << "mean1: " << mean1.transpose() << "\ncovar1\n" << covar1 << std::endl;
     //    std::cout << "mean2: " << mean2.transpose() << "\ncovar2\n" << covar2 << std::endl;
 
-    gme.setDistanceGap(distanceGap);
-    gme.setDistanceSplit(distanceSplit);
-    gme.setSigmaMin(sigmaMin);
-    gme.compute(acesPoints);
-    std::cout << "\nFound GMM with " << gme.size() << " kernels:\n";
+    if (clusterAlg == "scan") {
+        gmeScan = new ars::GaussianMixtureEstimatorScan;
+        gmeScan->setDistanceGap(distanceGap);
+        gmeScan->setDistanceSplit(distanceSplit);
+        gmeScan->setSigmaMin(sigmaMin);
+        gme = gmeScan;
+    } else {
+        gmeMean = new ars::GaussianMixtureEstimatorMeanShift;
+        gmeMean->setSigmaMin(sigmaMin);
+        gme = gmeMean;
+    }
+
+    //    gme.setDistanceGap(distanceGap);
+    //    gme.setDistanceSplit(distanceSplit);
+    //    gme.setSigmaMin(sigmaMin);
+    gme->compute(acesPoints);
+    std::cout << "\nFound GMM with " << gme->size() << " kernels:\n";
     weightSum = 0.0;
-    for (int i = 0; i < gme.size(); ++i) {
-        ars::diagonalize(gme.covariance(i), lmin, lmax, theta);
-        std::cout << "---\n " << i << ": weight " << gme.weight(i) << ", "
-                << "mean [" << gme.mean(i).transpose() << "], covar\n"
-                << gme.covariance(i) << "\n"
-                << "  (lmin " << lmin << ", lmax " << lmax << ", theta[deg] " << (180.0 / M_PI * theta) << ")\n"
-                << "  interval: [" << gme.interval(i).first << ", " << gme.interval(i).last << "] "
-                << "num " << gme.interval(i).num << std::endl;
-        weightSum += gme.weight(i);
+    for (int i = 0; i < gme->size(); ++i) {
+        ars::diagonalize(gme->covariance(i), lmin, lmax, theta);
+        std::cout << "---\n " << i << ": weight " << gme->weight(i) << ", "
+                << "mean [" << gme->mean(i).transpose() << "], covar\n"
+                << gme->covariance(i) << "\n"
+                << "  (lmin " << lmin << ", lmax " << lmax << ", theta[deg] " << (180.0 / M_PI * theta) << ")\n";
+        if (clusterAlg == "scan") {
+            std::cout << "  interval: [" << gmeScan->interval(i).first << ", " << gmeScan->interval(i).last << "] "
+                    << "num " << gmeScan->interval(i).num << std::endl;
+        }
+        weightSum += gme->weight(i);
     }
     std::cout << "***\nweight sum: " << weightSum << std::endl;
 
     Gnuplot gp("gnuplot -persist");
-//    gp << "set term wxt 0 title \"GMM\"\n";
-//    gp << "set xrange [0.0:8.0]\n";
-//    gp << "set yrange [-8.0:8.0]\n";
-//    gp << "set size ratio -1\n";
-//    for (int i = 0; i < gme.size(); ++i) {
-//        plotEllipse(gp, i + 1, gme.mean(i), gme.covariance(i));
-//    }
-//    gp << "plot '-' title \"scan\" w p pt 7 ps 0.5\n";
-//    for (auto& p : acesPoints) {
-//        gp << p.x() << " " << p.y() << "\n";
-//    }
-//    gp << "e\n";
+    //    gp << "set term wxt 0 title \"GMM\"\n";
+    //    gp << "set xrange [0.0:8.0]\n";
+    //    gp << "set yrange [-8.0:8.0]\n";
+    //    gp << "set size ratio -1\n";
+    //    for (int i = 0; i < gme.size(); ++i) {
+    //        plotEllipse(gp, i + 1, gme.mean(i), gme.covariance(i));
+    //    }
+    //    gp << "plot '-' title \"scan\" w p pt 7 ps 0.5\n";
+    //    for (auto& p : acesPoints) {
+    //        gp << p.x() << " " << p.y() << "\n";
+    //    }
+    //    gp << "e\n";
 
     // Computes ARS
-    gme.exportGaussians(means, covars, weights);
+    gme->exportGaussians(means, covars, weights);
 
-    
+
     covarsUniform.resize(acesPoints.size());
-    weightsUniform.resize(acesPoints.size()); 
+    weightsUniform.resize(acesPoints.size());
     covarUniform << sigmaMin * sigmaMin, 0.0,
             0.0, sigmaMin * sigmaMin;
     std::fill(covarsUniform.begin(), covarsUniform.end(), covarUniform);
     double w = 1.0 / acesPoints.size();
     std::fill(weightsUniform.begin(), weightsUniform.end(), w);
-//    for (int i = 0; i < acesPoints.size(); ++i) {
-//        std::cout << "  weightsUniform[" << i << "] " << weightsUniform[i] << ", covarsuniform[" << i << "]\n"
-//                << covarsUniform[i] << "\n";
-//        //covarsUniform.pop_back(covarUniform);
-//    }
+    //    for (int i = 0; i < acesPoints.size(); ++i) {
+    //        std::cout << "  weightsUniform[" << i << "] " << weightsUniform[i] << ", covarsuniform[" << i << "]\n"
+    //                << covarsUniform[i] << "\n";
+    //        //covarsUniform.pop_back(covarUniform);
+    //    }
 
 
     ars1.setARSFOrder(arsOrder);
@@ -159,6 +179,8 @@ int main(int argc, char** argv) {
     }
     gp << "e\n";
 
+    
+    delete gme;
     return 0;
 }
 

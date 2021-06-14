@@ -19,10 +19,10 @@
 #include <ars/definitions.h>
 
 namespace ars {
-    
+
     void diagonalize(const Matrix2& m, double& lmin, double& lmax, double& theta) {
         double a, b, c, s;
-        
+
         // Diagonalizes sigma12
         a = 0.5 * (m(1, 1) - m(0, 0));
         b = 0.5 * (m(0, 1) + m(1, 0));
@@ -42,14 +42,31 @@ namespace ars {
             //ARS_PRINT("after swap: lmin " << lmin << " < lmax " << lmax << ", theta + PI/2: " << theta);
         }
     }
-    
+
     void diagonalize(const Matrix2& m, Matrix2& l, Matrix2& v) {
         double lmin, lmax, theta;
-        
+
         diagonalize(m, lmin, lmax, theta);
         l = Matrix2::Zero();
         l.diagonal() << lmax, lmin;
         v = Eigen::Rotation2Dd(theta);
+    }
+
+    void saturateEigenvalues(Matrix2& covar, double sigmaMinSquare) {
+        Matrix2 v;
+        double lmin, lmax, theta;
+
+        diagonalize(covar, lmin, lmax, theta);
+        if (lmin < sigmaMinSquare) {
+            lmin = sigmaMinSquare;
+        }
+        if (lmax < sigmaMinSquare) {
+            lmax = sigmaMinSquare;
+        }
+        covar << lmax, 0.0,
+                0.0, lmin;
+        v = Eigen::Rotation2Dd(theta);
+        covar = v * covar * v.transpose();
     }
 
 } // end of namespace

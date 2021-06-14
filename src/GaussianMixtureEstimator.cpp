@@ -21,7 +21,7 @@
 #include <deque>
 #include <signal.h>
 
-#include "ars/utils.h"
+#include <ars/utils.h>
 
 namespace ars {
 
@@ -300,24 +300,28 @@ namespace ars {
         DisjointSet clusterLabels;
         std::vector<double> clusterIntraDistanceMax;
         std::vector<DisjointSet::id_type> clusterIds;
-        double intraDistMaxMax;
+        Gaussian gaussianKernel;
+        double intraDistMaxMax, sigmaMinSquare;
         int iterNum;
-        
+
+        sigmaMinSquare = sigmaMin_ * sigmaMin_;
+
         ARS_ASSERT(meanShiftTol_ < clusterDist_);
 
         intraDistMaxMax = std::numeric_limits<double>::max();
         iterNum = 0;
         ARS_VARIABLE4(intraDistMaxMax, meanShiftTol_, iterNum, iterationNumMax_);
+
         while (intraDistMaxMax > meanShiftTol_ && iterNum < iterationNumMax_) {
             updateMeans(meansCurr, meansNext, clusterLabels, clusterIntraDistanceMax);
-            
+
             clusterIds.clear();
             clusterLabels.parents(std::back_inserter(clusterIds));
             ARS_PRINT("Iteration " << iterNum << ": " << clusterIds.size() << " clusters: ");
             intraDistMaxMax = 0.0;
             for (auto& cid : clusterIds) {
-                std::cout << "  cluster " << cid << " samples " << clusterLabels.size(cid) << ": "
-                        << "max intra-distance " << clusterIntraDistanceMax[cid] << "\n";
+                //                std::cout << "  cluster " << cid << " samples " << clusterLabels.size(cid) << ": "
+                //                        << "max intra-distance " << clusterIntraDistanceMax[cid] << "\n";
                 if (clusterIntraDistanceMax[cid] > intraDistMaxMax) {
                     intraDistMaxMax = clusterIntraDistanceMax[cid];
                 }
@@ -327,6 +331,38 @@ namespace ars {
         }
         ARS_PRINT("Found " << clusterLabels.setNum() << " clusters");
 
+        // Computes the parameters of the Gaussian kernels associated to each cluster. 
+        // To find the index of the Gaussian, unfortunately there is a complex index mapping.
+        //    samples[i] -> clusterId = clusterLabels.find(i) -> position of clusterId in clusterIds[]
+        gaussians_.resize(clusterIds.size());
+        for (auto& g : gaussians_) {
+            g.mean = Vector2::Zero();
+            g.covar = Matrix2::Zero();
+            g.weight = 0.0;
+        }
+        for (int i = 0; i < samples.size(); ++i) {
+            int sampleId = clusterLabels.find(i);
+            auto it = std::lower_bound(std::begin(clusterIds), std::end(clusterIds), sampleId);
+            size_t gaussianIndex = std::distance(std::begin(clusterIds), it);
+            if (it != std::end(clusterIds) && 0 <= gaussianIndex && gaussianIndex < gaussians_.size()) {
+                gaussians_[gaussianIndex].mean += samples[i];
+                gaussians_[gaussianIndex].covar += samples[i] * samples[i].transpose();
+                gaussians_[gaussianIndex].weight += 1.0;
+            }
+        }
+        for (auto& g : gaussians_) {
+            if (g.weight > 1.0) {
+                g.mean = g.mean / g.weight;
+                g.covar = (g.covar - g.weight * g.mean * g.mean.transpose()) / (g.weight - 1.0);
+                g.weight = g.weight / samples.size();
+                saturateEigenvalues(g.covar, sigmaMinSquare);
+            } else {
+                g.mean = g.mean / g.weight;
+                g.covar << sigmaMinSquare, 0.0,
+                        0.0, sigmaMinSquare;
+                g.weight = g.weight / samples.size();
+            }
+        }
     }
 
     void GaussianMixtureEstimatorMeanShift::updateMeans(const VectorVector2& meansCurr, VectorVector2& meansNext, DisjointSet& clusterLabels, std::vector<double>& clusterIntraDistMax) const {
@@ -349,7 +385,7 @@ namespace ars {
         for (int i = 0; i < n; ++i) {
             meansNext[i] = meansCurr[i];
             for (int j = i + 1; j < n; ++j) {
-                d = (meansCurr[j] - meansCurr[i]).norm() / sigmaMin_;
+                d = (meansCurr[j] - meansCurr[i]).norm() / (2.0 * sigmaMin_);
                 w = exp(-d * d);
                 meansNext[i] += meansCurr[j] * w;
                 weights[i] += w;
@@ -367,18 +403,15 @@ namespace ars {
                     if (d > clusterIntraDistMax[clusterI]) {
                         clusterIntraDistMax[clusterI] = d;
                     }
-                }
-                else if (d < clusterDist_) {
+                } else if (d < clusterDist_) {
                     double distMaxI = clusterIntraDistMax[clusterI];
                     double distMaxJ = clusterIntraDistMax[clusterJ];
                     int clusterJoined = clusterLabels.join(i, j);
                     if (d > distMaxI && d > distMaxJ) {
                         clusterIntraDistMax[clusterJoined] = d;
-                    }
-                    else if (distMaxI > distMaxJ) {
+                    } else if (distMaxI > distMaxJ) {
                         clusterIntraDistMax[clusterJoined] = distMaxI;
-                    }
-                    else {
+                    } else {
                         clusterIntraDistMax[clusterJoined] = distMaxJ;
                     }
                 }
