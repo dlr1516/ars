@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
     std::cout << "***\nweight sum: " << weightSum << std::endl;
 
     Gnuplot gp("gnuplot -persist");
-    gp << "set term wxt 0 title \"GMM\"\n";
+    gp << "set term wxt 0 title \"GMM " << clusterAlg << "\"\n";
     gp << "set xrange [0.0:8.0]\n";
     gp << "set yrange [-8.0:8.0]\n";
     gp << "set size ratio -1\n";

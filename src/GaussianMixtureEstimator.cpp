@@ -363,6 +363,8 @@ namespace ars {
                 g.weight = g.weight / samples.size();
             }
         }
+        
+        //executeEM(samples, iterationNumMax_);
     }
 
     void GaussianMixtureEstimatorMeanShift::updateMeans(const VectorVector2& meansCurr, VectorVector2& meansNext, DisjointSet& clusterLabels, std::vector<double>& clusterIntraDistMax) const {

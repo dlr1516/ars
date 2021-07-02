@@ -25,6 +25,8 @@
 #include <ars/ParamMap.h>
 #include <ars/thirdparty/gnuplot-iostream.h>
 
+#include "ars/Profiler.h"
+
 
 
 
@@ -99,7 +101,10 @@ int main(int argc, char** argv) {
     //    gme.setDistanceGap(distanceGap);
     //    gme.setDistanceSplit(distanceSplit);
     //    gme.setSigmaMin(sigmaMin);
-    gme->compute(acesPoints);
+    {
+        ars::ScopedTimer timer("GaussianMixtureEstimator::compute()");
+        gme->compute(acesPoints);
+    }
     std::cout << "\nFound GMM with " << gme->size() << " kernels:\n";
     weightSum = 0.0;
     for (int i = 0; i < gme->size(); ++i) {
@@ -151,12 +156,18 @@ int main(int argc, char** argv) {
     ars1.setARSFOrder(arsOrder);
     ars1.setAnisotropicStep(arsStep);
     //ars1.insertAnisotropicGaussian(means, covars, weights);
-    ars1.insertAnisotropicGaussian(acesPoints, covarsUniform, weightsUniform);
+    {
+        ars::ScopedTimer timer("ArsKernelIsotropic2d::insertAnisotropicGaussian()");
+        ars1.insertAnisotropicGaussian(acesPoints, covarsUniform, weightsUniform);
+    }
 
     ars2.setARSFOrder(arsOrder);
     ars2.initLUT(0.0001);
     ars2.setComputeMode(ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT);
-    ars2.insertIsotropicGaussians(acesPoints, sigmaMin);
+    {
+        ars::ScopedTimer timer("ArsKernelIsotropic2d::insertIsotropicGaussians()");
+        ars2.insertIsotropicGaussians(acesPoints, sigmaMin);
+    }
 
     std::cout << "\n\n";
     ARS_VARIABLE2(ars1.coefficients().size(), ars2.coefficients().size());
@@ -178,8 +189,11 @@ int main(int argc, char** argv) {
         gp << " " << (180.0 / M_PI * th) << " " << ars2.eval(th) << "\n";
     }
     gp << "e\n";
-
     
+    std::cout << "\n---\nEXECUTION TIMES:" << std::endl;
+    ars::Profiler::getProfiler().printStats(std::cout);
+
+
     delete gme;
     return 0;
 }
