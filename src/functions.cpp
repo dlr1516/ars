@@ -382,7 +382,7 @@ namespace ars {
         coeffs[1] = 0.0;
         for (int i = 1; i < n && i < fourierOrder; ++i) {
             coeffs[2 * i] = 0.5 * (freqvec[i].real() + freqvec[n - i].real());
-            coeffs[2 * i + 1] = 0.5 * (freqvec[i].imag() + freqvec[n - i].imag());
+            coeffs[2 * i + 1] = 0.5 * (freqvec[i].imag() - freqvec[n - i].imag());
         }
     }
 
