@@ -72,7 +72,7 @@ namespace ars {
          * @param nRes number of interval 
          */
         void setIntervalNum(int nRes) {
-            nRes_ = nRes_;
+            nRes_ = nRes;
         }
 
         /**

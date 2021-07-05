@@ -172,8 +172,7 @@ namespace ars {
         int orderMax_;
         double tolerance_;
     };
-
-
+    
     // --------------------------------------------------------
     // INTERVAL FUNCTIONS
     // --------------------------------------------------------
@@ -188,6 +187,8 @@ namespace ars {
      *   S(x) = \sum_{i=0}^{n} ( coeffs[2*i] * cos(2*i*x) + coeffs[2*i+1] * sin(2*i*x) )
      */
     void findLUFourier(const std::vector<double>& coeffs, double theta0, double theta1, double& fourierMin, double& fourierfMax);
+    
+    void fft(const std::vector<double>& funIn, std::vector<double>& coeff, int fourierOrder);
 
 
 } // end of namespace

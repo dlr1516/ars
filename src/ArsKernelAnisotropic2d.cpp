@@ -18,13 +18,15 @@
 #include <ars/ArsKernelAnisotropic2d.h>
 #include <ars/utils.h>
 
+#include <ars/functions.h>
+
 namespace ars {
 
     ArsKernelAnisotropic2d::ArsKernelAnisotropic2d()
-    : muMod_(0.0), muAng_(0.0), sigmaMod_(0.0), sigmaAng_(0.0), sigmaDif_(0.0), nRes_(720) {
+    : muMod_(0.0), muAng_(0.0), sigmaMod_(0.0), sigmaAng_(0.0), sigmaDif_(0.0), nRes_(512) {
     }
 
-    ArsKernelAnisotropic2d::ArsKernelAnisotropic2d(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2) : nRes_(720) {
+    ArsKernelAnisotropic2d::ArsKernelAnisotropic2d(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2) : nRes_(512) {
         init(mean1, covar1, mean2, covar2);
     }
 
@@ -75,7 +77,7 @@ namespace ars {
             coeffs.resize(2 * nFourier + 2);
         }
         std::fill(coeffs.begin(), coeffs.end(), 0.0);
-        
+
         updateFourier(nFourier, coeffs);
     }
 
@@ -112,10 +114,11 @@ namespace ars {
             cosCurr = 1.0;
             sinCurr = 0.0;
             for (int i = 0; i < nRes_; ++i) {
-                cosNext = cos(2.0 * k * dt * (i + 1));
-                sinNext = sin(2.0 * k * dt * (i + 1));
-                //cosNext = cosCurr * cosIncr - sinCurr * sinIncr;
-                //sinNext = cosCurr * sinIncr + sinCurr * cosIncr;
+                fastCosSin(2.0 * k * dt * (i + 1), cosNext, sinNext);
+                //                cosNext = cos(2.0 * k * dt * (i + 1));
+                //                sinNext = sin(2.0 * k * dt * (i + 1));
+                //                cosNext = cosCurr * cosIncr - sinCurr * sinIncr;
+                //                sinNext = cosCurr * sinIncr + sinCurr * cosIncr;
                 sumCos += (kernelVal[i] * cosCurr + kernelVal[i + 1] * cosNext) * h;
                 sumSin += (kernelVal[i] * sinCurr + kernelVal[i + 1] * sinNext) * h;
                 cosCurr = cosNext;
@@ -123,6 +126,14 @@ namespace ars {
             }
             coeffs[2 * k] = sumCos;
             coeffs[2 * k + 1] = sumSin;
+        }
+        
+        std::vector<double> coeffsFft;
+        fft(kernelVal, coeffsFft, nFourier);
+        
+        ARS_PRINT("Compare integral Fourier and FFT: coeffs.size() " << coeffs.size() << ", coeffsFft.size() " << coeffsFft.size());
+        for (int i = 0; i < coeffs.size() && i < coeffsFft.size(); ++i) {
+            std::cout << "  i " << i << ": \t" << coeffs[i] << " \t" << coeffsFft[i] << "\n";
         }
     }
 

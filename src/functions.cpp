@@ -18,6 +18,9 @@
 #include <ars/functions.h>
 #include <cassert> 
 #include <algorithm>
+#include <unsupported/Eigen/FFT>
+
+#include <ars/definitions.h>
 
 
 namespace ars {
@@ -207,8 +210,8 @@ namespace ars {
             lut_.push_back(PnebiPoint(n, x));
             ratio = deriv * (y0prev - lut_.back().y[0]) / tol;
             deriv = std::min(std::max(lut_.back().y[1] - lut_.back().y[0], ratio), -10.0 * std::numeric_limits<double>::min());
-//            std::cout << "x " << x << ", y[0] " << lut_.back().y[0] << " (incr prev y[0] " << (lut_.back().y[0] - y0prev) << "), "
-//                      << "real deriv " << (lut_.back().y[1] - lut_.back().y[0]) << ", deriv " << deriv << ", ratio " << ratio << std::endl;
+            //            std::cout << "x " << x << ", y[0] " << lut_.back().y[0] << " (incr prev y[0] " << (lut_.back().y[0] - y0prev) << "), "
+            //                      << "real deriv " << (lut_.back().y[1] - lut_.back().y[0]) << ", deriv " << deriv << ", ratio " << ratio << std::endl;
             y0prev = lut_.back().y[0];
         }
         //std::cout << __FILE__ << "," << __LINE__ << ": lut num " << lut_.size() << ", x max " << lut_.back().x << " -> y[0] " << lut_.back().y[0] << std::endl;
@@ -274,21 +277,21 @@ namespace ars {
             }
         }
     }
-    
-    void PnebiLUT::printLUT(std::ostream& out,int n,int k) {
+
+    void PnebiLUT::printLUT(std::ostream& out, int n, int k) {
         int incr = std::max<int>(lut_.size() / n, 1);
-        for (int i = 0; i < lut_.size(); i+=incr) {
+        for (int i = 0; i < lut_.size(); i += incr) {
             out << i << "\t" << lut_[i].x << "\t";
             for (int j = 0; j <= k && j < lut_[i].y.size(); ++j) {
                 out << lut_[i].y[j] << "\t";
             }
             out << std::endl;
         }
-        out << (lut_.size()-1) << "\t" << lut_.back().x << "\t";
-            for (int j = 0; j <= k && j < lut_.back().y.size(); ++j) {
-                out << lut_.back().y[j] << "\t";
-            }
-            out << std::endl;
+        out << (lut_.size() - 1) << "\t" << lut_.back().x << "\t";
+        for (int j = 0; j <= k && j < lut_.back().y.size(); ++j) {
+            out << lut_.back().y[j] << "\t";
+        }
+        out << std::endl;
     }
 
     // --------------------------------------------------------
@@ -362,6 +365,24 @@ namespace ars {
             findLUCos(2 * k * theta0 - phase, 2 * k * theta1 - phase, sinusoidMin, sinusoidMax);
             fourierMin += amplitude * sinusoidMin;
             fourierMax += amplitude * sinusoidMax;
+        }
+    }
+
+    void fft(const std::vector<double>& funIn, std::vector<double>& coeffs, int fourierOrder) {
+        Eigen::FFT<double> fft_;
+        std::vector<std::complex<double> > freqvec;
+        int n = funIn.size();
+
+        fft_.fwd(freqvec, funIn);
+        
+        ARS_PRINT("fft: input size " << funIn.size() << ", output complex size " << freqvec.size());
+        
+        coeffs.resize(2 * n + 2);
+        coeffs[0] = freqvec[0].real();
+        coeffs[1] = 0.0;
+        for (int i = 1; i < n && i < fourierOrder; ++i) {
+            coeffs[2 * i] = 0.5 * (freqvec[i].real() + freqvec[n - i].real());
+            coeffs[2 * i + 1] = 0.5 * (freqvec[i].imag() + freqvec[n - i].imag());
         }
     }
 
