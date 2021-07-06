@@ -99,42 +99,43 @@ namespace ars {
 
         // Computation of the 0-order coefficient (only for cosine part) using 
         // numerical integration (trapezoid approximation)
-        for (int i = 0; i < nRes_; ++i) {
-            coeffs[0] += (kernelVal[i] + kernelVal[i + 1]) * h;
-        }
+//        for (int i = 0; i < nRes_; ++i) {
+//            coeffs[0] += (kernelVal[i] + kernelVal[i + 1]) * h;
+//        }
 
         // Computes the Fourier coefficients of orders greater or equal to 1 
         // according to trapezoidal rule integration
-        cosIncr = cos(2.0 * dt);
-        sinIncr = sin(2.0 * dt);
-        h = 2.0 * h;
-        for (int k = 1; k <= nFourier; ++k) {
-            sumCos = 0.0;
-            sumSin = 0.0;
-            cosCurr = 1.0;
-            sinCurr = 0.0;
-            for (int i = 0; i < nRes_; ++i) {
-                fastCosSin(2.0 * k * dt * (i + 1), cosNext, sinNext);
-                //                cosNext = cos(2.0 * k * dt * (i + 1));
-                //                sinNext = sin(2.0 * k * dt * (i + 1));
-                //                cosNext = cosCurr * cosIncr - sinCurr * sinIncr;
-                //                sinNext = cosCurr * sinIncr + sinCurr * cosIncr;
-                sumCos += (kernelVal[i] * cosCurr + kernelVal[i + 1] * cosNext) * h;
-                sumSin += (kernelVal[i] * sinCurr + kernelVal[i + 1] * sinNext) * h;
-                cosCurr = cosNext;
-                sinCurr = sinNext;
-            }
-            coeffs[2 * k] = sumCos;
-            coeffs[2 * k + 1] = sumSin;
-        }
-        
-        std::vector<double> coeffsFft;
-        fft(kernelVal, coeffsFft, nFourier);
-        
-        ARS_PRINT("Compare integral Fourier and FFT: coeffs.size() " << coeffs.size() << ", coeffsFft.size() " << coeffsFft.size());
-        for (int i = 0; i < coeffs.size() && i < coeffsFft.size(); ++i) {
-            std::cout << "  i " << i << ": \t" << coeffs[i] << " \t" << coeffsFft[i] << "\n";
-        }
+        //        cosIncr = cos(2.0 * dt);
+        //        sinIncr = sin(2.0 * dt);
+        //        h = 2.0 * h;
+        //        for (int k = 1; k <= nFourier; ++k) {
+        //            sumCos = 0.0;
+        //            sumSin = 0.0;
+        //            cosCurr = 1.0;
+        //            sinCurr = 0.0;
+        //            for (int i = 0; i < nRes_; ++i) {
+        //                fastCosSin(2.0 * k * dt * (i + 1), cosNext, sinNext);
+        //                //                cosNext = cos(2.0 * k * dt * (i + 1));
+        //                //                sinNext = sin(2.0 * k * dt * (i + 1));
+        //                //                cosNext = cosCurr * cosIncr - sinCurr * sinIncr;
+        //                //                sinNext = cosCurr * sinIncr + sinCurr * cosIncr;
+        //                sumCos += (kernelVal[i] * cosCurr + kernelVal[i + 1] * cosNext) * h;
+        //                sumSin += (kernelVal[i] * sinCurr + kernelVal[i + 1] * sinNext) * h;
+        //                cosCurr = cosNext;
+        //                sinCurr = sinNext;
+        //            }
+        //            coeffs[2 * k] = sumCos;
+        //            coeffs[2 * k + 1] = sumSin;
+        //        }
+        //        
+        //        std::vector<double> coeffsFft;
+        //        fft(kernelVal, coeffsFft, nFourier);
+
+        //        ARS_PRINT("Compare integral Fourier and FFT: coeffs.size() " << coeffs.size() << ", coeffsFft.size() " << coeffsFft.size());
+        //        for (int i = 0; i < coeffs.size() && i < coeffsFft.size(); ++i) {
+        //            std::cout << "  i " << i << ": \t" << coeffs[i] << " \t" << coeffsFft[i] << "\n";
+        //        }
+        fft(kernelVal, coeffs, nFourier);
     }
 
 }

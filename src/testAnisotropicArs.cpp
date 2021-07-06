@@ -158,7 +158,8 @@ int main(int argc, char** argv) {
     //ars1.insertAnisotropicGaussian(means, covars, weights);
     {
         ars::ScopedTimer timer("ArsKernelIsotropic2d::insertAnisotropicGaussian()");
-        ars1.insertAnisotropicGaussian(acesPoints, covarsUniform, weightsUniform);
+        //ars1.insertAnisotropicGaussian(acesPoints, covarsUniform, weightsUniform);
+        ars1.insertAnisotropicGaussian(means, covars, weights);
     }
 
     ars2.setARSFOrder(arsOrder);

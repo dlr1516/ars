@@ -375,15 +375,16 @@ namespace ars {
 
         fft_.fwd(freqvec, funIn);
         
-        ARS_PRINT("fft: input size " << funIn.size() << ", output complex size " << freqvec.size());
+        //ARS_PRINT("fft: input size " << funIn.size() << ", output complex size " << freqvec.size());
         
-        coeffs.resize(2 * n + 2);
-        coeffs[0] = freqvec[0].real();
+        coeffs.resize(2 * fourierOrder + 2);
+        coeffs[0] = freqvec[0].real() / n;
         coeffs[1] = 0.0;
-        for (int i = 1; i < n && i < fourierOrder; ++i) {
-            coeffs[2 * i] = 0.5 * (freqvec[i].real() + freqvec[n - i].real());
-            coeffs[2 * i + 1] = 0.5 * (freqvec[i].imag() - freqvec[n - i].imag());
+        for (int i = 1; i <= n && i <= fourierOrder; ++i) {
+            coeffs[2 * i] = 2.0 * freqvec[i].real() / n;
+            coeffs[2 * i + 1] = -2.0 * freqvec[i].imag() / n;
         }
+        
     }
 
 } // end of namespace
