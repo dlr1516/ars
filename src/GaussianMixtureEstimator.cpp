@@ -35,6 +35,10 @@ namespace ars {
 
     GaussianMixtureEstimator::~GaussianMixtureEstimator() {
     }
+    
+    void GaussianMixtureEstimator::clear() {
+        gaussians_.clear();
+    }
 
     void GaussianMixtureEstimator::exportGaussians(VectorVector2& means, VectorMatrix2& covariances, std::vector<double>& weights) const {
         int n = gaussians_.size();

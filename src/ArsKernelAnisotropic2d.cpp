@@ -23,10 +23,10 @@
 namespace ars {
 
     ArsKernelAnisotropic2d::ArsKernelAnisotropic2d()
-    : muMod_(0.0), muAng_(0.0), sigmaMod_(0.0), sigmaAng_(0.0), sigmaDif_(0.0), nRes_(512) {
+    : muMod_(0.0), muAng_(0.0), sigmaMod_(0.0), sigmaAng_(0.0), sigmaDif_(0.0), nRes_(128) {
     }
 
-    ArsKernelAnisotropic2d::ArsKernelAnisotropic2d(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2) : nRes_(512) {
+    ArsKernelAnisotropic2d::ArsKernelAnisotropic2d(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2) : nRes_(128) {
         init(mean1, covar1, mean2, covar2);
     }
 
@@ -99,9 +99,9 @@ namespace ars {
 
         // Computation of the 0-order coefficient (only for cosine part) using 
         // numerical integration (trapezoid approximation)
-//        for (int i = 0; i < nRes_; ++i) {
-//            coeffs[0] += (kernelVal[i] + kernelVal[i + 1]) * h;
-//        }
+        //        for (int i = 0; i < nRes_; ++i) {
+        //            coeffs[0] += (kernelVal[i] + kernelVal[i + 1]) * h;
+        //        }
 
         // Computes the Fourier coefficients of orders greater or equal to 1 
         // according to trapezoidal rule integration

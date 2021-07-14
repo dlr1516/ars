@@ -67,6 +67,8 @@ namespace ars {
          * Destructor. 
          */
         virtual ~GaussianMixtureEstimator();
+        
+        void clear();
 
         /**
          * Computes the Gaussian parameters from the given samples.
