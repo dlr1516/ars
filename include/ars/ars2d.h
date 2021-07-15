@@ -28,7 +28,7 @@
 
 namespace ars {
 
-    /** Computes coeffients of Fourier series Correlation. 
+    /** Computes coefficients of Fourier series Correlation. 
      * Given two series Fsrc(t) and Fdst(t) with coefficients:
      *   Fsrc(t) = \sum_{i=0}^{n} ( fourierSrc[2*i] * cos(2*i*t) + fourierSrc[2*i+1] * sin(2*i*t) )
      *   Fdst(t) = \sum_{i=0}^{n} ( fourierDst[2*i] * cos(2*i*t) + fourierDst[2*i+1] * sin(2*i*t) )
