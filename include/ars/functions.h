@@ -82,7 +82,8 @@ namespace ars {
     // where besseli(k,x) is the modified Bessel function of the First Kind with order k. 
     // --------------------------------------------------------
 
-    /** Computes the value of function of PNEBI(0,x) = 2.0 * exp(-x) * besseli(0,x) 
+    /** 
+     * Computes the value of function of PNEBI(0,x) = 2.0 * exp(-x) * besseli(0,x) 
      * using the polynomial approximation of Abramowitz-Stegun (9.8.1)-(9.8.2). 
      * Common library functions computing besseli(0,x) leads to numeric overflow 
      * or exploits inaccurate (and substantially flat in our interval!) Hankel 
@@ -90,7 +91,8 @@ namespace ars {
      */
     double evaluatePnebi0Polynom(double x);
 
-    /** Evaluates PNEBI function in point x for different orders from 0 to n. 
+    /** 
+     * Evaluates PNEBI function in point x for different orders from 0 to n. 
      * This implementation is based on downward recurring formula as suggested in
      *  
      * Aa Vv, Numerical Recipes in C. The Art of Scientific Computing, 2nd edition, 1992. 
@@ -99,9 +101,17 @@ namespace ars {
      */
     void evaluatePnebiVector(int n, double x, std::vector<double>& pnebis);
 
-    /** Class for storing a Look-Up Table (LUT) of PNEBI function. 
+    /** 
+     * Class for storing a Look-Up Table (LUT) of PNEBI function. 
      * The LUT has adaptive step to achieve a trade-off between memory efficiency 
      * and accuracy. 
+     * 
+     * The function is defined as:
+     * 
+     *   PNEBI(k,x) = 2.0 * exp(-x) * besseli(k,x)
+     * 
+     * where besseli(k,x) is the modified bessel function  of the first kind of 
+     * order k computed in x. 
      */
     class PnebiLUT {
     private:

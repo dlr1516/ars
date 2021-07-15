@@ -150,6 +150,10 @@ namespace ars {
             return lambdaSqNorm_;
         }
         
+        /**
+         * Returns the variance associated to the ARS Kernel. 
+         * @return 
+         */
         double getVariance() const {
             return sigmaValSq_;
         }

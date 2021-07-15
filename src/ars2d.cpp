@@ -19,6 +19,8 @@
 #include <boost/numeric/interval.hpp>
 #include <queue>
 
+#include <ars/Profiler.h>
+
 //#include <omp.h>
 
 namespace ars {
@@ -147,6 +149,7 @@ namespace ars {
         //double dx, dy, sigma2, lambda, phi, scale, ux, uy;
         for (int i = 0; i < kernelNum; ++i) {
             for (int j = i + 1; j < kernelNum; ++j) {
+                ars::ScopedTimer timer("ArsKernelIsotropic2d::computeFourier()");
                 isotropicKer_.init(means[i], means[j], sigma);
                 isotropicKer_.updateFourier(arsfOrder_, coeffs_, w);
 //                dx = means[i].x() - means[j].x();
@@ -237,6 +240,7 @@ namespace ars {
         std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
         for (int i = 0; i < kernelNum; ++i) {
             for (int j = i + 1; j < kernelNum; ++j) {
+                ars::ScopedTimer timer("AnisotropicKernel::computeFourier()");
                 nik.init(means[i], covars[i], means[j], covars[j]);
                 nik.computeFourier(arsfOrder_ , coeffsPartial);
                 
