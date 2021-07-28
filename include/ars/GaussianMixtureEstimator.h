@@ -68,6 +68,9 @@ namespace ars {
          */
         virtual ~GaussianMixtureEstimator();
         
+        /**
+         * Clear gaussians_ vector
+         */
         void clear();
 
         /**
