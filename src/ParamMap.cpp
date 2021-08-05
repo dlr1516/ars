@@ -66,6 +66,7 @@ namespace ars {
             }
             ++argi;
         }
+        return true;
     }
 
     bool ParamMap::write(std::ostream& out) const {

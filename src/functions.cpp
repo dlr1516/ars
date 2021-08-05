@@ -62,6 +62,7 @@ namespace ars {
         if (invert) th = M_PI_2 - th; // th in range [0,M_PI/2]
         if (x < 0) th = M_PI - th; // th in range [0,M_PI]
         th = copysign(th, y); // th in range [-M_PI,M_PI]
+        return th;
     }
 
     double evaluateFourier(const std::vector<double>& coeffs, double theta) {
