@@ -24,7 +24,7 @@
 #include <deque>
 #include <Eigen/Dense>
 #include <ars/definitions.h>
-//#include <ars/MortonOrderedPoints.h>
+#include <ars/MortonOctree.h>
 #include <ars/DisjointSet.h>
 
 namespace ars {
@@ -67,7 +67,7 @@ namespace ars {
          * Destructor. 
          */
         virtual ~GaussianMixtureEstimator();
-        
+
         /**
          * Clear gaussians_ vector
          */
@@ -302,7 +302,7 @@ namespace ars {
         void setClusterDistance(double cd) {
             clusterDist_ = cd;
         }
-        
+
         /**
          * Sets the tolerance on the distance between the shifted means inside 
          * the same cluster. 
@@ -313,7 +313,7 @@ namespace ars {
         void setMeanShiftTol(double mst) {
             meanShiftTol_ = mst;
         }
-        
+
         /**
          * Sets the maximum number of iterations of mean-shift clustering algorithm. 
          * @param inmax
@@ -351,45 +351,45 @@ namespace ars {
      * ECCV 2018. 
      * 
      */
-    //    class GaussianMixtureEstimatorHierarchical : public GaussianMixtureEstimator {
-    //    public:
-    //        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    //
-    //                // Private
-    //                using PointContainer = MortonOrderedPoints2d16h;
-    //        using Iterator = PointContainer::Iterator;
-    //        using ConstIterator = PointContainer::ConstIterator;
-    //
-    //        /**
-    //         * Default constructor.
-    //         */
-    //        GaussianMixtureEstimatorHierarchical();
-    //
-    //        /**
-    //         * Destructor. 
-    //         */
-    //        virtual ~GaussianMixtureEstimatorHierarchical();
-    //
-    //        /**
-    //         * Sets the minimum value of standard deviation of Gaussians.
-    //         * @param sm the minimum standard deviation 
-    //         */
-    //        void setSigmaMin(double sm) {
-    //            sigmaMin_ = sm;
-    //        }
-    //
-    //        /**
-    //         * Computes the Gaussian parameters from the given samples.
-    //         * @param samples sorted in counter-clockwise order
-    //         */
-    //        virtual void compute(const VectorVector2& samples);
-    //
-    //    private:
-    //        PointContainer data_;
-    //        double sigmaMin_;
-    //
-    //        void estimateGaussianFromPoints(const ConstIterator& beg, const ConstIterator& end, Vector2& mean, Matrix2& covar) const;
-    //    };
+    class GaussianMixtureEstimatorHierarchical : public GaussianMixtureEstimator {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+        // Private
+        using PointContainer = MortonOctree<2, double, int32_t>;
+        using Iterator = PointContainer::Iterator;
+        using ConstIterator = PointContainer::ConstIterator;
+
+        /**
+         * Default constructor.
+         */
+        GaussianMixtureEstimatorHierarchical();
+
+        /**
+         * Destructor. 
+         */
+        virtual ~GaussianMixtureEstimatorHierarchical();
+
+        /**
+         * Sets the minimum value of standard deviation of Gaussians.
+         * @param sm the minimum standard deviation 
+         */
+        void setSigmaMin(double sm) {
+            sigmaMin_ = sm;
+        }
+
+        /**
+         * Computes the Gaussian parameters from the given samples.
+         * @param samples sorted in counter-clockwise order
+         */
+        virtual void compute(const VectorVector2& samples);
+
+    private:
+        PointContainer data_;
+        double sigmaMin_;
+
+        void estimateGaussianFromPoints(const ConstIterator& beg, const ConstIterator& end, Vector2& mean, Matrix2& covar) const;
+    };
 
 } // end of namespace
 

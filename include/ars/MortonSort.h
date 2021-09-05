@@ -2,82 +2,155 @@
 #define MORTONSORT_H
 
 #include <cmath>
-#include <stdint>
+#include <cstdint>
+#include <Eigen/Dense>
 
 namespace ars {
+    
+    // ---------------------------------------------------------------
+    // NUMBER OF LEADING ZEROS
+    // ---------------------------------------------------------------
+    
+    int8_t nlz8(uint8_t x);
 
-    void getExpMantissaF(const float& f, uint32_t& e, uint32_t& m, bool& s) {
+    int16_t nlz16(uint16_t x);
 
-        union {
-            float f;
-            uint32_t i;
-        } floatBits;
+    int32_t nlz32(uint32_t x);
 
-        floatBits.f = f;
-        m = 0x007FFFFF & floatBits.i;
-        e = 0x7F800000 & floatBits.i;
-        s = 0x80000000 & floatBits.i;
-    }
+    int64_t nlz64(uint64_t x);
+    
+    // ---------------------------------------------------------------
+    // MORTON INTEGER TRAITS (FOR TREATING THE SIGN OF INTEGER)
+    // ---------------------------------------------------------------
 
-    void getExpMantissaD(const double& f, uint64_t& e, uint64_t& m, bool& s) {
+    template <typename I> struct MortonIntegerTraits;
 
-        union {
-            double f;
-            uint64_t i;
-        } floatBits;
+    template <> struct MortonIntegerTraits<int8_t> {
+        using IntegerType = int8_t;
+        using UnsignedType = uint8_t;
 
-        floatBits.f = f;
-        m = 0x000FFFFFFFFFFFFF & floatBits.i;
-        e = 0x7FF0000000000000 & floatBits.i;
-        s = 0x8000000000000000 & floatBits.i;
-    }
+        static const int BIT_NUM = 8;
 
-    // --------------------------------------------------------------
-    // XOR MSB 
-    // --------------------------------------------------------------
-
-    template <typename Float> struct XorMsb;
-
-    template <>
-    struct XorMsb<float> {
-        using Float = float;
-        using Integer = int;
-
-        union FloatInteger {
-            Float f;
-            Integer i;
-        };
-
-        static Integer eval(const Float& f1, const Float& f2) {
-            Integer e1, e2, ret;
-            bool s1, s2;
-            FloatInteger u1, u2, zero;
-
-            //getExpMantissaF(f1, m1, e1, s1);
-            //getExpMantissaF(f2, m2, e2, s2);
-            u1.f = frexpf(f1, &e1);
-            u2.f = frexpf(f2, &e2);
-            zero.f = 0.0f;
-
-            if (e1 == e2) {
-                if (m1 == m2) {
-                    ret = 0;
-                } else {
-                    u1.i = ((u1.i ^ u2.i) | zero.i);
-                    u1.f = frexpf(u1.f - 0.5f, &e1);
-                    ret = e1 + e2;
-                }
-            } else {
-                if (e1 < e2)
-                    ret = e2;
-                else
-                    ret = e1;
-            }
-            return ret;
+        static UnsignedType removeSign(const IntegerType& i) {
+            return (i ^ 0x01);
+        }
+        
+        static IntegerType nlz(const IntegerType& i) {
+            return nlz8(i);
         }
     };
 
+    template <> struct MortonIntegerTraits<uint8_t> {
+        using IntegerType = uint8_t;
+        using UnsignedType = uint8_t;
+
+        static const int BIT_NUM = 8;
+
+        static UnsignedType removeSign(const IntegerType& i) {
+            return i;
+        }
+        
+        static IntegerType nlz(const IntegerType& i) {
+            return nlz8(i);
+        }
+    };
+
+    template <> struct MortonIntegerTraits<int16_t> {
+        using IntegerType = int16_t;
+        using UnsignedType = uint16_t;
+
+        static const int BIT_NUM = 16;
+
+        static UnsignedType removeSign(const IntegerType& i) {
+            return (i ^ 0x0001);
+        }
+        
+        static IntegerType nlz(const IntegerType& i) {
+            return nlz16(i);
+        }
+    };
+
+    template <> struct MortonIntegerTraits<uint16_t> {
+        using IntegerType = uint16_t;
+        using UnsignedType = uint16_t;
+
+        static const int BIT_NUM = 16;
+
+        static UnsignedType removeSign(const IntegerType& i) {
+            return i;
+        }
+        
+        static IntegerType nlz(const IntegerType& i) {
+            return nlz16(i);
+        }
+    };
+
+    template <> struct MortonIntegerTraits<int32_t> {
+        using IntegerType = int32_t;
+        using UnsignedType = uint32_t;
+
+        static const int BIT_NUM = 32;
+
+        static UnsignedType removeSign(const IntegerType& i) {
+            return (i ^ 0x00000001);
+        }
+        
+        static IntegerType nlz(const IntegerType& i) {
+            return nlz32(i);
+        }
+    };
+
+    template <> struct MortonIntegerTraits<uint32_t> {
+        using IntegerType = uint32_t;
+        using UnsignedType = uint32_t;
+
+        static const int BIT_NUM = 32;
+
+        static UnsignedType removeSign(const IntegerType& i) {
+            return i;
+        }
+        
+        static IntegerType nlz(const IntegerType& i) {
+            return nlz32(i);
+        }
+    };
+
+    template <> struct MortonIntegerTraits<int64_t> {
+        using IntegerType = int64_t;
+        using UnsignedType = uint64_t;
+
+        static const int BIT_NUM = 64;
+
+        static UnsignedType removeSign(const IntegerType& i) {
+            return (i ^ 0x0000000000000001);
+        }
+        
+        static IntegerType nlz(const IntegerType& i) {
+            return nlz64(i);
+        }
+    };
+
+    template <> struct MortonIntegerTraits<uint64_t> {
+        using IntegerType = uint64_t;
+        using UnsignedType = uint64_t;
+
+        static const int BIT_NUM = 64;
+
+        static UnsignedType removeSign(const IntegerType& i) {
+            return i;
+        }
+        
+        static IntegerType nlz(const IntegerType& i) {
+            return nlz64(i);
+        }
+    };
+
+    // ---------------------------------------------------------------
+    // MORTON COMPARATOR
+    // ---------------------------------------------------------------
+
     /**
+     * MSB: Most Significant Bit comparison. 
      * Given two integers i1 and i2, it computes if floor(log2(i1)) < floor(log2(i2))
      * using the well known Timothy Chan's trick illustrated in 
      *   
@@ -85,72 +158,62 @@ namespace ars {
      * neighbor algorithm in fixed dimensions", 2006
      * http://tmc.web.engr.illinois.edu/pub_ann.html
      * 
+     * E.g. i1 = 8 = 1000b, i2 = 11 = 1011b, i1 ^ i2 = 0011
+     *    i1 < i2 -> TRUE, i1 = 1000b < 
+     * 
      * @param i1 the first integer
      * @param i2 the second integer
      * @return 
      */
     template <typename Integer>
-    bool lessMbs(const Integer& i1, const Integer& i2) {
+    inline bool msb(const Integer& i1, const Integer& i2) {
         return (i1 < i2 && i1 < (i1 ^ i2));
     }
 
-    bool xorMsbD(const double& f1, const double& f2) {
-        int e1, e2;
-        double m1, m2;
-        m1 = frexp(f1, e1);
-        m2 = frexp(f2, e2);
-        if (e1 == e2) {
-
-        }
-    }
-
-    template <typename Integer, typename Dim>
-    bool mortonCmpInt(const Eigen::Matrix<Integer, Dim, 1>& v1, const Eigen::Matrix<Integer, Dim, 1>& v2) {
-        Integer dimLast = 0;
-        Integer diffLast = 0;
-        Integer diffShifted;
-        for (Integer d = 0; d < Dim; ++d) {
-            diffShifted = v1(d) ^ v2(d);
-            if (lessMbs(diffLast, diffShifted)) {
-                dimLast = d;
-                diffLast = diffShifted;
+    /**
+     * Compares two (Eigen) vectors of integer values with integer type I and
+     * dimension Dim and sort them according to Morton order.
+     * It is based on the so called Chan's trick:
+     * 
+     * T.M. Chan, "A minimalist's implementation of an approximate nearest 
+     * neighbor algorithm in fixed dimensions", 2006
+     * http://tmc.web.engr.illinois.edu/pub_ann.html
+     * 
+     * @param v1 the first integer vector
+     * @param v2 the second integer vector
+     * @return true if v1 is before v2 in Morton Order. 
+     */
+    template <typename I, int Dim>
+    bool mortonCmpInt(const Eigen::Matrix<I, Dim, 1>& v1, const Eigen::Matrix<I, Dim, 1>& v2) {
+        using MIT = MortonIntegerTraits<I>;
+        using UnsignedType = typename MIT::UnsignedType;
+        UnsignedType lastDim, lastXor, currXor;
+        lastDim = 0;
+        lastXor = MIT::removeSign(v1(0)) ^ MIT::removeSign(v2(0));
+        for (int d = 1; d < Dim; ++d) {
+            currXor = MIT::removeSign(v1(d)) ^ MIT::removeSign(v2(d));
+            if (msb<UnsignedType>(lastXor, currXor)) {
+                lastDim = d;
+                lastXor = currXor;
             }
         }
-        return v1(dimLast) < v2(dimLast);
+        return (v1(lastDim) < v2(lastDim));
     }
-
-    template <typename Float, typename Dim>
-    bool mortonCmpFloat(const Eigen::Matrix<Float, Dim, 1>& v1, const Eigen::Matrix<Float, Dim, 1>& v2) {
-        Float x, y;
-        int dim;
-
-        dim = 0;
-        x = 0;
+    
+    template <typename I, int Dim>
+    int mortonLevel(const Eigen::Matrix<I, Dim, 1>& v1, const Eigen::Matrix<I, Dim, 1>& v2) {
+        using MIT = MortonIntegerTraits<I>;
+        using UnsignedType = typename MIT::UnsignedType;
+        typename MIT::IntegerType levelMax, level;
+        levelMax = 0;
         for (int d = 0; d < Dim; ++d) {
-            y = xorMsb(v1(d), v2(d));
-            if (x < y) {
-                x = y;
-                dim = d;
+            level = MIT::BIT_NUM - MIT::nlz(MIT::removeSign(v1(d)) ^ MIT::removeSign(v2(d)));
+            if (level > levelMax) {
+                levelMax = level;
             }
         }
-        return v1(dim) < v2(dim);
+        return levelMax;
     }
-
-    template <typename Scalar, typename Dim>
-    struct MortonSort {
-        using Point = Eigen::Matrix<Scalar, Dim, 1>;
-
-        static bool less(const Point& p1, const Point& p2);
-    };
-
-    template <typename Dim>
-    struct MortonSort<int, Dim> {
-        using Point = Eigen::Matrix<int, Dim, 1>;
-
-        static bool less(const Point& p1, const Point& p2) {
-
-        }
-    };
 
 }
 

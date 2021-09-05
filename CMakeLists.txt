@@ -36,7 +36,7 @@ add_library(ars
   src/HistogramCircularCorrelation.cpp
   src/HoughSpectrum.cpp
   #src/MortonOrderedPoints2d.cpp
-  #src/MortonOrderedPoints.cpp
+  src/MortonSort.cpp
   src/ParamMap.cpp
   src/Profiler.cpp
 )
