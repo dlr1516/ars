@@ -430,12 +430,29 @@ namespace ars {
     // GaussianMixtureEstimatorHierarchical
     //-----------------------------------------------------
 
-    //    GaussianMixtureEstimatorHierarchical::GaussianMixtureEstimatorHierarchical() : data_(), sigmaMin_(0.1) {
-    //    }
-    //
-    //    GaussianMixtureEstimatorHierarchical::~GaussianMixtureEstimatorHierarchical() {
-    //    }
-    //
+    GaussianMixtureEstimatorHierarchical::GaussianMixtureEstimatorHierarchical() : data_(), sigmaMin_(0.1) {
+    }
+
+    GaussianMixtureEstimatorHierarchical::~GaussianMixtureEstimatorHierarchical() {
+    }
+    
+    void GaussianMixtureEstimatorHierarchical::compute(const VectorVector2& samples) {
+        VectorVector2 samplesSorted(samples.size());
+        data_.insert(samples);
+        
+        for (size_t i = 0; i < data_.size() && i < samplesSorted.size(); ++i) {
+            samplesSorted[i] = data_.getItems()[i].value;
+        }
+        
+        GaussianMixtureEstimatorScan gme;
+        gme.setDistanceGap(8.0 * sigmaMin_);
+        gme.setDistanceSplit(4.0 * sigmaMin_);
+        gme.setSigmaMin(sigmaMin_);
+        gme.compute(samplesSorted);
+        
+        gaussians_ = gme.gaussians();
+    }
+    
     //    void GaussianMixtureEstimatorHierarchical::compute(const VectorVector2& samples) {
     //        ConstIterator octBeg, octEnd;
     //

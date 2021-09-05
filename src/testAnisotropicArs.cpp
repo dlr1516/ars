@@ -48,6 +48,7 @@ int main(int argc, char** argv) {
     //ars::GaussianMixtureEstimatorScan gme;
     ars::GaussianMixtureEstimator* gme = nullptr;
     ars::GaussianMixtureEstimatorScan* gmeScan = nullptr;
+    ars::GaussianMixtureEstimatorHierarchical* gmeHier = nullptr;
     ars::GaussianMixtureEstimatorMeanShift* gmeMean = nullptr;
     double distanceGap, distanceSplit, clusterDist, meanShiftTol, sigmaMin, weightSum, lmin, lmax, theta, th;
     int arsOrder, arsStep;
@@ -92,6 +93,10 @@ int main(int argc, char** argv) {
         gmeScan->setDistanceSplit(distanceSplit);
         gmeScan->setSigmaMin(sigmaMin);
         gme = gmeScan;
+    } else if (clusterAlg == "hier") {
+        gmeHier = new ars::GaussianMixtureEstimatorHierarchical;
+        gmeHier->setSigmaMin(sigmaMin);
+        gme = gmeHier;
     } else {
         gmeMean = new ars::GaussianMixtureEstimatorMeanShift;
         gmeMean->setSigmaMin(sigmaMin);

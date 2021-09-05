@@ -21,6 +21,7 @@ int main(int argc, char** argv) {
     ars::VectorMatrix2 covars, covarsUniform;
     ars::GaussianMixtureEstimator* gme = nullptr;
     ars::GaussianMixtureEstimatorScan* gmeScan = nullptr;
+    ars::GaussianMixtureEstimatorHierarchical* gmeHier = nullptr;
     ars::GaussianMixtureEstimatorMeanShift* gmeMean = nullptr;
     double sigmaMin, clusterDist, meanShiftTol, distanceGap, distanceSplit, weightSum, lmin, lmax, theta;
     ars::Vector2 pmin, pmax;
@@ -71,6 +72,10 @@ int main(int argc, char** argv) {
         gmeScan->setDistanceSplit(distanceSplit);
         gmeScan->setSigmaMin(sigmaMin);
         gme = gmeScan;
+    } else if (clusterAlg == "hier") {
+        gmeHier = new ars::GaussianMixtureEstimatorHierarchical;
+        gmeHier->setSigmaMin(sigmaMin);
+        gme = gmeHier;
     } else {
         std::cout << "\n---\nTesting GaussianMixtureEstimatorMeanShift:" << std::endl;
         gmeMean = new ars::GaussianMixtureEstimatorMeanShift;

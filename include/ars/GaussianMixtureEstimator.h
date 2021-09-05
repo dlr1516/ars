@@ -124,6 +124,14 @@ namespace ars {
             ARS_ASSERT(0 <= i && i < gaussians_.size());
             return gaussians_[i].weight;
         }
+        
+        /** 
+         * Returns a const reference to the vector of gaussians.
+         * @return 
+         */
+        const VectorGaussian& gaussians() const {
+            return gaussians_;
+        }
 
         /**
          * Exports the Gaussian mixture parameters, i.e. means, covariances and weights, 
@@ -264,7 +272,7 @@ namespace ars {
     class GaussianMixtureEstimatorMeanShift : public GaussianMixtureEstimator {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
+        
         /**
          * Default constructor.
          */
@@ -376,6 +384,7 @@ namespace ars {
          */
         void setSigmaMin(double sm) {
             sigmaMin_ = sm;
+            data_.setRes(sigmaMin_);
         }
 
         /**
@@ -388,7 +397,7 @@ namespace ars {
         PointContainer data_;
         double sigmaMin_;
 
-        void estimateGaussianFromPoints(const ConstIterator& beg, const ConstIterator& end, Vector2& mean, Matrix2& covar) const;
+        //void estimateGaussianFromPoints(const ConstIterator& beg, const ConstIterator& end, Vector2& mean, Matrix2& covar) const;
     };
 
 } // end of namespace
