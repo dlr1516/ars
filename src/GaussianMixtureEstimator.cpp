@@ -437,20 +437,82 @@ namespace ars {
     }
     
     void GaussianMixtureEstimatorHierarchical::compute(const VectorVector2& samples) {
-        VectorVector2 samplesSorted(samples.size());
-        data_.insert(samples);
+        std::deque<ConstInterval> intervals;
+        ConstInterval intervalCur;
+        ConstIterator mid;
+        Gaussian g;
+        double num;
         
-        for (size_t i = 0; i < data_.size() && i < samplesSorted.size(); ++i) {
-            samplesSorted[i] = data_.getItems()[i].value;
+        num = (double)samples.size();
+        data_.insert(samples);
+        intervals.push_back(std::make_pair(std::begin(data_), std::end(data_)));
+        while (!intervals.empty()) {
+            intervalCur = intervals.front();
+            intervals.pop_front();
+            if (estimateGaussianFromPoints(intervalCur.first, intervalCur.second, g.mean, g.covar)) {
+                g.weight = std::distance(intervalCur.first, intervalCur.second) / num;
+                gaussians_.push_front(g);
+            }
+            else {
+                mid = data_.findSplit(intervalCur.first, intervalCur.second);
+                intervals.push_back(std::make_pair(intervalCur.first, mid));
+                intervals.push_back(std::make_pair(mid, intervalCur.second));
+            }
         }
         
-        GaussianMixtureEstimatorScan gme;
-        gme.setDistanceGap(8.0 * sigmaMin_);
-        gme.setDistanceSplit(4.0 * sigmaMin_);
-        gme.setSigmaMin(sigmaMin_);
-        gme.compute(samplesSorted);
         
-        gaussians_ = gme.gaussians();
+//        VectorVector2 samplesSorted(samples.size());
+//        data_.insert(samples);
+//        
+//        for (size_t i = 0; i < data_.size() && i < samplesSorted.size(); ++i) {
+//            samplesSorted[i] = data_.getItems()[i].value;
+//        }
+//        
+//        GaussianMixtureEstimatorScan gme;
+//        gme.setDistanceGap(8.0 * sigmaMin_);
+//        gme.setDistanceSplit(4.0 * sigmaMin_);
+//        gme.setSigmaMin(sigmaMin_);
+//        gme.compute(samplesSorted);
+//        
+//        gaussians_ = gme.gaussians();
+    }
+
+    bool GaussianMixtureEstimatorHierarchical::estimateGaussianFromPoints(const ConstIterator& beg, const ConstIterator& end, Vector2& mean, Matrix2& covar) const {
+        Matrix2 l, v;
+        Vector2 tmp;
+        double sigmaMinSquare = sigmaMin_ * sigmaMin_;
+        int num;
+
+        // Computes the mean value vector
+        mean = Vector2::Zero();
+        num = 0;
+        for (auto it = beg; it != end; ++it) {
+            mean += it->value;
+            num++;
+        }
+        mean = mean / num;
+
+        // Computes the covariance
+        covar = Matrix2::Zero();
+        for (auto it = beg; it != end; ++it) {
+            tmp = (it->value - mean);
+            covar = tmp * tmp.transpose();
+        }
+
+        if (num < 1) {
+            // Only one point: use the point uncertainty
+            covar << sigmaMinSquare, 0.0,
+                    0.0, sigmaMinSquare;
+        } else {
+            covar = covar / num;
+            diagonalize(covar, l, v);
+            if (l(0, 0) < sigmaMinSquare)
+                l(0, 0) = sigmaMinSquare;
+            if (l(1, 1) < sigmaMinSquare)
+                l(1, 1) = sigmaMinSquare;
+            covar = v * l * v.transpose();
+        }
+        return true;
     }
     
     //    void GaussianMixtureEstimatorHierarchical::compute(const VectorVector2& samples) {

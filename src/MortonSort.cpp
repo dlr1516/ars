@@ -120,5 +120,135 @@ namespace ars {
         return n - x;
     }
     
+    
+    // ---------------------------------------------------------------
+    // FLOOR/CEIL LOW POWER 2
+    // ---------------------------------------------------------------
+    
+    /**
+     * Returns the larger power of 2 less than the given argument.
+     * Example: flp2(5) = 2^2.
+     * @param x input argument
+     */
+    uint8_t flp2u8(uint8_t x) {
+        x = x | (x >> 1);
+        x = x | (x >> 2);
+        x = x | (x >> 4);
+        return x - (x >> 1);
+    }
+
+    /**
+     * Returns the larger power of 2 less than the given argument.
+     * Example: flp2(5) = 2^2.
+     * @param x input argument
+     */
+    uint16_t flp2u16(uint16_t x) {
+        x = x | (x >> 1);
+        x = x | (x >> 2);
+        x = x | (x >> 4);
+        x = x | (x >> 8);
+        return x - (x >> 1);
+    }
+
+    /**
+     * Returns the larger power of 2 less than the given argument.
+     * Example: flp2(5) = 2^2.
+     * @param x input argument
+     */
+    uint32_t flp2u32(uint32_t x) {
+        //        std::cout << " x:       " << std::bitset<32>(x) << " | \n"
+        //                  << " x >> 1:  " << std::bitset<32>(x >> 1) << "\n";
+        x = x | (x >> 1);
+        //        std::cout << " x:       " << std::bitset<32>(x) << " | \n"
+        //                  << " x >> 2:  " << std::bitset<32>(x >> 2) << "\n";
+        x = x | (x >> 2);
+        //        std::cout << " x:       " << std::bitset<32>(x) << " | \n"
+        //                  << " x >> 4:  " << std::bitset<32>(x >> 4) << "\n";
+        x = x | (x >> 4);
+        //        std::cout << " x:       " << std::bitset<32>(x) << " | \n"
+        //                  << " x >> 8:  " << std::bitset<32>(x >> 8) << "\n";
+        x = x | (x >> 8);
+        //        std::cout << " x:       " << std::bitset<32>(x) << " | \n"
+        //                  << " x >> 16: " << std::bitset<32>(x >> 16) << "\n";
+        x = x | (x >> 16);
+        //        std::cout << " x:       " << std::bitset<32>(x) << " - \n"
+        //                  << " x >> 1:  " << std::bitset<32>(x >> 1) << "\n"
+        //                  << " diff     " << (x - (x >> 1)) << std::endl;
+        return x - (x >> 1);
+    }
+
+    /**
+     * Returns the larger power of 2 less than the given argument.
+     * Example: flp2(5) = 2^2.
+     * @param x input argument
+     */
+    uint64_t flp2u64(uint64_t x) {
+        x = x | (x >> 1);
+        x = x | (x >> 2);
+        x = x | (x >> 4);
+        x = x | (x >> 8);
+        x = x | (x >> 16);
+        x = x | (x >> 32);
+        return x - (x >> 1);
+    }
+
+    /**
+     * Returns the smaller power of 2 greater than the given argument.
+     * Example: clp2(5) = 2^3.
+     * @param x input argument
+     */
+    uint8_t clp2u8(uint8_t x) {
+        x = x - 1;
+        x = x | (x >> 1);
+        x = x | (x >> 2);
+        x = x | (x >> 4);
+        return x + 1;
+    }
+
+    /**
+     * Returns the smaller power of 2 greater than the given argument.
+     * Example: clp2(5) = 2^3.
+     * @param x input argument
+     */
+    uint16_t clp2u16(uint16_t x) {
+        x = x - 1;
+        x = x | (x >> 1);
+        x = x | (x >> 2);
+        x = x | (x >> 4);
+        x = x | (x >> 8);
+        return x + 1;
+    }
+
+    /**
+     * Returns the smaller power of 2 greater than the given argument.
+     * Example: clp2(5) = 2^3.
+     * @param x input argument
+     */
+    uint32_t clp2u32(uint32_t x) {
+        x = x - 1;
+        x = x | (x >> 1);
+        x = x | (x >> 2);
+        x = x | (x >> 4);
+        x = x | (x >> 8);
+        x = x | (x >> 16);
+        return x + 1;
+    }
+
+    /**
+     * Returns the smaller power of 2 greater than the given argument.
+     * Example: clp2(5) = 2^3.
+     * @param x input argument
+     */
+    uint64_t clp2u64(uint64_t x) {
+        x = x - 1;
+        x = x | (x >> 1);
+        x = x | (x >> 2);
+        x = x | (x >> 4);
+        x = x | (x >> 8);
+        x = x | (x >> 16);
+        x = x | (x >> 32);
+        return x + 1;
+    }
+    
 }
 

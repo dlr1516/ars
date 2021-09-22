@@ -367,6 +367,7 @@ namespace ars {
         using PointContainer = MortonOctree<2, double, int32_t>;
         using Iterator = PointContainer::Iterator;
         using ConstIterator = PointContainer::ConstIterator;
+        using ConstInterval = std::pair<ConstIterator, ConstIterator>;
 
         /**
          * Default constructor.
@@ -397,7 +398,8 @@ namespace ars {
         PointContainer data_;
         double sigmaMin_;
 
-        //void estimateGaussianFromPoints(const ConstIterator& beg, const ConstIterator& end, Vector2& mean, Matrix2& covar) const;
+        bool estimateGaussianFromPoints(const ConstIterator& beg, const ConstIterator& end, Vector2& mean, Matrix2& covar) const;
+        
     };
 
 } // end of namespace

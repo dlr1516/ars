@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(ars)
 add_definitions(-std=c++0x)
 
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 # Set the output directory for the build executables and libraries
 SET(ars_RUNTIME_OUTPUT_DIRECTORY ${ars_SOURCE_DIR}/bin CACHE PATH "Target for the binaries")
