@@ -151,6 +151,15 @@ namespace ars {
             return it;
         }
 
+        int computeLevel(ConstIterator first, ConstIterator last) {
+        	// For iterator syntax interval [first, last[ does not include last iterator,
+        	// but some operations requires access to last item. Hence, we --last
+        	if (last != first) {
+        		--last;
+        	}
+        	return mortonDistance(first->index, last->index);
+        }
+
         /**
          * Returns the iterator pointing to the splitting item of the given 
          * input interval [first, last[. 

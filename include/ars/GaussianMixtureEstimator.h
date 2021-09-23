@@ -26,6 +26,8 @@
 #include <ars/definitions.h>
 #include <ars/MortonOctree.h>
 #include <ars/DisjointSet.h>
+#include <boost/math/distributions/chi_squared.hpp>
+
 
 namespace ars {
 
@@ -387,6 +389,17 @@ namespace ars {
             sigmaMin_ = sm;
             data_.setRes(sigmaMin_);
         }
+        
+        void setChiConfidence(double conf) {
+        	static const int CHI2_DOF = 2;
+        	ARS_ASSERT(0.0 <= conf && conf <= 1.0);
+        	boost::math::chi_squared mydist(CHI2_DOF);
+            chi2Thres_ = boost::math::quantile(mydist, conf);
+        }
+
+        void setCellSizeMax(double s) {
+        	levelMax_ = ceilPow2((int)ceil(s / sigmaMin_));
+        }
 
         /**
          * Computes the Gaussian parameters from the given samples.
@@ -397,6 +410,8 @@ namespace ars {
     private:
         PointContainer data_;
         double sigmaMin_;
+        double chi2Thres_;
+        int levelMax_;
 
         bool estimateGaussianFromPoints(const ConstIterator& beg, const ConstIterator& end, Vector2& mean, Matrix2& covar) const;
         
