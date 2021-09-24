@@ -398,7 +398,7 @@ namespace ars {
         }
 
         void setCellSizeMax(double s) {
-        	levelMax_ = ceilPow2((int)ceil(s / sigmaMin_));
+        	levelMax_ = log2Mod((int)ceil(s / sigmaMin_));
         }
 
         /**

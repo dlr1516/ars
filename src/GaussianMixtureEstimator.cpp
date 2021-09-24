@@ -474,7 +474,7 @@ void GaussianMixtureEstimatorHierarchical::compute(
 		if (intervalCur.second != intervalCur.first) {
 			ARS_VARIABLE4(intervalCur.first->index.transpose(), (intervalCur.second-1)->index.transpose(), level, levelMax_);
 		}
-		if (level < levelMax_ && estimateGaussianFromPoints(intervalCur.first, intervalCur.second,g.mean, g.covar)) {
+		if (level <= levelMax_ && estimateGaussianFromPoints(intervalCur.first, intervalCur.second,g.mean, g.covar)) {
 			g.weight = std::distance(intervalCur.first, intervalCur.second) / num;
 			gaussians_.push_front(g);
 		} else {
