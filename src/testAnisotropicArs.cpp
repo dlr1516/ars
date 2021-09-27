@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
 	params.getParam<double>("inlierPerc", inlierPerc, double(0.60));
 	params.getParam<int>("arsOrder", arsOrder, int(20));
 	params.getParam<int>("arsStep", arsStep, int(720));
-	params.getParam<std::string>("clusterAlg", clusterAlg, std::string("scan"));
+	params.getParam<std::string>("clusterAlg", clusterAlg, std::string("hier"));
 
 	std::cout << "\nParams:" << std::endl;
 	params.write(std::cout);
@@ -136,6 +136,7 @@ int main(int argc, char **argv) {
 		gmeHier->setChiConfidence(chi2conf);
 		gmeHier->setInlierPerc(inlierPerc);
 		gmeHier->setCellSizeMax(gaussRes);
+                gme = gmeHier;
 	} else {
 		gmeMean = new ars::GaussianMixtureEstimatorMeanShift;
 		gmeMean->setSigmaMin(sigmaMin);

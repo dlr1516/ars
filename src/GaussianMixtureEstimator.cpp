@@ -36,7 +36,7 @@ GaussianMixtureEstimator::GaussianMixtureEstimator() :
 GaussianMixtureEstimator::~GaussianMixtureEstimator() {
 }
 
-void GaussianMixtureEstimator::clear() {
+void GaussianMixtureEstimator::clearGaussians() {
 	gaussians_.clear();
 }
 
@@ -323,7 +323,7 @@ void GaussianMixtureEstimatorMeanShift::compute(const VectorVector2 &samples) {
 
 	intraDistMaxMax = std::numeric_limits<double>::max();
 	iterNum = 0;
-	ARS_VARIABLE4(intraDistMaxMax, meanShiftTol_, iterNum, iterationNumMax_);
+//	ARS_VARIABLE4(intraDistMaxMax, meanShiftTol_, iterNum, iterationNumMax_);
 
 	while (intraDistMaxMax > meanShiftTol_ && iterNum < iterationNumMax_) {
 		updateMeans(meansCurr, meansNext, clusterLabels,
@@ -473,9 +473,9 @@ void GaussianMixtureEstimatorHierarchical::compute(
 		intervals.pop_front();
 		level = data_.computeLevel(intervalCur.first, intervalCur.second);
 		if (intervalCur.second != intervalCur.first) {
-			ARS_VARIABLE4(intervalCur.first->index.transpose(),
-					(intervalCur.second - 1)->index.transpose(), level,
-					levelMax_);
+//			ARS_VARIABLE4(intervalCur.first->index.transpose(),
+//					(intervalCur.second - 1)->index.transpose(), level,
+//					levelMax_);
 		}
 		if (level <= levelMax_
 				&& estimateGaussianFromSegment(intervalCur.first,
@@ -485,8 +485,8 @@ void GaussianMixtureEstimatorHierarchical::compute(
 			gaussians_.push_front(g);
 		} else {
 			mid = data_.findSplit(intervalCur.first, intervalCur.second);
-			ARS_PRINT(
-					"splitting into\n" << "  ([" << intervalCur.first->index.transpose() << "], [" << mid->index.transpose() << "])\n" << "  ([" << mid->index.transpose() << "], [" << (intervalCur.second-1)->index.transpose() << "])");
+//			ARS_PRINT(
+//					"splitting into\n" << "  ([" << intervalCur.first->index.transpose() << "], [" << mid->index.transpose() << "])\n" << "  ([" << mid->index.transpose() << "], [" << (intervalCur.second-1)->index.transpose() << "])");
 			intervals.push_back(std::make_pair(intervalCur.first, mid));
 			intervals.push_back(std::make_pair(mid, intervalCur.second));
 		}
@@ -526,7 +526,7 @@ bool GaussianMixtureEstimatorHierarchical::estimateGaussianFromPoints(
 	}
 	mean = mean / num;
 
-	ARS_VARIABLE2(num, mean.transpose());
+//	ARS_VARIABLE2(num, mean.transpose());
 
 	// Computes the covariance
 	covar = Matrix2::Zero();
@@ -558,7 +558,7 @@ bool GaussianMixtureEstimatorHierarchical::estimateGaussianFromPoints(
 			inlier++;
 		}
 	}
-	ARS_VARIABLE2(inlier, chi2Thres_);
+//	ARS_VARIABLE2(inlier, chi2Thres_);
 	return (inlier >= inlierPerc_ * num);
 }
 
@@ -626,7 +626,7 @@ bool GaussianMixtureEstimatorHierarchical::estimateGaussianFromSegment(
 			inlier++;
 		}
 	}
-	ARS_VARIABLE2(inlier, chi2Thres_);
+//	ARS_VARIABLE2(inlier, chi2Thres_);
 	return (inlier >= inlierPerc_ * num);
 }
 

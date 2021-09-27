@@ -72,7 +72,7 @@ public:
 	/**
 	 * Clear gaussians_ vector
 	 */
-	void clear();
+	void clearGaussians();
 
 	/**
 	 * Computes the Gaussian parameters from the given samples.
