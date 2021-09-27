@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     ars::GaussianMixtureEstimatorScan* gmeScan = nullptr;
     ars::GaussianMixtureEstimatorHierarchical* gmeHier = nullptr;
     ars::GaussianMixtureEstimatorMeanShift* gmeMean = nullptr;
-    double sigmaMin, clusterDist, meanShiftTol, distanceGap, distanceSplit, chi2conf, gaussRes, weightSum, lmin, lmax, theta;
+    double sigmaMin, clusterDist, meanShiftTol, distanceGap, distanceSplit, chi2conf, gaussRes, inlierPerc, covarWidth, weightSum, lmin, lmax, theta;
     ars::Vector2 pmin, pmax;
     double rangeMax, framePlot;
     int iterationNumMax;
@@ -44,6 +44,8 @@ int main(int argc, char** argv) {
     params.getParam<double>("distanceSplit", distanceSplit, double(0.2));
     params.getParam<double>("chi2conf", chi2conf, double(0.80));
     params.getParam<double>("gaussRes", gaussRes, double(1.0));
+    params.getParam<double>("covarWidth", covarWidth, double(0.2));
+    params.getParam<double>("inlierPerc", inlierPerc, double(0.60));
     params.getParam<std::string>("clusterAlg", clusterAlg, std::string("scan"));
     params.getParam<double>("rangeMax", rangeMax, double(10.0));
 
@@ -77,6 +79,7 @@ int main(int argc, char** argv) {
     } else if (clusterAlg == "hier") {
         gmeHier = new ars::GaussianMixtureEstimatorHierarchical;
         gmeHier->setSigmaMin(sigmaMin);
+        gmeHier->setCovarWidth(covarWidth);
         gmeHier->setChiConfidence(chi2conf);
         gmeHier->setCellSizeMax(gaussRes);
         gme = gmeHier;
