@@ -34,6 +34,8 @@ double acesRanges[] = {50.00, 50.00, 50.00, 5.26, 5.21, 5.06, 5.01, 3.01, 2.94, 
 
 void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, ars::VectorVector2& points);
 
+int readPoints(std::string filename, ars::VectorVector2& points);
+
 void plotEllipse(std::ostream& out, int idx, const ars::Vector2& mean, const ars::Matrix2& covar);
 
 void plotEllipses(std::ostream& out, const ars::VectorVector2& means, const ars::VectorMatrix2& covars);
@@ -50,21 +52,24 @@ int main(int argc, char** argv) {
     ars::GaussianMixtureEstimatorScan* gmeScan = nullptr;
     ars::GaussianMixtureEstimatorHierarchical* gmeHier = nullptr;
     ars::GaussianMixtureEstimatorMeanShift* gmeMean = nullptr;
-    double distanceGap, distanceSplit, clusterDist, meanShiftTol, sigmaMin, weightSum, lmin, lmax, theta, th;
+    double distanceGap, distanceSplit, clusterDist, meanShiftTol,chi2conf, gaussRes, sigmaMin, weightSum, lmin, lmax, theta, th;
     int arsOrder, arsStep;
     ars::ParamMap params;
-    std::string filenameCfg, clusterAlg;
+    std::string filenameCfg, filenameIn, clusterAlg;
 
     // Reads params from command line
     params.read(argc, argv);
     params.getParam("cfg", filenameCfg, std::string(""));
     params.read(filenameCfg);
     params.read(argc, argv);
+    params.getParam<std::string>("in", filenameIn, std::string(""));
     params.getParam<double>("distanceGap", distanceGap, double(0.6));
     params.getParam<double>("distanceSplit", distanceSplit, double(0.2));
     params.getParam<double>("sigmaMin", sigmaMin, double(0.05));
     params.getParam<double>("clusterDist", clusterDist, double(4.0));
     params.getParam<double>("meanShiftTol", meanShiftTol, double(2.0));
+    params.getParam<double>("chi2conf", chi2conf, double(0.80));
+    params.getParam<double>("gaussRes", gaussRes, double(1.0));
     params.getParam<int>("arsOrder", arsOrder, int(20));
     params.getParam<int>("arsStep", arsStep, int(720));
     params.getParam<std::string>("clusterAlg", clusterAlg, std::string("scan"));
@@ -73,8 +78,18 @@ int main(int argc, char** argv) {
     params.write(std::cout);
     std::cout << "-------\n" << std::endl;
 
-    rangeToPoint(acesRanges, 180, -0.5 * M_PI, M_PI / 180.0 * 1.0, acesPoints);
-    acesPoints.push_back(ars::Vector2::Zero());
+    // Tries to read points from file: if not, the points are read from the available example
+    if (readPoints(filenameIn, acesPoints) > 0) {
+    	std::cout << "Read points from file \"" << filenameIn << "\"" << std::endl;
+    } else {
+    	std::cout << "Default scan points" << std::endl;
+    	//rangeToPoint(acesRanges, 180, -0.5 * M_PI, M_PI / 180.0 * 1.0, rangeMax, acesPoints);
+    	rangeToPoint(acesRanges, 180, -0.5 * M_PI, M_PI / 180.0 * 1.0, acesPoints);
+    	acesPoints.push_back(ars::Vector2::Zero());
+    }
+
+    //rangeToPoint(acesRanges, 180, -0.5 * M_PI, M_PI / 180.0 * 1.0, acesPoints);
+    //acesPoints.push_back(ars::Vector2::Zero());
     std::cout << "Number of input points: " << acesPoints.size() << std::endl;
     //    ars::Vector2 mean1, mean2;
     //    ars::Matrix2 covar1, covar2;
@@ -96,6 +111,8 @@ int main(int argc, char** argv) {
     } else if (clusterAlg == "hier") {
         gmeHier = new ars::GaussianMixtureEstimatorHierarchical;
         gmeHier->setSigmaMin(sigmaMin);
+        gmeHier->setChiConfidence(chi2conf);
+        gmeHier->setCellSizeMax(gaussRes);
         gme = gmeHier;
     } else {
         gmeMean = new ars::GaussianMixtureEstimatorMeanShift;
@@ -181,6 +198,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < ars1.coefficients().size() && i < ars2.coefficients().size(); ++i) {
         std::cout << "\t" << i << "\t" << ars1.coefficients()[i] << "\t" << ars2.coefficients()[i] << "\n";
     }
+    ARS_PRINT("Plot");
 
     gp << "set term wxt 1 title \"ARS\"\n";
     gp << "clear\n";
@@ -195,6 +213,7 @@ int main(int argc, char** argv) {
         gp << " " << (180.0 / M_PI * th) << " " << ars2.eval(th) << "\n";
     }
     gp << "e\n";
+    ARS_PRINT("called eval() many times");
     
     std::cout << "\n---\nEXECUTION TIMES:" << std::endl;
     ars::Profiler::getProfiler().printStats(std::cout);
@@ -211,6 +230,41 @@ void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, ars
         p << ranges[i] * cos(a), ranges[i] * sin(a);
         points.push_back(p);
     }
+}
+
+int readPoints(std::string filename, ars::VectorVector2& points) {
+    std::string line, comment;
+    ars::Vector2 p;
+    size_t pos;
+    int count;
+
+    std::ifstream file(filename);
+    if (!file) {
+        std::cerr << "Cannot open file \"" << filename << "\"" << std::endl;
+        return 0;
+    }
+
+    points.clear();
+    count = 0;
+    while (!file.eof()) {
+        std::getline(file, line);
+        // Remove comments starting with '#'
+        comment = "";
+        pos = line.find_first_of('#');
+        if (pos != std::string::npos) {
+            comment = line.substr(pos + 1, line.size());
+            line = line.substr(0, pos);
+        }
+        // Parse the line (after comment removal
+        std::stringstream ssline(line);
+        if (ssline >> p.x() >> p.y()) {
+            points.push_back(p);
+            count++;
+        }
+    }
+    file.close();
+
+    return count;
 }
 
 void plotEllipse(std::ostream& out, int idx, const ars::Vector2& mean, const ars::Matrix2& covar) {

@@ -288,7 +288,7 @@ namespace ars {
     /** Evaluates the ARSF using the coefficients obtained from downward recursion. 
      */
     double AngularRadonSpectrum2d::eval(double theta) const {
-        evaluateFourier(coeffs_, 2.0 * theta);
+        return evaluateFourier(coeffs_, 2.0 * theta);
     }
 
 
