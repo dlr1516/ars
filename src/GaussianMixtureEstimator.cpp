@@ -476,16 +476,16 @@ namespace ars {
                 //					(intervalCur.second - 1)->index.transpose(), level,
                 //					levelMax_);
             }
-            if (level <= levelMax_
-                    && estimateGaussianISE(intervalCur.first,
-                    intervalCur.second, g.mean, g.covar, g.weight)) {
+            if (level <= levelMax_ && estimateGaussianISE(intervalCur.first, intervalCur.second, g.mean, g.covar, g.weight)) {
                 gaussians_.push_front(g);
             } else {
                 mid = data_.findSplit(intervalCur.first, intervalCur.second);
                 //			ARS_PRINT(
                 //					"splitting into\n" << "  ([" << intervalCur.first->index.transpose() << "], [" << mid->index.transpose() << "])\n" << "  ([" << mid->index.transpose() << "], [" << (intervalCur.second-1)->index.transpose() << "])");
-                intervals.push_back(std::make_pair(intervalCur.first, mid));
-                intervals.push_back(std::make_pair(mid, intervalCur.second));
+                if (mid != intervalCur.first && mid != intervalCur.second) {
+                    intervals.push_back(std::make_pair(intervalCur.first, mid));
+                    intervals.push_back(std::make_pair(mid, intervalCur.second));
+                }
             }
         }
 
@@ -619,44 +619,57 @@ namespace ars {
     bool GaussianMixtureEstimatorHierarchical::estimateGaussianISE(const ConstIterator &beg, const ConstIterator &end, Vector2 &mean,
             Matrix2 &covar, double &wMerged) const {
 
-        double wOrig = 1.0 / data_.size();
+
+        ARS_ASSERT(beg != end);
+
+
+        double sigmaMinSqrd = sigmaMin_ * sigmaMin_;
+        double wOrig = 1.0 / data_.size(); //w_i
+
 
         int num = 0;
+        mean = Vector2::Zero();
         for (auto it = beg; it != end; ++it) {
             mean += it->value;
             num++;
         }
-        mean = mean / num;
+        mean /= num;
 
-        wMerged = wOrig*num;
+
+        std::cout << "num " << num << std::endl;
+        std::cout << "mean " << mean << std::endl;
+
+
+
+        wMerged = wOrig*num; //w_L
 
         covar = Matrix2::Zero();
         for (auto it = beg; it != end; ++it) {
-            Vector2 tmp = (it->value - mean);
-
+            Vector2 tmp = it->value - mean;
             covar += tmp * tmp.transpose();
         }
         covar = covar / num;
-        covar(0, 0) += sigmaMin_ * sigmaMin_;
-        covar(1, 1) += sigmaMin_ * sigmaMin_;
+        covar(0, 0) += sigmaMinSqrd;
+        covar(1, 1) += sigmaMinSqrd;
+
+        std::cout << "covar\n" << covar << std::endl;
 
 
         double jNN = 0.0, jLL = 0.0, jNL = 0.0;
 
-        jLL = wMerged * wMerged / (2 * M_PI * covar.determinant());
+        jLL = wMerged * wMerged / (2 * M_PI * sqrt((2*covar).determinant()));
 
-        double sigmaMinSqrd = sigmaMin_ * sigmaMin_;
-        double normOrig = 1.0 / (4 * M_PI * sigmaMinSqrd * sigmaMinSqrd); //const1
+        double normOrig = 1.0 / (4 * M_PI * sigmaMinSqrd); //normNN
         double gaussConstOrig = -0.25 / sigmaMinSqrd; //const2
 
         Matrix2 covarNL = covar + sigmaMinSqrd * Matrix2::Identity();
         Matrix2 infoNL = covarNL.inverse();
-        double normNL = 1.0 / (2 * M_PI * covarNL.determinant());
+        double normNL = 1.0 / (2 * M_PI * sqrt(covarNL.determinant()));
 
         for (auto it = beg; it != end; ++it) {
             jNN += 1.0;
             for (auto it2 = it + 1; it2 != end; ++it2) {
-                jNN += exp(gaussConstOrig * (it->value - it2->value).dot(it->value - it2->value));
+                jNN += 2 * exp(gaussConstOrig * (it->value - it2->value).dot(it->value - it2->value));
             }
 
             jNL += exp(-0.5 * (it->value - mean).transpose() * infoNL * (it->value - mean));
@@ -666,8 +679,26 @@ namespace ars {
         jNL *= wOrig * wMerged * normNL;
 
 
+        double nise = 1 - 2 * jNL / (jNN + jLL);
 
-        return (1 - 2 * jNL / (jNN + jLL) < iseThres_);
+        if (num == 1) {
+            std::cout << "nise " << nise << std::endl;
+            //            std::cout << "wMerged " << wMerged << std::endl;
+            //                        std::cout << "wOrig " << wOrig << std::endl;
+            std::cout << "mean\n" << mean.transpose() << std::endl;
+            std::cout << "beg " << (beg->value).transpose() << std::endl;
+            std::cout << "normOrig " << normOrig << std::endl;
+            std::cout << "normNL " << normNL << std::endl;
+            std::cout << "jNN " << jNN << std::endl;
+            std::cout << "jNL " << jNL << std::endl;
+            std::cout << "jLL " << jLL << std::endl;
+
+//            std::cin.get();
+        }
+
+        std::cout << "--------------\n\n\n" << std::endl;
+
+        return nise < iseThres_;
     }
 
 

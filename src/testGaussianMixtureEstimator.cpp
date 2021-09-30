@@ -24,6 +24,7 @@ int main(int argc, char** argv) {
     ars::GaussianMixtureEstimatorHierarchical* gmeHier = nullptr;
     ars::GaussianMixtureEstimatorMeanShift* gmeMean = nullptr;
     double sigmaMin, clusterDist, meanShiftTol, distanceGap, distanceSplit, chi2conf, gaussRes, inlierPerc, covarWidth, weightSum, lmin, lmax, theta;
+    double iseThresh;
     ars::Vector2 pmin, pmax;
     double rangeMax, framePlot;
     int iterationNumMax;
@@ -43,6 +44,7 @@ int main(int argc, char** argv) {
     params.getParam<double>("distanceGap", distanceGap, double(0.6));
     params.getParam<double>("distanceSplit", distanceSplit, double(0.2));
     params.getParam<double>("chi2conf", chi2conf, double(0.80));
+    params.getParam<double>("iseThresh", iseThresh, double(0.30));
     params.getParam<double>("gaussRes", gaussRes, double(1.0));
     params.getParam<double>("covarWidth", covarWidth, double(0.2));
     params.getParam<double>("inlierPerc", inlierPerc, double(0.60));
@@ -80,7 +82,8 @@ int main(int argc, char** argv) {
         gmeHier = new ars::GaussianMixtureEstimatorHierarchical;
         gmeHier->setSigmaMin(sigmaMin);
         gmeHier->setCovarWidth(covarWidth);
-        gmeHier->setChiConfidence(chi2conf);
+        //        gmeHier->setChiConfidence(chi2conf);
+        gmeHier->setIseThreshold(iseThresh);
         gmeHier->setCellSizeMax(gaussRes);
         gme = gmeHier;
     } else {
@@ -100,10 +103,10 @@ int main(int argc, char** argv) {
     for (int i = 0; i < gme->size(); ++i) {
         ars::diagonalize(gme->covariance(i), lmin, lmax, theta);
         //if (gme->size() < 30) {
-        std::cout << "---\n " << i << ": weight " << gme->weight(i) << ", "
-                << "mean [" << gme->mean(i).transpose() << "], covar\n"
-                << gme->covariance(i) << "\n"
-                << "  (lmin " << lmin << ", lmax " << lmax << ", theta[deg] " << (180.0 / M_PI * theta) << ")\n";
+//        std::cout << "---\n " << i << ": weight " << gme->weight(i) << ", "
+//                << "mean [" << gme->mean(i).transpose() << "], covar\n"
+//                << gme->covariance(i) << "\n"
+//                << "  (lmin " << lmin << ", lmax " << lmax << ", theta[deg] " << (180.0 / M_PI * theta) << ")\n";
         //}
         weightSum += gme->weight(i);
     }

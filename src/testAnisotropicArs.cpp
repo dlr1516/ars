@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
 	ars::GaussianMixtureEstimatorScan *gmeScan = nullptr;
 	ars::GaussianMixtureEstimatorHierarchical *gmeHier = nullptr;
 	ars::GaussianMixtureEstimatorMeanShift *gmeMean = nullptr;
-	double distanceGap, distanceSplit, clusterDist, meanShiftTol, chi2conf,
+	double distanceGap, distanceSplit, clusterDist, meanShiftTol, chi2conf, iseThresh,
 			inlierPerc, gaussRes, sigmaMin, covarWidth, weightSum, lmin, lmax,
 			theta, th;
 	int arsOrder, arsStep;
@@ -86,6 +86,7 @@ int main(int argc, char **argv) {
 	params.getParam<double>("clusterDist", clusterDist, double(4.0));
 	params.getParam<double>("meanShiftTol", meanShiftTol, double(2.0));
 	params.getParam<double>("chi2conf", chi2conf, double(0.80));
+        params.getParam<double>("iseThresh", iseThresh, double(0.95));
 	params.getParam<double>("gaussRes", gaussRes, double(1.0));
 	params.getParam<double>("covarWidth", covarWidth, double(0.2));
 	params.getParam<double>("inlierPerc", inlierPerc, double(0.60));
@@ -133,7 +134,8 @@ int main(int argc, char **argv) {
 		gmeHier = new ars::GaussianMixtureEstimatorHierarchical;
 		gmeHier->setSigmaMin(sigmaMin);
 		gmeHier->setCovarWidth(covarWidth);
-		gmeHier->setChiConfidence(chi2conf);
+//		gmeHier->setChiConfidence(chi2conf);
+                gmeHier->setIseThreshold(iseThresh);
 		gmeHier->setInlierPerc(inlierPerc);
 		gmeHier->setCellSizeMax(gaussRes);
                 gme = gmeHier;
