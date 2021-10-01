@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
 	params.getParam<double>("clusterDist", clusterDist, double(4.0));
 	params.getParam<double>("meanShiftTol", meanShiftTol, double(2.0));
 	params.getParam<double>("chi2conf", chi2conf, double(0.80));
-        params.getParam<double>("iseThresh", iseThresh, double(0.95));
+        params.getParam<double>("iseThresh", iseThresh, double(0.03));
 	params.getParam<double>("gaussRes", gaussRes, double(1.0));
 	params.getParam<double>("covarWidth", covarWidth, double(0.2));
 	params.getParam<double>("inlierPerc", inlierPerc, double(0.60));
