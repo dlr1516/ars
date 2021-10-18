@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
     params.getParam<double>("distanceSplit", distanceSplit, double(0.2));
     params.getParam<double>("chi2conf", chi2conf, double(0.80));
     params.getParam<double>("iseThresh", iseThresh, double(0.30));
-    params.getParam<double>("gaussRes", gaussRes, double(1.0));
+    params.getParam<double>("gaussRes", gaussRes, double(16.0 * sigmaMin));
     params.getParam<double>("covarWidth", covarWidth, double(0.2));
     params.getParam<double>("inlierPerc", inlierPerc, double(0.60));
     params.getParam<std::string>("clusterAlg", clusterAlg, std::string("scan"));

@@ -636,8 +636,8 @@ namespace ars {
         mean /= num;
 
 
-        std::cout << "num " << num << std::endl;
-        std::cout << "mean " << mean << std::endl;
+        //std::cout << "num " << num << std::endl;
+        //std::cout << "mean " << mean << std::endl;
 
 
 
@@ -652,7 +652,7 @@ namespace ars {
         covar(0, 0) += sigmaMinSqrd;
         covar(1, 1) += sigmaMinSqrd;
 
-        std::cout << "covar\n" << covar << std::endl;
+        //std::cout << "covar\n" << covar << std::endl;
 
 
         double jNN = 0.0, jLL = 0.0, jNL = 0.0;
@@ -682,21 +682,21 @@ namespace ars {
         double nise = 1 - 2 * jNL / (jNN + jLL);
 
         if (num == 1) {
-            std::cout << "nise " << nise << std::endl;
+            //std::cout << "nise " << nise << std::endl;
             //            std::cout << "wMerged " << wMerged << std::endl;
             //                        std::cout << "wOrig " << wOrig << std::endl;
-            std::cout << "mean\n" << mean.transpose() << std::endl;
-            std::cout << "beg " << (beg->value).transpose() << std::endl;
-            std::cout << "normOrig " << normOrig << std::endl;
-            std::cout << "normNL " << normNL << std::endl;
-            std::cout << "jNN " << jNN << std::endl;
-            std::cout << "jNL " << jNL << std::endl;
-            std::cout << "jLL " << jLL << std::endl;
-
+            //std::cout << "mean\n" << mean.transpose() << std::endl;
+            //std::cout << "beg " << (beg->value).transpose() << std::endl;
+            //std::cout << "normOrig " << normOrig << std::endl;
+            //std::cout << "normNL " << normNL << std::endl;
+            //std::cout << "jNN " << jNN << std::endl;
+            //std::cout << "jNL " << jNL << std::endl;
+            //std::cout << "jLL " << jLL << std::endl;
+            return true;
 //            std::cin.get();
         }
 
-        std::cout << "--------------\n\n\n" << std::endl;
+//        std::cout << "--------------\n\n\n" << std::endl;
 
         return nise < iseThres_;
     }
