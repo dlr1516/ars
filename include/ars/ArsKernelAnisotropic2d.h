@@ -71,9 +71,9 @@ namespace ars {
          * the period M_PI.
          * @param nRes number of interval 
          */
-        void setIntervalNum(int nRes) {
-            nRes_ = nRes;
-        }
+//        void setIntervalNum(int nRes) {
+//            nRes_ = nRes;
+//        }
 
         /**
          * Returns the module of the sinusoidal numerator. 
@@ -152,7 +152,7 @@ namespace ars {
         double sigmaMod_;
         double sigmaAng_;
         double sigmaDif_;
-        int nRes_;
+//        int nRes_;
     };
 
 }

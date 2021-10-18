@@ -119,12 +119,12 @@ namespace ars {
 
     AngularRadonSpectrum2d::AngularRadonSpectrum2d()
     : coeffs_(), isotropicKer_(), anisotropicKer_(), arsfOrder_(0),
-    thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4), anisotropicStep_(720) {    // pnebiLut_(), mode_(PNEBI_LUT),
+    thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4) {    // pnebiLut_(), mode_(PNEBI_LUT), anisotropicStep_(720)
     }
 
     AngularRadonSpectrum2d::AngularRadonSpectrum2d(const std::vector<double>& coeffs)
     : coeffs_(coeffs), isotropicKer_(), anisotropicKer_(), arsfOrder_(0),
-    thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4), anisotropicStep_(720) {  // pnebiLut_(), mode_(PNEBI_LUT),
+    thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4) {  // pnebiLut_(), mode_(PNEBI_LUT), anisotropicStep_(720)
     }
 
     AngularRadonSpectrum2d::~AngularRadonSpectrum2d() {
@@ -175,11 +175,16 @@ namespace ars {
     }
 
     void AngularRadonSpectrum2d::insertIsotropicGaussians(const VectorVector2& means, const std::vector<double>& sigmas) {
+    	ARS_PRINT("NOT IMPLEMENTED!");
+    	ARS_ASSERT(false);
     }
     
     void AngularRadonSpectrum2d::insertIsotropicGaussians(const VectorVector2& means, const std::vector<double>& sigmas, const std::vector<double>& weights) {
         int kernelNum = means.size();
         double w = 1.0 / (kernelNum * kernelNum);
+
+        ARS_PRINT("IMPLEMENTATION NOT FINISHED!");
+		ARS_ASSERT(false);
 
         if (kernelNum != sigmas.size()) {
             std::cerr << __FILE__ << "," << __LINE__ << ": inconsistent vector sizes: found " << means.size()
@@ -232,7 +237,7 @@ namespace ars {
             return;
         }
 
-        nik.setIntervalNum(anisotropicStep_);
+        //nik.setIntervalNum(anisotropicStep_);
         //ARS_ASSERT(coeffs_.size() == 2 * arsfOrder_ && coeffsPartial.size() == 2 * arsfOrder_);
         coeffs_.resize(2 * arsfOrder_ + 2);
         coeffsPartial.resize(2 * arsfOrder_ + 2);

@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
     std::string clusterAlg;
     double distanceGap, distanceSplit, sigmaMin, weightSum, lmin, lmax, theta, th;
     double clusterDist, meanShiftTol, chi2conf, iseThresh, gaussRes, covarWidth, inlierPerc;
-    int arsOrder, arsStep;
+    int arsOrder;
     double arsSigma, arsThetaToll;
     double rotTrue, rotArs;
 
@@ -105,7 +105,6 @@ int main(int argc, char **argv) {
     params.getParam<double>("covarWidth", covarWidth, double(0.2));
     params.getParam<double>("inlierPerc", inlierPerc, double(0.60));
     params.getParam<int>("arsOrder", arsOrder, 20);
-    params.getParam<int>("arsStep", arsStep, int(32));
     params.getParam<double>("arsSigma", arsSigma, 1.0);
     params.getParam<double>("arsTollDeg", arsThetaToll, 1.0);
     arsThetaToll *= M_PI / 180.0;
@@ -149,12 +148,9 @@ int main(int argc, char **argv) {
         gme = gmeScan;
     } else if (clusterAlg == "hier") {
         gmeHier = new ars::GaussianMixtureEstimatorHierarchical;
-        gmeHier->setSigmaMin(sigmaMin);
-        gmeHier->setCovarWidth(covarWidth);
-        //		gmeHier->setChiConfidence(chi2conf);
-        gmeHier->setIseThreshold(iseThresh);
-        gmeHier->setInlierPerc(inlierPerc);
         gmeHier->setCellSizeMax(gaussRes);
+        gmeHier->setSigmaMin(sigmaMin);
+        gmeHier->setIseThreshold(iseThresh);
         gme = gmeHier;
     } else {
         gmeMean = new ars::GaussianMixtureEstimatorMeanShift;
@@ -206,7 +202,7 @@ int main(int argc, char **argv) {
 
     std::cout << "insertAnisotropicGaussians() src data: means.size() " << means.size() << std::endl;
     arsSrc.setARSFOrder(arsOrder);
-    arsSrc.setAnisotropicStep(arsStep);
+    //arsSrc.setAnisotropicStep(arsStep);
     {
         ars::ScopedTimer timer("AngularRadonSpectrum2d::insertAnisotropicGaussians()");
         arsSrc.insertAnisotropicGaussians(means, covars, weights);
@@ -242,7 +238,6 @@ int main(int argc, char **argv) {
 
     std::cout << "insertAnisotropicGaussians() dst data: means.size() " << means.size() << std::endl;
     arsDst.setARSFOrder(arsOrder);
-    arsDst.setAnisotropicStep(arsStep);
     {
         ars::ScopedTimer timer("AngularRadonSpectrum2d::insertAnisotropicGaussians()");
         arsDst.insertAnisotropicGaussians(means, covars, weights);

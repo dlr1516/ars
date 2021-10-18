@@ -23,10 +23,10 @@
 namespace ars {
 
     ArsKernelAnisotropic2d::ArsKernelAnisotropic2d()
-    : muMod_(0.0), muAng_(0.0), sigmaMod_(0.0), sigmaAng_(0.0), sigmaDif_(0.0), nRes_(128) {
+    : muMod_(0.0), muAng_(0.0), sigmaMod_(0.0), sigmaAng_(0.0), sigmaDif_(0.0) {
     }
 
-    ArsKernelAnisotropic2d::ArsKernelAnisotropic2d(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2) : nRes_(128) {
+    ArsKernelAnisotropic2d::ArsKernelAnisotropic2d(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2) {
         init(mean1, covar1, mean2, covar2);
     }
 
@@ -82,13 +82,16 @@ namespace ars {
     }
 
     void ArsKernelAnisotropic2d::updateFourier(int nFourier, std::vector<double>& coeffs) const {
-        std::vector<double> kernelVal(nRes_ + 1);
+        std::vector<double> kernelVal(nFourier);
         double sumCos, sumSin, cosCurr, cosNext, cosIncr, sinCurr, sinNext, sinIncr;
-        double dt = M_PI / nRes_;
-        double h = 0.5 * dt / M_PI;
+        double dt;
+        //double h = 0.5 * dt / M_PI;
+
+        ARS_ASSERT(nFourier > 0);
 
         // Evaluates the kernel function at given intervals
-        for (int i = 0; i <= nRes_; ++i) {
+        dt = M_PI / nFourier;
+        for (int i = 0; i < nFourier; ++i) {
             kernelVal[i] = value(dt * i);
         }
 

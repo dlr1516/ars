@@ -67,7 +67,6 @@ int main(int argc, char** argv) {
             << "Gaussian2: mu " << mean2.transpose() << "\ncovar:\n" << covar2 << "\n"
             << "Sum covariance matrix:\n" << covar12 << "\n";
 
-    ak.setIntervalNum(arsStep);
     ak.init(mean1, covar1, mean2, covar2);
     ak.computeFourier(arsOrder, fourierCoeffsAnisot);
 
@@ -143,7 +142,6 @@ int main(int argc, char** argv) {
             << "Gaussian1: mu " << mean1.transpose() << "\ncovar:\n" << covar1 << "\n"
             << "Gaussian2: mu " << mean2.transpose() << "\ncovar:\n" << covar2 << "\n";
 
-    ak.setIntervalNum(arsStep);
     ak.init(mean1, covar1, mean2, covar2);
     ak.computeFourier(arsOrder, fourierCoeffsAnisot);
     ARS_PRINT("Anisotropic kernel computed parameters:\n"

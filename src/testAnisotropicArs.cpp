@@ -199,7 +199,6 @@ int main(int argc, char **argv) {
 	//    }
 
 	ars1.setARSFOrder(arsOrder);
-	ars1.setAnisotropicStep(arsStep);
 	//ars1.insertAnisotropicGaussian(means, covars, weights);
 	{
 		ars::ScopedTimer timer(

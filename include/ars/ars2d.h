@@ -110,9 +110,9 @@ namespace ars {
          * is used instead. 
          * @param as
          */
-        void setAnisotropicStep(int as) {
-            anisotropicStep_ = as;
-        }
+//        void setAnisotropicStep(int as) {
+//            anisotropicStep_ = as;
+//        }
 
         /** Returns const reference to ARS Fourier coefficients. 
          * Coefficients are obtained from a Gaussian Mixture Model (GMM) representing
@@ -232,7 +232,7 @@ namespace ars {
         double thetaToll_;
         int threadNumOMP_;
         // Parameters for computation of the Fourier coefficients of anisotropic kernels
-        int anisotropicStep_;
+        //int anisotropicStep_;
     };
 
 } // end of namespace
