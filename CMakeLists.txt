@@ -41,25 +41,25 @@ add_library(ars
   src/Profiler.cpp
 )
 
-add_executable(testFunctions src/testFunctions.cpp )
+add_executable(testFunctions app/testFunctions.cpp )
 target_link_libraries(testFunctions ${ars_LINK_LIBS} ars)
 
-add_executable(testIsotropicArs src/testIsotropicArs.cpp )
+add_executable(testIsotropicArs app/testIsotropicArs.cpp )
 target_link_libraries(testIsotropicArs ${ars_LINK_LIBS} ars)
 
-add_executable(testAnisotropicArs src/testAnisotropicArs.cpp)
+add_executable(testAnisotropicArs app/testAnisotropicArs.cpp)
 target_link_libraries(testAnisotropicArs ${ars_LINK_LIBS} ars)
 
-add_executable(testCorrelationArs src/testCorrelationArs.cpp)
+add_executable(testCorrelationArs app/testCorrelationArs.cpp)
 target_link_libraries(testCorrelationArs ${ars_LINK_LIBS} ars)
 
-add_executable(testAnisotropicKernel src/testAnisotropicKernel.cpp)
+add_executable(testAnisotropicKernel app/testAnisotropicKernel.cpp)
 target_link_libraries(testAnisotropicKernel ${ars_LINK_LIBS} ars)
 
-add_executable(testGaussianMixtureEstimator src/testGaussianMixtureEstimator.cpp)
+add_executable(testGaussianMixtureEstimator app/testGaussianMixtureEstimator.cpp)
 target_link_libraries(testGaussianMixtureEstimator ${ars_LINK_LIBS} ars)
 
-#add_executable(testMortonOrderedPoints src/testMortonOrderedPoints.cpp)
+#add_executable(testMortonOrderedPoints app/testMortonOrderedPoints.cpp)
 #target_link_libraries(testMortonOrderedPoints ${ars_LINK_LIBS} ars)
 
 # Option "make install": copy binaries
