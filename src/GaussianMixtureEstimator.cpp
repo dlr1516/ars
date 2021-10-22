@@ -465,6 +465,10 @@ namespace ars {
         int level;
 
         num = (double) samples.size();
+        if (num == 0) {
+        	return;
+        }
+
         data_.insert(samples);
         intervals.push_back(std::make_pair(std::begin(data_), std::end(data_)));
         while (!intervals.empty()) {
@@ -618,7 +622,6 @@ namespace ars {
 
     bool GaussianMixtureEstimatorHierarchical::estimateGaussianISE(const ConstIterator &beg, const ConstIterator &end, Vector2 &mean,
             Matrix2 &covar, double &wMerged) const {
-
 
         ARS_ASSERT(beg != end);
 
