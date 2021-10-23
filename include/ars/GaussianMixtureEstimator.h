@@ -385,6 +385,15 @@ namespace ars {
          */
         virtual ~GaussianMixtureEstimatorHierarchical();
 
+
+		double getSigmaMin() const {
+			return sigmaMin_;
+		}
+
+		double getIseThreshold() const {
+			return iseThres_;
+		}
+
         /**
          * Sets the minimum value of standard deviation of Gaussians.
          * @param sm the minimum standard deviation
