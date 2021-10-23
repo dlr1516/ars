@@ -19,63 +19,98 @@
 
 namespace ars {
 
-    // ----------------------------------------------------
-    // PROFILER
-    // ----------------------------------------------------
+	// ----------------------------------------------------
+	// PROFILER
+	// ----------------------------------------------------
 
-    void Profiler::updateStat(std::string label, double time) {
-        auto it = stats_.find(label);
-        if (it == stats_.end()) {
-            MeasureStatistic ms(time);
-            stats_.insert(std::make_pair(label, ms));
-        } else {
-            // Computes mean value and variance with online Welford’s method 
-            double timeAvgOld = it->second.timeAvg;
-            it->second.timeAvg += (time - timeAvgOld) / (double) it->second.count;
-            it->second.timeVar += (time - it->second.timeAvg) * (time - timeAvgOld);
-            if (time < it->second.timeMin) {
-                it->second.timeMin = time;
-            }
-            if (time > it->second.timeMax) {
-                it->second.timeMax = time;
-            }
-            it->second.count++;
-        }
-    }
+	void Profiler::updateStat(const std::string &label, double time) {
+		auto it = stats_.find(label);
+		if (it == stats_.end()) {
+			MeasureStatistic ms(time);
+			stats_.insert(std::make_pair(label, ms));
+		} else {
+			// Computes mean value and variance with online Welford’s method
+			double timeAvgOld = it->second.timeAvg;
+			it->second.timeAvg += (time - timeAvgOld) / (double) it->second.count;
+			it->second.timeVar += (time - it->second.timeAvg) * (time - timeAvgOld);
+			if (time < it->second.timeMin) {
+				it->second.timeMin = time;
+			}
+			if (time > it->second.timeMax) {
+				it->second.timeMax = time;
+			}
+			it->second.count++;
+		}
+	}
 
-    void Profiler::printStats(std::ostream& out) const {
-        for (auto s : stats_) {
-            out << s.first << " \t"
-                    << s.second.timeAvg << " \t"
-                    << s.second.getVariance() << " \t"
-                    << s.second.timeMin << " \t"
-                    << s.second.timeMax << " \t"
-                    << s.second.count << " \t"
-                    << std::endl;
-        }
-    }
+	bool Profiler::getStat(const std::string &label, double &timeAvg, double &timeVar, double &timeMin, double &timeMax, int &count) const {
+		auto it = stats_.find(label);
+		if (it == stats_.end()) {
+			timeAvg = 0.0;
+			timeVar = 0.0;
+			timeMin = 0.0;
+			timeMax = 0.0;
+			count = 0;
+			return false;
+		}
+		timeAvg = it->second.timeAvg;
+		timeVar = it->second.timeVar;
+		timeMin = it->second.timeMin;
+		timeMax = it->second.timeMax;
+		count = it->second.count;
+		return true;
+	}
 
-    // ----------------------------------------------------
-    // SCOPED TIMER
-    // ----------------------------------------------------
+	bool Profiler::getStat(const std::string &label, double &timeAvg, double &timeVar, int &count) const {
+		auto it = stats_.find(label);
+		if (it == stats_.end()) {
+			timeAvg = 0.0;
+			timeVar = 0.0;
+			count = 0;
+			return false;
+		}
+		timeAvg = it->second.timeAvg;
+		timeVar = it->second.timeVar;
+		count = it->second.count;
+		return true;
+	}
 
-    ScopedTimer::ScopedTimer(std::string label) : label_(label), timeStart_(timer_type::now()) {
-        // before: timeStart_(std::chrono::high_resolution_clock::now())
-    }
+	bool Profiler::getStat(const std::string &label, double &timeAvg) const {
+		auto it = stats_.find(label);
+		if (it == stats_.end()) {
+			timeAvg = 0.0;
+			return false;
+		}
+		timeAvg = it->second.timeAvg;
+		return true;
+	}
 
-    ScopedTimer::~ScopedTimer() {
-        Profiler::getProfiler().updateStat(label_, elapsedTimeMs());
-    }
+	void Profiler::printStats(std::ostream &out) const {
+		for (auto s : stats_) {
+			out << s.first << " \t" << s.second.timeAvg << " \t" << s.second.getVariance() << " \t" << s.second.timeMin << " \t" << s.second.timeMax << " \t"
+					<< s.second.count << " \t" << std::endl;
+		}
+	}
 
-    double ScopedTimer::elapsedTimeMs() const {
-        //auto elapsedNanosec = std::chrono::duration_cast<double,std::chrono::milliseconds>(std::chrono::steady_clock::now() - timeStart_).count();
-        //double timeElapsed = 1.0 * (double)elapsedNanosec;
-        std::chrono::duration<double, std::milli> timeElapsed = timer_type::now() - timeStart_;
-        return timeElapsed.count();
-    }
+	// ----------------------------------------------------
+	// SCOPED TIMER
+	// ----------------------------------------------------
+
+	ScopedTimer::ScopedTimer(std::string label) :
+			label_(label), timeStart_(timer_type::now()) {
+		// before: timeStart_(std::chrono::high_resolution_clock::now())
+	}
+
+	ScopedTimer::~ScopedTimer() {
+		Profiler::getProfiler().updateStat(label_, elapsedTimeMs());
+	}
+
+	double ScopedTimer::elapsedTimeMs() const {
+		//auto elapsedNanosec = std::chrono::duration_cast<double,std::chrono::milliseconds>(std::chrono::steady_clock::now() - timeStart_).count();
+		//double timeElapsed = 1.0 * (double)elapsedNanosec;
+		std::chrono::duration<double, std::milli> timeElapsed = timer_type::now() - timeStart_;
+		return timeElapsed.count();
+	}
 
 }
-
-
-
 
