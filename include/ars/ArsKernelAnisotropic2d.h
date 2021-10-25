@@ -20,7 +20,9 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <unsupported/Eigen/FFT>
 #include <ars/definitions.h>
+
 
 namespace ars {
 
@@ -38,6 +40,8 @@ namespace ars {
      */
     class ArsKernelAnisotropic2d {
     public:
+    	static constexpr double INV_SQRT_2_PI = 0.3989422804;   // 1 / sqrt(2.0 * M_PI)
+
         /**
          * Creates a flat kernel
          */
@@ -132,7 +136,7 @@ namespace ars {
          * @param nRes number of intervals used in numeric integration
          * @param coeffs the computed coefficients 
          */
-        void computeFourier(int nFourier, std::vector<double>& coeffs) const;
+        void computeFourier(int nFourier, std::vector<double>& coeffs);
         
         /**
          * Computes the coefficients of Fourier series expansion of the kernel 
@@ -144,7 +148,7 @@ namespace ars {
          * @param nRes number of intervals used in numeric integration
          * @param coeffs the computed coefficients 
          */
-        void updateFourier(int nFourier, std::vector<double>& coeffs) const;
+        void updateFourier(int nFourier, std::vector<double>& coeffs);
 
     private:
         double muMod_;
@@ -152,6 +156,8 @@ namespace ars {
         double sigmaMod_;
         double sigmaAng_;
         double sigmaDif_;
+        Eigen::FFT<double> fft_;
+        std::vector<std::complex<double> > freqvec_;
 //        int nRes_;
     };
 

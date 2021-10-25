@@ -23,10 +23,11 @@
 namespace ars {
 
     ArsKernelAnisotropic2d::ArsKernelAnisotropic2d()
-    : muMod_(0.0), muAng_(0.0), sigmaMod_(0.0), sigmaAng_(0.0), sigmaDif_(0.0) {
+    : muMod_(0.0), muAng_(0.0), sigmaMod_(0.0), sigmaAng_(0.0), sigmaDif_(0.0), fft_(), freqvec_() {
     }
 
-    ArsKernelAnisotropic2d::ArsKernelAnisotropic2d(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2) {
+    ArsKernelAnisotropic2d::ArsKernelAnisotropic2d(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2)
+    : fft_(), freqvec_() {
         init(mean1, covar1, mean2, covar2);
     }
 
@@ -72,7 +73,7 @@ namespace ars {
         //                << ", sigmaDif_ " << sigmaDif_ << "\n");
     }
 
-    void ArsKernelAnisotropic2d::computeFourier(int nFourier, std::vector<double>& coeffs) const {
+    void ArsKernelAnisotropic2d::computeFourier(int nFourier, std::vector<double>& coeffs) {
         if (coeffs.size() != 2 * nFourier + 2) {
             coeffs.resize(2 * nFourier + 2);
         }
@@ -81,10 +82,10 @@ namespace ars {
         updateFourier(nFourier, coeffs);
     }
 
-    void ArsKernelAnisotropic2d::updateFourier(int nFourier, std::vector<double>& coeffs) const {
+    void ArsKernelAnisotropic2d::updateFourier(int nFourier, std::vector<double>& coeffs) {
         std::vector<double> kernelVal(nFourier);
         double sumCos, sumSin, cosCurr, cosNext, cosIncr, sinCurr, sinNext, sinIncr;
-        double dt;
+        double dt, factor;
         //double h = 0.5 * dt / M_PI;
 
         ARS_ASSERT(nFourier > 0);
@@ -94,6 +95,22 @@ namespace ars {
         for (int i = 0; i < nFourier; ++i) {
             kernelVal[i] = value(dt * i);
         }
+        // Alternative and possibly more efficient evaluation
+//        double varCos = sigmaMod_ * sigmaDif_ * cos(2.0 * sigmaAng_);
+//        double varSin = sigmaMod_ * sigmaDif_ * sin(2.0 * sigmaAng_);
+//        double meanConst = 0.5 * muMod_ * muMod_;
+//        double meanCos = meanConst * cos(2.0 * muAng_);
+//        double meanSin = meanConst * sin(2.0 * muAng_);
+//        double varInv, cosTh, sinTh;
+//        for (int i = 0; i < nFourier; ++i) {
+//        	//cosTh = cos(dt * i);
+//        	//sinTh = sin(dt * i);
+//        	ars::fastCosSin(dt*i, cosTh, sinTh);
+//        	varInv = 1.0 / (sigmaMod_ + varCos * cosTh + varSin * sinTh);
+//        	kernelVal[i] = INV_SQRT_2_PI * sqrt(varInv) * exp(-0.5 * (meanConst + meanCos * cosTh + meanSin * sinTh) * varInv);
+//        	ARS_ASSERT(fabs(kernelVal[i] - value(dt * i)) < 1e-6)
+//        }
+
 
         // Evaluates each of the Fourier coefficients
         if (coeffs.size() != 2 * nFourier + 2) {
@@ -139,6 +156,18 @@ namespace ars {
         //            std::cout << "  i " << i << ": \t" << coeffs[i] << " \t" << coeffsFft[i] << "\n";
         //        }
         fft(kernelVal, coeffs, nFourier);
+
+//		fft_.fwd(freqvec_, kernelVal);
+
+		//ARS_PRINT("fft: input size " << funIn.size() << ", output complex size " << freqvec.size());
+
+//		coeffs[0] = freqvec_[0].real() / nFourier;
+//		coeffs[1] = 0.0;
+//		factor = 2.0 / nFourier;
+//		for (int i = 1; i <= nFourier; ++i) {
+//			coeffs[2 * i] = factor * freqvec_[i].real();
+//			coeffs[2 * i + 1] = -factor * freqvec_[i].imag();
+//		}
     }
 
 }

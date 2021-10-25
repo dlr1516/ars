@@ -373,6 +373,7 @@ namespace ars {
         Eigen::FFT<double> fft_;
         std::vector<std::complex<double> > freqvec;
         int n = funIn.size();
+        double factor = 2.0 / n;
 
         fft_.fwd(freqvec, funIn);
         
@@ -382,8 +383,8 @@ namespace ars {
         coeffs[0] = freqvec[0].real() / n;
         coeffs[1] = 0.0;
         for (int i = 1; i <= n && i <= fourierOrder; ++i) {
-            coeffs[2 * i] = 2.0 * freqvec[i].real() / n;
-            coeffs[2 * i + 1] = -2.0 * freqvec[i].imag() / n;
+            coeffs[2 * i] = factor * freqvec[i].real();
+            coeffs[2 * i + 1] = -factor * freqvec[i].imag();
         }
         
     }

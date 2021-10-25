@@ -200,6 +200,5 @@ namespace ars {
     
     void fft(const std::vector<double>& funIn, std::vector<double>& coeff, int fourierOrder);
 
-
 } // end of namespace
 
