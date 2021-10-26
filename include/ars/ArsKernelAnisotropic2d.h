@@ -184,7 +184,6 @@ namespace ars {
         std::vector<double> kernelVal_;
         std::vector<std::complex<double> > freqvec_;
         DataLut lut_;
-//        int nRes_;
 
         void initCosSinLut();
     };

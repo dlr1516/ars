@@ -99,12 +99,13 @@ namespace ars {
 	void ArsKernelAnisotropic2d::computeFourier(std::vector<double> &coeffs) {
 		//double sumCos, sumSin, cosCurr, cosNext, cosIncr, sinCurr, sinNext, sinIncr;
 		double dt, factor, varInv;
+		int n2 = nFourier_ << 1;
 
 		ARS_ASSERT(nFourier_ > 0);
 
 		// Evaluates each of the Fourier coefficients
-		if (coeffs.size() != 2 * nFourier_ + 2) {
-			coeffs.resize(2 * nFourier_ + 2);
+		if (coeffs.size() != n2) {
+			coeffs.resize(n2);
 		}
 
 		// Evaluates the kernel function at given intervals
@@ -113,11 +114,11 @@ namespace ars {
 //            kernelVal[i] = value(dt * i);
 //        }
 		// Alternative and faster evaluation using LUT
-        //  var = sigmaMod_ * (1.0 + sigmaDif_ * cos(2.0 * t - 2.0 * sigmaAng_))
+		//  var = sigmaMod_ * (1.0 + sigmaDif_ * cos(2.0 * t - 2.0 * sigmaAng_))
 		//      = sigmaMod_ + sigmaMod_ * sigmaDif_ * (cos(2.0 * t) * cos(2.0 * sigmaAng_) + sin(2.0 * t) * sin(2.0 * sigmaAng_))
 		//      = sigmaMod_ + (sigmaMod_ * sigmaDif_ * cos(2.0 * sigmaAng_)) * cos(2.0 * t) + (sigmaMod_ * sigmaDif_ * sin(2.0 * sigmaAng_)) * sin(2.0 * t)
 		//      = sigmaMod_ + lut_.varCos * cosTh[i] + lut_.varSin * lut_.sinTh[i]
-		for (int i = 0; i < nFourier_; ++i) {
+		for (int i = 0; i < n2; ++i) {
 			varInv = 1.0 / (sigmaMod_ + lut_.varCos * lut_.cosTh[i] + lut_.varSin * lut_.sinTh[i]);
 			kernelVal_[i] = INV_SQRT_2_PI * sqrt(varInv) * exp(-0.5 * (lut_.meanConst + lut_.meanCos * lut_.cosTh[i] + lut_.meanSin * lut_.sinTh[i]) * varInv);
 		}
@@ -126,9 +127,9 @@ namespace ars {
 
 		fft_.fwd(freqvec_, kernelVal_);
 
-		coeffs[0] = freqvec_[0].real() / nFourier_;
+		coeffs[0] = 0.5 * freqvec_[0].real() / nFourier_;
 		coeffs[1] = 0.0;
-		factor = 2.0 / nFourier_;
+		factor = 1.0 / nFourier_;
 		for (int i = 1; i < nFourier_; ++i) {
 			coeffs[2 * i] = factor * freqvec_[i].real();
 			coeffs[2 * i + 1] = -factor * freqvec_[i].imag();
@@ -136,14 +137,16 @@ namespace ars {
 	}
 
 	void ArsKernelAnisotropic2d::initCosSinLut() {
-		double dt = 2.0 * M_PI / nFourier_;
-		lut_.cosTh.resize(nFourier_);
-		lut_.sinTh.resize(nFourier_);
-		for (int i = 0; i < nFourier_; ++i) {
+		double dt = M_PI / nFourier_;
+		int n2 = nFourier_ << 1;
+		lut_.cosTh.resize(n2);
+		lut_.sinTh.resize(n2);
+		for (int i = 0; i < n2; ++i) {
 			lut_.cosTh[i] = cos(dt * i);
 			lut_.sinTh[i] = sin(dt * i);
 		}
-		kernelVal_.resize(nFourier_);
+		kernelVal_.resize(n2);
+		freqvec_.resize(nFourier_ + 1);
 	}
 
 }

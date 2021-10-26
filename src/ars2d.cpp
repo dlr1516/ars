@@ -239,8 +239,8 @@ namespace ars {
 
         nik.setFourierOrder(arsfOrder_);
         //ARS_ASSERT(coeffs_.size() == 2 * arsfOrder_ && coeffsPartial.size() == 2 * arsfOrder_);
-        coeffs_.resize(2 * arsfOrder_ + 2);
-        coeffsPartial.resize(2 * arsfOrder_ + 2);
+        coeffs_.resize(2 * arsfOrder_);
+        coeffsPartial.resize(2 * arsfOrder_);
         
 
         std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
