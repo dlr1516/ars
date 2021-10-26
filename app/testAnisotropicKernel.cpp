@@ -67,8 +67,9 @@ int main(int argc, char** argv) {
             << "Gaussian2: mu " << mean2.transpose() << "\ncovar:\n" << covar2 << "\n"
             << "Sum covariance matrix:\n" << covar12 << "\n";
 
+    ak.setFourierOrder(arsOrder);
     ak.init(mean1, covar1, mean2, covar2);
-    ak.computeFourier(arsOrder, fourierCoeffsAnisot);
+    ak.computeFourier(fourierCoeffsAnisot);
 
     std::cout << "Fourier coefficients:\n";
     for (int f = 0; f < arsOrder; ++f) {
@@ -142,8 +143,9 @@ int main(int argc, char** argv) {
             << "Gaussian1: mu " << mean1.transpose() << "\ncovar:\n" << covar1 << "\n"
             << "Gaussian2: mu " << mean2.transpose() << "\ncovar:\n" << covar2 << "\n";
 
+    ak.setFourierOrder(arsOrder);
     ak.init(mean1, covar1, mean2, covar2);
-    ak.computeFourier(arsOrder, fourierCoeffsAnisot);
+    ak.computeFourier(fourierCoeffsAnisot);
     ARS_PRINT("Anisotropic kernel computed parameters:\n"
             << "  muMod_ " << ak.getMuModule()
             << ", muAng_[rad] " << ak.getMuPhase() << " [deg] " << (180.0 / M_PI * ak.getMuPhase()) << "\n"

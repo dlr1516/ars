@@ -48,13 +48,19 @@ namespace ars {
         ArsKernelAnisotropic2d();
 
         /**
+         * Creates a kernel with the given number of Fourier coefficients.
+         */
+        ArsKernelAnisotropic2d(int nFourier);
+
+        /**
          * Constructor of non-isotropic Kernel of Angular Randon Specturm associated to two Gaussian distributions. 
          * @param mean1 mean value of first gaussian
          * @param covar1 covariance matrix of first gaussian
          * @param mean2 mean value of second gaussian
          * @param covar2 covariance matrix of second gaussian
+         * @param nFourier Fourier order to be computed
          */
-        ArsKernelAnisotropic2d(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2);
+        ArsKernelAnisotropic2d(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2, int nFourier = 256);
 
         /**
          * Destructor. 
@@ -116,6 +122,13 @@ namespace ars {
             return sigmaDif_;
         }
 
+        void setFourierOrder(int nFourier) {
+        	if (nFourier_ != nFourier) {
+        		nFourier_ = nFourier;
+        		initCosSinLut();
+        	}
+        }
+
         /**
          * Copmputes the value of the non-isotropic kernel at a given angle. 
          * @param t
@@ -136,7 +149,7 @@ namespace ars {
          * @param nRes number of intervals used in numeric integration
          * @param coeffs the computed coefficients 
          */
-        void computeFourier(int nFourier, std::vector<double>& coeffs);
+        void computeFourier(std::vector<double>& coeffs);
         
         /**
          * Computes the coefficients of Fourier series expansion of the kernel 
@@ -148,17 +161,32 @@ namespace ars {
          * @param nRes number of intervals used in numeric integration
          * @param coeffs the computed coefficients 
          */
-        void updateFourier(int nFourier, std::vector<double>& coeffs);
+        //void updateFourier(std::vector<double>& coeffs);
 
     private:
+        struct DataLut {
+        	double varCos;
+        	double varSin;
+        	double meanConst;
+        	double meanCos;
+        	double meanSin;
+        	std::vector<double> cosTh;
+        	std::vector<double> sinTh;
+        };
+
+        int nFourier_;
         double muMod_;
         double muAng_;
         double sigmaMod_;
         double sigmaAng_;
         double sigmaDif_;
         Eigen::FFT<double> fft_;
+        std::vector<double> kernelVal_;
         std::vector<std::complex<double> > freqvec_;
+        DataLut lut_;
 //        int nRes_;
+
+        void initCosSinLut();
     };
 
 }

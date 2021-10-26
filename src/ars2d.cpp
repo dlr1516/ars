@@ -237,17 +237,18 @@ namespace ars {
             return;
         }
 
-        //nik.setIntervalNum(anisotropicStep_);
+        nik.setFourierOrder(arsfOrder_);
         //ARS_ASSERT(coeffs_.size() == 2 * arsfOrder_ && coeffsPartial.size() == 2 * arsfOrder_);
         coeffs_.resize(2 * arsfOrder_ + 2);
         coeffsPartial.resize(2 * arsfOrder_ + 2);
         
+
         std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
         for (int i = 0; i < kernelNum; ++i) {
             for (int j = i + 1; j < kernelNum; ++j) {
                 ars::ScopedTimer timer("AnisotropicKernel::computeFourier()");
                 nik.init(means[i], covars[i], means[j], covars[j]);
-                nik.computeFourier(arsfOrder_ , coeffsPartial);
+                nik.computeFourier(coeffsPartial);
                 
                 wij = weights[i] * weights[j];
                 for (int f = 0; f < coeffs_.size(); ++f) {
