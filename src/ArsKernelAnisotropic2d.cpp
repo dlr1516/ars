@@ -142,9 +142,10 @@ namespace ars {
 		lut_.cosTh.resize(n2);
 		lut_.sinTh.resize(n2);
 		for (int i = 0; i < n2; ++i) {
-			lut_.cosTh[i] = cos(dt * i);
-			lut_.sinTh[i] = sin(dt * i);
+			lut_.cosTh[i] = cos(dt * i);  // cosTh[i] = cos(2 * PI * i / (2 * nFourier)) = cos(PI / nFourier * i)
+			lut_.sinTh[i] = sin(dt * i);  // sinTh[i] = sin(2 * PI * i / (2 * nFourier)) = sin(PI / nFourier * i)
 		}
+		// kernelVal_ stores samples of the ARS kernel sampled at frequency double than DFT/FFT order
 		kernelVal_.resize(n2);
 		freqvec_.resize(nFourier_ + 1);
 	}
