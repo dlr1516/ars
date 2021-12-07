@@ -39,6 +39,36 @@ namespace ars {
     void GaussianMixtureEstimator::clearGaussians() {
         gaussians_.clear();
     }
+    
+    size_t GaussianMixtureEstimator::size() const {
+        //return weights_.size();
+        return gaussians_.size();
+    }
+    
+    const Vector2& GaussianMixtureEstimator::mean(int i) const {
+        //            ARS_ASSERT(0 <= i && i < means_.size());
+        //            return means_.at(i);
+        ARS_ASSERT(0 <= i && i < gaussians_.size());
+        return gaussians_[i].mean;
+    }
+
+    const Matrix2& GaussianMixtureEstimator::covariance(int i) const {
+        //            ARS_ASSERT(0 <= i && i < covars_.size());
+        //            return covars_.at(i);
+        ARS_ASSERT(0 <= i && i < gaussians_.size());
+        return gaussians_[i].covar;
+    }
+
+    double GaussianMixtureEstimator::weight(int i) const {
+        //            ARS_ASSERT(0 <= i && i < weights_.size());
+        //            return weights_.at(i);
+        ARS_ASSERT(0 <= i && i < gaussians_.size());
+        return gaussians_[i].weight;
+    }
+    
+    const GaussianMixtureEstimator::VectorGaussian& GaussianMixtureEstimator::gaussians() const {
+            return gaussians_;
+    }
 
     void GaussianMixtureEstimator::exportGaussians(VectorVector2 &means,
             VectorMatrix2 &covariances, std::vector<double> &weights) const {
@@ -469,6 +499,7 @@ namespace ars {
         	return;
         }
 
+        gaussians_.clear();
         data_.insert(samples);
         intervals.push_back(std::make_pair(std::begin(data_), std::end(data_)));
         while (!intervals.empty()) {

@@ -84,34 +84,21 @@ namespace ars {
          * Returns the number of components/hypotheses of the mixture.
          * @return
          */
-        int size() const {
-            //return weights_.size();
-            return gaussians_.size();
-        }
+        size_t size() const;
 
         /**
          * Returns the estimated mean value of i-th Gaussian distribution in the mixture.
          * @param i the index of the distribution/hypothesis
          * @return the mean vector
          */
-        const Vector2& mean(int i) const {
-            //            ARS_ASSERT(0 <= i && i < means_.size());
-            //            return means_.at(i);
-            ARS_ASSERT(0 <= i && i < gaussians_.size());
-            return gaussians_[i].mean;
-        }
+        const Vector2& mean(int i) const;
 
         /**
          * Returns the estimated covariance of i-th Gaussian distribution in the mixture.
          * @param i the index of the distribution/hypothesis
          * @return the covariance matrix
          */
-        const Matrix2& covariance(int i) const {
-            //            ARS_ASSERT(0 <= i && i < covars_.size());
-            //            return covars_.at(i);
-            ARS_ASSERT(0 <= i && i < gaussians_.size());
-            return gaussians_[i].covar;
-        }
+        const Matrix2& covariance(int i) const;
 
         /**
          * Returns the estimated weight of i-th Gaussian distribution in the mixture,
@@ -119,20 +106,13 @@ namespace ars {
          * @param i the index of the distribution/hypothesis
          * @return the weight
          */
-        double weight(int i) const {
-            //            ARS_ASSERT(0 <= i && i < weights_.size());
-            //            return weights_.at(i);
-            ARS_ASSERT(0 <= i && i < gaussians_.size());
-            return gaussians_[i].weight;
-        }
+        double weight(int i) const;
 
         /**
          * Returns a const reference to the vector of gaussians.
          * @return
          */
-        const VectorGaussian& gaussians() const {
-            return gaussians_;
-        }
+        const VectorGaussian& gaussians() const;
 
         /**
          * Exports the Gaussian mixture parameters, i.e. means, covariances and weights,
