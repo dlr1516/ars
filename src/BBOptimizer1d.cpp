@@ -34,6 +34,22 @@ namespace ars {
     BBOptimizer1d::~BBOptimizer1d() {
     }
 
+    void BBOptimizer1d::setXTolerance(double xtol) {
+        xtol_ = xtol;
+    }
+
+    void BBOptimizer1d::enableXTolerance(bool xt) {
+        xtollOn_ = xt;
+    }
+
+    void BBOptimizer1d::enableYTolerance(bool yt) {
+        ytollOn_ = yt;
+    }
+
+    void BBOptimizer1d::setYTolerance(double ytol) {
+        ytol_ = ytol;
+    }
+
     void BBOptimizer1d::findGlobalMax(double xmin, double xmax, double& x, double& ylower, double& yupper) {
         LeastUpperBoundFirstQueue queue;
         IntervalBound curr, left, right, global;
@@ -116,9 +132,20 @@ namespace ars {
     FourierOptimizerBB1D::~FourierOptimizerBB1D() {
     }
 
+    void FourierOptimizerBB1D::setCoefficients(const std::vector<double>& coeffs) {
+        if (coeffs.size() % 2 != 0) {
+            std::cerr << __FILE__ << "," << __LINE__ << ": the number of Fourier coefficients must be even and equal: " << coeffs.size() << std::endl;
+            return;
+        }
+        coeffs_.insert(coeffs_.begin(), coeffs.begin(), coeffs.end());
+        orderMax_ = coeffs.size() / 2;
+    }
+
     void FourierOptimizerBB1D::findLU(double xmin, double xmax, double& ylower, double& yupper) {
         findLUFourier(coeffs_, xmin, xmax, ylower, yupper);
     }
+
+
 
     // --------------------------------------------------------
 

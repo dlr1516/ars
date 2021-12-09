@@ -80,30 +80,22 @@ namespace ars {
         /**
          * Sets the tolerance on domain to stop estimation when an accuracy on x is reached. 
          */
-        void setXTolerance(double xtol) {
-            xtol_ = xtol;
-        }
+        void setXTolerance(double xtol);
 
         /**
          * Enables halting condition on x tolerance.
          */
-        void enableXTolerance(bool xt) {
-            xtollOn_ = xt;
-        }
+        void enableXTolerance(bool xt);
 
         /**
          * Enables halting condition on x tolerance.
          */
-        void enableYTolerance(bool yt) {
-            ytollOn_ = yt;
-        }
+        void enableYTolerance(bool yt);
 
         /**
          * Sets the tolerance on domain to stop estimation when an accuracy on y is reached. 
          */
-        void setYTolerance(double ytol) {
-            ytol_ = ytol;
-        }
+        void setYTolerance(double ytol);
 
         /**
          * Finds the global maximum point of the function on the given interval [xmin, xmax]. 
@@ -129,11 +121,11 @@ namespace ars {
         bool checkInterval(const IntervalBound& ib) const;
     };
 
-    
+
     // --------------------------------------------------------
     // FOURIER SERIES OPTIMIZER 
     // --------------------------------------------------------
-    
+
     /**
      * Class FourierOptimizerBB1D performs optimization on 1D functionts represented as 
      * Fourier series with finite terms. 
@@ -159,14 +151,7 @@ namespace ars {
         /**
          * Sets the Fourier series coefficients. 
          */
-        void setCoefficients(const std::vector<double>& coeffs) {
-            if (coeffs.size() % 2 != 0) {
-                std::cerr << __FILE__ << "," << __LINE__ << ": the number of Fourier coefficients must be even and equal: " << coeffs.size() << std::endl;
-                return;
-            }
-            coeffs_.insert(coeffs_.begin(), coeffs.begin(), coeffs.end());
-            orderMax_ = coeffs.size() / 2;
-        }
+        void setCoefficients(const std::vector<double>& coeffs);
 
         /**
          * Returns the lower and upper bound of the function over the given interval [xmin, xmax].
@@ -184,6 +169,6 @@ namespace ars {
     void findGlobalMaxBBFourier(const std::vector<double>& coeffs, double theta0, double theta1, double thetaToll, double fourierToll, double& thetaMax, double& arsfMax);
 
 } // end of namespace 
-    
+
 #endif /* OPTIMIZERBB1D_H */
 
