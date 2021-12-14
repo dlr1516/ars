@@ -48,6 +48,9 @@ namespace ars {
         }
     }
 
+    HoughSpectrum::~HoughSpectrum() {
+    }
+
     void HoughSpectrum::init(double thetaStep, double rhoStep, double rhoMax) {
         thetaStep_ = thetaStep;
         rhoStep_ = rhoStep;
@@ -63,6 +66,46 @@ namespace ars {
             cosLut_(i) = cos(thetaStep_ * i);
             sinLut_(i) = sin(thetaStep_ * i);
         }
+    }
+
+    const Eigen::MatrixXd& HoughSpectrum::hough() const {
+        return hough_;
+    }
+
+    double HoughSpectrum::hough(double theta, double rho) const {
+        int ith = thetaToIdx(theta);
+        int irh = rhoToIdx(rho);
+        if (0 <= ith && ith < hough_.rows() && 0 <= irh && irh < hough_.cols()) {
+            return hough_(ith, irh);
+        }
+        return 0.0;
+    }
+
+    const Eigen::VectorXd& HoughSpectrum::spectrum() const {
+        return spectrum_;
+    }
+
+    const double HoughSpectrum::spectrum(double theta) const {
+        int ith = thetaToIdx(theta);
+        if (0 <= ith && ith < hough_.rows()) {
+            return spectrum_(ith);
+        }
+        return 0.0;
+    }
+
+    double HoughSpectrum::idxToRho(int idx) const {
+        return (rhoStep_ * (idx - rhoNum_));
+    }
+
+    int HoughSpectrum::rhoToIdx(double rho) const {
+        return ((int) round(rho / rhoStep_) + rhoNum_ / 2);
+    }
+
+    int HoughSpectrum::thetaToIdx(double theta) const {
+        int idx = (int) round(theta / thetaStep_);
+        int thetaNum2 = 2 * thetaNum_;
+        idx = ((idx % thetaNum2) + thetaNum2) % thetaNum2;
+        return idx;
     }
 
 } // end of namespace

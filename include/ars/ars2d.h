@@ -80,19 +80,13 @@ namespace ars {
          * Sets the mode for computing ARS coefficients in the case of isotropic kernels. 
          * @param mode the desired mode
          */
-        void setComputeMode(ArsKernelIsotropic2d::ComputeMode mode) {
-            //mode_ = mode;
-            isotropicKer_.setComputeMode(mode);
-        }
+        void setComputeMode(ArsKernelIsotropic2d::ComputeMode mode);
 
         /**
          * Returns a string description of the current mode. 
          * @return 
          */
-        const std::string& getComputeModeName() const {
-            //return MODE_NAME[mode_];
-            return isotropicKer_.getComputeModeName();
-        }
+        const std::string& getComputeModeName() const;
 
         /**
          * Sets the number of intervals used in the computation of Fourier coeffcients 
@@ -110,9 +104,7 @@ namespace ars {
          * Coefficients are obtained from a Gaussian Mixture Model (GMM) representing
          * a point set distribution with uncertainty. 
          */
-        const std::vector<double>& coefficients() const {
-            return coeffs_;
-        }
+        const std::vector<double>& coefficients() const;
 
         /**
          * Sets the ARS Fourier coefficients. 
@@ -121,9 +113,7 @@ namespace ars {
          * Accordingly it should be used carefully to avoid inconsistencies. 
          * @param coeffs the coefficients
          */
-        void setCoefficients(const std::vector<double>& coeffs) {
-            coeffs_ = coeffs;
-        }
+        void setCoefficients(const std::vector<double>& coeffs);
 
         /** * Inserts the given points and computes all the data about point pairs and 
          * computes the coefficients of the Fourier series representing the ARS 

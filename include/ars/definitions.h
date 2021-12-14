@@ -54,13 +54,13 @@
 
 namespace ars {
 
-    typedef Eigen::Vector2d Vector2;
+    using Vector2 = Eigen::Vector2d;
 
-    typedef std::vector<Vector2, Eigen::aligned_allocator<Vector2> > VectorVector2;
+    using VectorVector2 = std::vector<Vector2, Eigen::aligned_allocator<Vector2> >;
 
-    typedef Eigen::Matrix2d Matrix2;
+    using Matrix2 = Eigen::Matrix2d;
     
-    typedef std::vector<Matrix2, Eigen::aligned_allocator<Matrix2> > VectorMatrix2;
+    using VectorMatrix2 = std::vector<Matrix2, Eigen::aligned_allocator<Matrix2> >;
 
 } // end of namespace
 

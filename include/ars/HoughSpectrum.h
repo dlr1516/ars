@@ -38,6 +38,8 @@ namespace ars {
      */
     class HoughSpectrum {
     public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
         /** Constructor with deafult parameters. 
          */
         HoughSpectrum();
@@ -49,6 +51,10 @@ namespace ars {
          * @param rhoMax the maximum value of polar range of lines
          */
         HoughSpectrum(double thetaStep, double rhoStep, double rhoMax);
+
+        /** Default destructor. 
+         */
+        virtual ~HoughSpectrum();
 
         /**
          * Inits params of histogram representing the discretized domain of 
@@ -66,38 +72,21 @@ namespace ars {
 
         /** Returns the Hough Transform. 
          */
-        const Eigen::MatrixXd& hough() const {
-            return hough_;
-        }
+        const Eigen::MatrixXd& hough() const;
 
         /** Returns the value of Hough Transform for a specific value of theta and rho.
          * If the theta and rho are not in the domain, then it return 0.0.
          */
-        double hough(double theta, double rho) const {
-            int ith = thetaToIdx(theta);
-            int irh = rhoToIdx(rho);
-            if (0 <= ith && ith < hough_.rows() && 0 <= irh && irh < hough_.cols()) {
-                return hough_(ith, irh);
-            }
-            return 0.0;
-        }
+        double hough(double theta, double rho) const;
 
         /** Returns the spectrum.
          */
-        const Eigen::VectorXd& spectrum() const {
-            return spectrum_;
-        }
+        const Eigen::VectorXd& spectrum() const;
 
         /** Returns the value of spectrum at given angle.
          * @param theta the angle value
          */
-        const double spectrum(double theta) const {
-            int ith = thetaToIdx(theta);
-            if (0 <= ith && ith < hough_.rows()) {
-                return spectrum_(ith);
-            }
-            return 0.0;
-        }
+        const double spectrum(double theta) const;
 
     private:
         int thetaNum_;
@@ -111,20 +100,11 @@ namespace ars {
         Eigen::VectorXd cosLut_;
         Eigen::VectorXd sinLut_;
 
-        double idxToRho(int idx) const {
-            return (rhoStep_ * (idx - rhoNum_));
-        }
+        double idxToRho(int idx) const;
 
-        int rhoToIdx(double rho) const {
-            return ((int) round(rho / rhoStep_) + rhoNum_ / 2);
-        }
+        int rhoToIdx(double rho) const;
 
-        int thetaToIdx(double theta) const {
-            int idx = (int) round(theta / thetaStep_);
-            int thetaNum2 = 2 * thetaNum_;
-            idx = ((idx % thetaNum2) + thetaNum2) % thetaNum2;
-            return idx;
-        }
+        int thetaToIdx(double theta) const;
     };
 
     // -------------------------------------------------------------
@@ -138,6 +118,14 @@ namespace ars {
 
         hough_.fill(0.0);
         spectrum_.fill(0.0);
+        // for (int r = 0; r < hough_.rows(); ++r) {
+        //     for (int c = 0; c < hough_.cols(); ++c) {
+        //         hough_(r, c) = 0.0;
+        //     }
+        // }
+        // for (int r = 0; r < spectrum_.rows(); ++r) {
+        //     spectrum_(r) = 0.0;
+        // }
         // Computes Hough
         for (It pit = pbeg; pit != pend; ++pit) {
             for (int i = 0; i < thetaNum_; ++i) {

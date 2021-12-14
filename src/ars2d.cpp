@@ -144,6 +144,24 @@ namespace ars {
         threadNumOMP_ = tno;
     }
 
+    void AngularRadonSpectrum2d::setComputeMode(ArsKernelIsotropic2d::ComputeMode mode) {
+        //mode_ = mode;
+        isotropicKer_.setComputeMode(mode);
+    }
+
+    const std::string& AngularRadonSpectrum2d::getComputeModeName() const {
+        //return MODE_NAME[mode_];
+        return isotropicKer_.getComputeModeName();
+    }
+
+    const std::vector<double>& AngularRadonSpectrum2d::coefficients() const {
+        return coeffs_;
+    }
+
+    void AngularRadonSpectrum2d::setCoefficients(const std::vector<double>& coeffs) {
+        coeffs_ = coeffs;
+    }
+
     void AngularRadonSpectrum2d::insertIsotropicGaussians(const VectorVector2& means, double sigma) {
         int kernelNum = means.size();
         double w = 1.0 / (kernelNum * kernelNum);
@@ -314,28 +332,24 @@ namespace ars {
         return evaluateFourier(coeffs_, 2.0 * theta);
     }
 
-    
     double AngularRadonSpectrum2d::findMax() const {
         double arsfMax, thetaMax;
         findGlobalMaxBBFourier(coeffs_, 0, M_PI, thetaToll_, 10.0, thetaMax, arsfMax);
         return arsfMax;
     }
 
-    
     double AngularRadonSpectrum2d::findMax(double& thetaMax) const {
         double arsfMax;
         findGlobalMaxBBFourier(coeffs_, 0, M_PI, thetaToll_, 10.0, thetaMax, arsfMax);
         return arsfMax;
     }
 
-    
     double AngularRadonSpectrum2d::findMax(double thetaLow, double thetaUpp) const {
         double arsfMax, thetaMax;
         findGlobalMaxBBFourier(coeffs_, thetaLow, thetaUpp, thetaToll_, 10.0, thetaMax, arsfMax);
         return arsfMax;
     }
 
-    
     double AngularRadonSpectrum2d::findMax(double& thetaMax, double thetaLow, double thetaUpp) const {
         double arsfMax;
         findGlobalMaxBBFourier(coeffs_, thetaLow, thetaUpp, thetaToll_, 10.0, thetaMax, arsfMax);

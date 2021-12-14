@@ -39,12 +39,12 @@ namespace ars {
     void GaussianMixtureEstimator::clearGaussians() {
         gaussians_.clear();
     }
-    
+
     size_t GaussianMixtureEstimator::size() const {
         //return weights_.size();
         return gaussians_.size();
     }
-    
+
     const Vector2& GaussianMixtureEstimator::mean(int i) const {
         //            ARS_ASSERT(0 <= i && i < means_.size());
         //            return means_.at(i);
@@ -65,9 +65,9 @@ namespace ars {
         ARS_ASSERT(0 <= i && i < gaussians_.size());
         return gaussians_[i].weight;
     }
-    
+
     const GaussianMixtureEstimator::VectorGaussian& GaussianMixtureEstimator::gaussians() const {
-            return gaussians_;
+        return gaussians_;
     }
 
     void GaussianMixtureEstimator::exportGaussians(VectorVector2 &means,
@@ -485,6 +485,46 @@ namespace ars {
     GaussianMixtureEstimatorHierarchical::~GaussianMixtureEstimatorHierarchical() {
     }
 
+    double GaussianMixtureEstimatorHierarchical::getSigmaMin() const {
+        return sigmaMin_;
+    }
+
+    double GaussianMixtureEstimatorHierarchical::getIseThreshold() const {
+        return iseThres_;
+    }
+
+    void GaussianMixtureEstimatorHierarchical::setSigmaMin(double sm) {
+        sigmaMin_ = sm;
+        data_.setRes(sigmaMin_);
+    }
+
+    void GaussianMixtureEstimatorHierarchical::setCovarWidth(double cw) {
+        covarWidth_ = cw;
+    }
+
+    void GaussianMixtureEstimatorHierarchical::setInlierPerc(double ip) {
+        inlierPerc_ = ip;
+        if (inlierPerc_ < 0.0)
+            inlierPerc_ = 0.0;
+        else if (inlierPerc_ >= 1.0)
+            inlierPerc_ = 1.0;
+    }
+
+    void GaussianMixtureEstimatorHierarchical::setChiConfidence(double conf) {
+        static const int CHI2_DOF = 2;
+        ARS_ASSERT(0.0 <= conf && conf <= 1.0);
+        boost::math::chi_squared mydist(CHI2_DOF);
+        chi2Thres_ = boost::math::quantile(mydist, conf);
+    }
+
+    void GaussianMixtureEstimatorHierarchical::setIseThreshold(double iseTh) {
+        iseThres_ = iseTh;
+    }
+
+    void GaussianMixtureEstimatorHierarchical::setCellSizeMax(double s) {
+        levelMax_ = log2Mod((int) ceil(s / sigmaMin_));
+    }
+
     void GaussianMixtureEstimatorHierarchical::compute(
             const VectorVector2 &samples) {
         std::deque<ConstInterval> intervals;
@@ -496,7 +536,7 @@ namespace ars {
 
         num = (double) samples.size();
         if (num == 0) {
-        	return;
+            return;
         }
 
         gaussians_.clear();
@@ -691,7 +731,7 @@ namespace ars {
 
         double jNN = 0.0, jLL = 0.0, jNL = 0.0;
 
-        jLL = wMerged * wMerged / (2 * M_PI * sqrt((2*covar).determinant()));
+        jLL = wMerged * wMerged / (2 * M_PI * sqrt((2 * covar).determinant()));
 
         double normOrig = 1.0 / (4 * M_PI * sigmaMinSqrd); //normNN
         double gaussConstOrig = -0.25 / sigmaMinSqrd; //const2
@@ -727,10 +767,10 @@ namespace ars {
             //std::cout << "jNL " << jNL << std::endl;
             //std::cout << "jLL " << jLL << std::endl;
             return true;
-//            std::cin.get();
+            //            std::cin.get();
         }
 
-//        std::cout << "--------------\n\n\n" << std::endl;
+        //        std::cout << "--------------\n\n\n" << std::endl;
 
         return nise < iseThres_;
     }

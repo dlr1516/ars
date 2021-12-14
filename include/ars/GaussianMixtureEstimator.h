@@ -365,50 +365,25 @@ namespace ars {
          */
         virtual ~GaussianMixtureEstimatorHierarchical();
 
+        double getSigmaMin() const;
 
-		double getSigmaMin() const {
-			return sigmaMin_;
-		}
-
-		double getIseThreshold() const {
-			return iseThres_;
-		}
+        double getIseThreshold() const;
 
         /**
          * Sets the minimum value of standard deviation of Gaussians.
          * @param sm the minimum standard deviation
          */
-        void setSigmaMin(double sm) {
-            sigmaMin_ = sm;
-            data_.setRes(sigmaMin_);
-        }
+        void setSigmaMin(double sm);
 
-        void setCovarWidth(double cw) {
-            covarWidth_ = cw;
-        }
+        void setCovarWidth(double cw);
 
-        void setInlierPerc(double ip) {
-            inlierPerc_ = ip;
-            if (inlierPerc_ < 0.0)
-                inlierPerc_ = 0.0;
-            else if (inlierPerc_ >= 1.0)
-                inlierPerc_ = 1.0;
-        }
+        void setInlierPerc(double ip);
 
-        void setChiConfidence(double conf) {
-            static const int CHI2_DOF = 2;
-            ARS_ASSERT(0.0 <= conf && conf <= 1.0);
-            boost::math::chi_squared mydist(CHI2_DOF);
-            chi2Thres_ = boost::math::quantile(mydist, conf);
-        }
+        void setChiConfidence(double conf);
 
-        void setIseThreshold(double iseTh) {
-            iseThres_ = iseTh;
-        }
-
-        void setCellSizeMax(double s) {
-            levelMax_ = log2Mod((int) ceil(s / sigmaMin_));
-        }
+        void setIseThreshold(double iseTh);
+        
+        void setCellSizeMax(double s);
 
         /**
          * Computes the Gaussian parameters from the given samples.
