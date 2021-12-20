@@ -107,6 +107,11 @@ namespace ars {
         const std::vector<double>& coefficients() const;
 
         /**
+         * Returns the correlation norm of ARS. 
+         */
+        double normCorr() const;
+
+        /**
          * Sets the ARS Fourier coefficients. 
          * @warning This method is a "backdoor" w.r.t. the insert methods that 
          * computes the coefficients directly from the point set in GMM form. 

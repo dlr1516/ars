@@ -158,6 +158,14 @@ namespace ars {
         return coeffs_;
     }
 
+    double AngularRadonSpectrum2d::normCorr() const {
+        double ret = 0.0;
+        for (int i = 0; i < coeffs_.size(); ++i) {
+            ret += coeffs_[i] * coeffs_[i];
+        }
+        return ret;
+    }
+
     void AngularRadonSpectrum2d::setCoefficients(const std::vector<double>& coeffs) {
         coeffs_ = coeffs;
     }
