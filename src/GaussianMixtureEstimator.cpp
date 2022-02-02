@@ -45,14 +45,14 @@ namespace ars {
         return gaussians_.size();
     }
 
-    const Vector2& GaussianMixtureEstimator::mean(int i) const {
+    const Vec2d& GaussianMixtureEstimator::mean(int i) const {
         //            ARS_ASSERT(0 <= i && i < means_.size());
         //            return means_.at(i);
         ARS_ASSERT(0 <= i && i < gaussians_.size());
         return gaussians_[i].mean;
     }
 
-    const Matrix2& GaussianMixtureEstimator::covariance(int i) const {
+    const Mat2d& GaussianMixtureEstimator::covariance(int i) const {
         //            ARS_ASSERT(0 <= i && i < covars_.size());
         //            return covars_.at(i);
         ARS_ASSERT(0 <= i && i < gaussians_.size());
@@ -70,8 +70,8 @@ namespace ars {
         return gaussians_;
     }
 
-    void GaussianMixtureEstimator::exportGaussians(VectorVector2 &means,
-            VectorMatrix2 &covariances, std::vector<double> &weights) const {
+    void GaussianMixtureEstimator::exportGaussians(VecVec2d &means,
+            VecMat2d &covariances, std::vector<double> &weights) const {
         int n = gaussians_.size();
         means.resize(n);
         covariances.resize(n);
@@ -83,7 +83,7 @@ namespace ars {
         }
     }
 
-    void GaussianMixtureEstimator::executeEM(const VectorVector2 &samples,
+    void GaussianMixtureEstimator::executeEM(const VecVec2d &samples,
             int stepNum) {
         Eigen::MatrixXd c(samples.size(), gaussians_.size());
         //Eigen::VectorXd sumC(gaussians_.size());
@@ -105,8 +105,8 @@ namespace ars {
 
             // Maximization
             for (int j = 0; j < gaussians_.size(); ++j) {
-                gaussians_[j].mean = Vector2::Zero();
-                gaussians_[j].covar = Matrix2::Zero();
+                gaussians_[j].mean = Vec2d::Zero();
+                gaussians_[j].covar = Mat2d::Zero();
                 gaussians_[j].weight = 0.0;
                 sumC = 0.0;
 
@@ -141,9 +141,9 @@ namespace ars {
     GaussianMixtureEstimatorScan::~GaussianMixtureEstimatorScan() {
     }
 
-    void GaussianMixtureEstimatorScan::compute(const VectorVector2 &samples) {
-        Vector2 mean;
-        Matrix2 covar;
+    void GaussianMixtureEstimatorScan::compute(const VecVec2d &samples) {
+        Vec2d mean;
+        Mat2d covar;
         std::deque<IndexInterval> intervals;
         IndexInterval interv, interv1, interv2;
         double dist, distMax, w;
@@ -213,9 +213,9 @@ namespace ars {
         ARS_VARIABLE(sum);
     }
 
-    void GaussianMixtureEstimatorScan::findFarthest(const VectorVector2 &points,
+    void GaussianMixtureEstimatorScan::findFarthest(const VecVec2d &points,
             int first, int last, int &farthest, double &distMax) const {
-        Vector2 dp;
+        Vec2d dp;
         double t, ct, st, r, dist;
 
         ARS_ASSERT(0 <= first && last < points.size() && first <= last);
@@ -236,23 +236,23 @@ namespace ars {
     }
 
     void GaussianMixtureEstimatorScan::estimateGaussianFromPoints(
-            const VectorVector2 &points, int first, int last, Vector2 &mean,
-            Matrix2 &covar) const {
-        Matrix2 l, v;
-        Vector2 tmp;
+            const VecVec2d &points, int first, int last, Vec2d &mean,
+            Mat2d &covar) const {
+        Mat2d l, v;
+        Vec2d tmp;
         double sigmaMinSquare = sigmaMin_ * sigmaMin_;
 
         ARS_ASSERT(first >= 0 && last < points.size());
 
         // Computes the mean value vector
-        mean = Vector2::Zero();
+        mean = Vec2d::Zero();
         for (int i = first; i <= last; ++i) {
             mean += points[i];
         }
         mean = mean / (last - first + 1);
 
         // Computes the covariance
-        covar = Matrix2::Zero();
+        covar = Mat2d::Zero();
         for (int i = first; i <= last; ++i) {
             tmp = (points[i] - mean);
             covar = tmp * tmp.transpose();
@@ -273,24 +273,24 @@ namespace ars {
     }
 
     void GaussianMixtureEstimatorScan::estimateGaussianFromSegment(
-            const VectorVector2 &points, int first, int last, Vector2 &mean,
-            Matrix2 &covar) const {
-        Matrix2 v;
-        Vector2 tmp;
+            const VecVec2d &points, int first, int last, Vec2d &mean,
+            Mat2d &covar) const {
+        Mat2d v;
+        Vec2d tmp;
         double lmin, lmax, theta, dfirst, dlast;
         double sigmaMinSquare = sigmaMin_ * sigmaMin_;
 
         ARS_ASSERT(first >= 0 && last < points.size());
 
         // Computes the mean value vector
-        mean = Vector2::Zero();
+        mean = Vec2d::Zero();
         for (int i = first; i <= last; ++i) {
             mean += points[i];
         }
         mean = mean / (last - first + 1);
 
         // Computes the covariance
-        covar = Matrix2::Zero();
+        covar = Mat2d::Zero();
         for (int i = first; i <= last; ++i) {
             tmp = (points[i] - mean);
             covar = tmp * tmp.transpose();
@@ -337,9 +337,9 @@ namespace ars {
     GaussianMixtureEstimatorMeanShift::~GaussianMixtureEstimatorMeanShift() {
     }
 
-    void GaussianMixtureEstimatorMeanShift::compute(const VectorVector2 &samples) {
-        VectorVector2 meansCurr = samples;
-        VectorVector2 meansNext(samples.size());
+    void GaussianMixtureEstimatorMeanShift::compute(const VecVec2d &samples) {
+        VecVec2d meansCurr = samples;
+        VecVec2d meansNext(samples.size());
         DisjointSet clusterLabels;
         std::vector<double> clusterIntraDistanceMax;
         std::vector<DisjointSet::id_type> clusterIds;
@@ -381,8 +381,8 @@ namespace ars {
         //    samples[i] -> clusterId = clusterLabels.find(i) -> position of clusterId in clusterIds[]
         gaussians_.resize(clusterIds.size());
         for (auto &g : gaussians_) {
-            g.mean = Vector2::Zero();
-            g.covar = Matrix2::Zero();
+            g.mean = Vec2d::Zero();
+            g.covar = Mat2d::Zero();
             g.weight = 0.0;
         }
         for (int i = 0; i < samples.size(); ++i) {
@@ -416,7 +416,7 @@ namespace ars {
     }
 
     void GaussianMixtureEstimatorMeanShift::updateMeans(
-            const VectorVector2 &meansCurr, VectorVector2 &meansNext,
+            const VecVec2d &meansCurr, VecVec2d &meansNext,
             DisjointSet &clusterLabels,
             std::vector<double> &clusterIntraDistMax) const {
         int n = meansCurr.size();
@@ -526,7 +526,7 @@ namespace ars {
     }
 
     void GaussianMixtureEstimatorHierarchical::compute(
-            const VectorVector2 &samples) {
+            const VecVec2d &samples) {
         std::deque<ConstInterval> intervals;
         ConstInterval intervalCur;
         ConstIterator mid;
@@ -567,16 +567,16 @@ namespace ars {
     }
 
     bool GaussianMixtureEstimatorHierarchical::estimateGaussianFromPoints(
-            const ConstIterator &beg, const ConstIterator &end, Vector2 &mean,
-            Matrix2 &covar, double &w) const {
-        Matrix2 l, v, infoMat;
-        Vector2 tmp;
+            const ConstIterator &beg, const ConstIterator &end, Vec2d &mean,
+            Mat2d &covar, double &w) const {
+        Mat2d l, v, infoMat;
+        Vec2d tmp;
         double sigmaMinSquare = sigmaMin_ * sigmaMin_;
         double distSqr;
         int num, inlier;
 
         // Computes the mean value vector
-        mean = Vector2::Zero();
+        mean = Vec2d::Zero();
         num = 0;
         for (auto it = beg; it != end; ++it) {
             mean += it->value;
@@ -587,7 +587,7 @@ namespace ars {
         //	ARS_VARIABLE2(num, mean.transpose());
 
         // Computes the covariance
-        covar = Matrix2::Zero();
+        covar = Mat2d::Zero();
         for (auto it = beg; it != end; ++it) {
             tmp = (it->value - mean);
             covar += tmp * tmp.transpose();
@@ -622,16 +622,16 @@ namespace ars {
     }
 
     bool GaussianMixtureEstimatorHierarchical::estimateGaussianFromSegment(
-            const ConstIterator &beg, const ConstIterator &end, Vector2 &mean,
-            Matrix2 &covar, double &w) const {
-        Matrix2 l, v, infoMat;
-        Vector2 tmp;
+            const ConstIterator &beg, const ConstIterator &end, Vec2d &mean,
+            Mat2d &covar, double &w) const {
+        Mat2d l, v, infoMat;
+        Vec2d tmp;
         double sigmaMinSquare = sigmaMin_ * sigmaMin_;
         int num, inlier;
         double lmin, lmax, theta, ct, st, distSqr, d, dfirst, dlast;
 
         // Computes the mean value vector
-        mean = Vector2::Zero();
+        mean = Vec2d::Zero();
         num = 0;
         for (auto it = beg; it != end; ++it) {
             mean += it->value;
@@ -640,7 +640,7 @@ namespace ars {
         mean = mean / num;
 
         // Computes the covariance
-        covar = Matrix2::Zero();
+        covar = Mat2d::Zero();
         for (auto it = beg; it != end; ++it) {
             tmp = (it->value - mean);
             covar += tmp * tmp.transpose();
@@ -691,8 +691,8 @@ namespace ars {
         return (inlier >= inlierPerc_ * num);
     }
 
-    bool GaussianMixtureEstimatorHierarchical::estimateGaussianISE(const ConstIterator &beg, const ConstIterator &end, Vector2 &mean,
-            Matrix2 &covar, double &wMerged) const {
+    bool GaussianMixtureEstimatorHierarchical::estimateGaussianISE(const ConstIterator &beg, const ConstIterator &end, Vec2d &mean,
+            Mat2d &covar, double &wMerged) const {
 
         ARS_ASSERT(beg != end);
 
@@ -702,7 +702,7 @@ namespace ars {
 
 
         int num = 0;
-        mean = Vector2::Zero();
+        mean = Vec2d::Zero();
         for (auto it = beg; it != end; ++it) {
             mean += it->value;
             num++;
@@ -717,9 +717,9 @@ namespace ars {
 
         wMerged = wOrig*num; //w_L
 
-        covar = Matrix2::Zero();
+        covar = Mat2d::Zero();
         for (auto it = beg; it != end; ++it) {
-            Vector2 tmp = it->value - mean;
+            Vec2d tmp = it->value - mean;
             covar += tmp * tmp.transpose();
         }
         covar = covar / num;
@@ -736,8 +736,8 @@ namespace ars {
         double normOrig = 1.0 / (4 * M_PI * sigmaMinSqrd); //normNN
         double gaussConstOrig = -0.25 / sigmaMinSqrd; //const2
 
-        Matrix2 covarNL = covar + sigmaMinSqrd * Matrix2::Identity();
-        Matrix2 infoNL = covarNL.inverse();
+        Mat2d covarNL = covar + sigmaMinSqrd * Mat2d::Identity();
+        Mat2d infoNL = covarNL.inverse();
         double normNL = 1.0 / (2 * M_PI * sqrt(covarNL.determinant()));
 
         for (auto it = beg; it != end; ++it) {

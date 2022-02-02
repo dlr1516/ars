@@ -32,7 +32,7 @@ namespace ars {
 		initCosSinLut();
 	}
 
-	ArsKernelAnisotropic2d::ArsKernelAnisotropic2d(const Vector2 &mean1, const Matrix2 &covar1, const Vector2 &mean2, const Matrix2 &covar2, int nFourier) :
+	ArsKernelAnisotropic2d::ArsKernelAnisotropic2d(const Vec2d &mean1, const Mat2d &covar1, const Vec2d &mean2, const Mat2d &covar2, int nFourier) :
 			nFourier_(nFourier), fft_(), kernelVal_(), freqvec_() {
 		init(mean1, covar1, mean2, covar2);
 		initCosSinLut();
@@ -41,9 +41,9 @@ namespace ars {
 	ArsKernelAnisotropic2d::~ArsKernelAnisotropic2d() {
 	}
 
-	void ArsKernelAnisotropic2d::init(const Vector2 &mean1, const Matrix2 &covar1, const Vector2 &mean2, const Matrix2 &covar2) {
-		Vector2 mu12;
-		Matrix2 sigma12;
+	void ArsKernelAnisotropic2d::init(const Vec2d &mean1, const Mat2d &covar1, const Vec2d &mean2, const Mat2d &covar2) {
+		Vec2d mu12;
+		Mat2d sigma12;
 		double a, b, lmax, lmin, c, s;
 
 		mu12 = mean2 - mean1;

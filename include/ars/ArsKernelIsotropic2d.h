@@ -97,7 +97,7 @@ namespace ars {
          * @param mean2 mean value of second Gaussian 
          * @param sigma the standard deviation of the two identical Gaussian
          */
-        ArsKernelIsotropic2d(const Vector2& mean1, const Vector2& mean2, double sigma);
+        ArsKernelIsotropic2d(const Vec2d& mean1, const Vec2d& mean2, double sigma);
 
         /**
          * Initializes the isotropic kernel of the given pair of isotropic Gaussians
@@ -107,7 +107,7 @@ namespace ars {
          * @param sigma1 the standard deviation of the first Gaussian
          * @param sigma2 the standard deviation of the second Gaussian
          */
-        ArsKernelIsotropic2d(const Vector2& mean1, const Vector2& mean2, double sigma1, double sigma2);
+        ArsKernelIsotropic2d(const Vec2d& mean1, const Vec2d& mean2, double sigma1, double sigma2);
 
         /**
          * Destructor. 
@@ -122,7 +122,7 @@ namespace ars {
          * @param mean2 mean value of second Gaussian 
          * @param sigma the standard deviation of the two identical Gaussian
          */
-        void init(const Vector2& mean1, const Vector2& mean2, double sigma);
+        void init(const Vec2d& mean1, const Vec2d& mean2, double sigma);
 
         /**
          * Initializes the isotropic kernel of the given pair of isotropic Gaussians
@@ -132,7 +132,7 @@ namespace ars {
          * @param sigma1 the standard deviation of the first Gaussian
          * @param sigma2 the standard deviation of the second Gaussian
          */
-        void init(const Vector2& mean1, const Vector2& mean2, double sigma1, double sigma2);
+        void init(const Vec2d& mean1, const Vec2d& mean2, double sigma1, double sigma2);
         
         /**
          * Initializes the LUT (look-up table) of the PNEBI (Product of Negative 

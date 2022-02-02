@@ -78,7 +78,7 @@ namespace ars {
          * Computes the Gaussian parameters from the given samples.
          * @param samples
          */
-        virtual void compute(const VectorVector2 &samples) = 0;
+        virtual void compute(const VecVec2d &samples) = 0;
 
         /**
          * Returns the number of components/hypotheses of the mixture.
@@ -121,7 +121,7 @@ namespace ars {
          * @param covariances std::vector of covariance matrices
          * @param weights std::vector of weights
          */
-        void exportGaussians(VectorVector2 &means, VectorMatrix2 &covariances,
+        void exportGaussians(VecVec2d &means, VecMat2d &covariances,
                 std::vector<double> &weights) const;
 
         /**
@@ -130,11 +130,11 @@ namespace ars {
          * @param samples vector of samples
          * @param stepNum number of iteration of EM
          */
-        void executeEM(const VectorVector2 &samples, int stepNum = 1);
+        void executeEM(const VecVec2d &samples, int stepNum = 1);
 
     protected:
-        //        VectorVector2 means_;
-        //        VectorMatrix2 covars_;
+        //        VecVec2d means_;
+        //        VecMat2d covars_;
         //        std::vector<double> weights_;
         VectorGaussian gaussians_;
     };
@@ -193,7 +193,7 @@ namespace ars {
          * Computes the Gaussian parameters from the given samples.
          * @param samples sorted in counter-clockwise order
          */
-        virtual void compute(const VectorVector2 &samples);
+        virtual void compute(const VecVec2d &samples);
 
         /**
          * Returns the i-th interval.
@@ -220,7 +220,7 @@ namespace ars {
          * @param farthest the index of the farthest point from the line
          * @param distMax the distance of the farthest point from the line
          */
-        void findFarthest(const VectorVector2 &points, int first, int last,
+        void findFarthest(const VecVec2d &points, int first, int last,
                 int &farthest, double &distMax) const;
 
         /**
@@ -232,7 +232,7 @@ namespace ars {
          * @param mean the mean vector
          * @param covar the covariance matrix
          */
-        void estimateGaussianFromPoints(const VectorVector2 &points, int first,
+        void estimateGaussianFromPoints(const VecVec2d &points, int first,
                 int last, Vector2 &mean, Matrix2 &covar) const;
 
         /**
@@ -245,7 +245,7 @@ namespace ars {
          * @param mean the mean vector
          * @param covar the covariance matrix
          */
-        void estimateGaussianFromSegment(const VectorVector2 &points, int first,
+        void estimateGaussianFromSegment(const VecVec2d &points, int first,
                 int last, Vector2 &mean, Matrix2 &covar) const;
 
     };
@@ -319,7 +319,7 @@ namespace ars {
          * Computes the Gaussian parameters from the given samples.
          * @param samples sorted in counter-clockwise order
          */
-        virtual void compute(const VectorVector2 &samples);
+        virtual void compute(const VecVec2d &samples);
 
     private:
         int kernelNum_;
@@ -328,7 +328,7 @@ namespace ars {
         double meanShiftTol_;
         int iterationNumMax_;
 
-        void updateMeans(const VectorVector2 &meansCurr, VectorVector2 &meansNext,
+        void updateMeans(const VecVec2d &meansCurr, VecVec2d &meansNext,
                 DisjointSet &clusterLabels,
                 std::vector<double> &clusterIntraDistMax) const;
     };
@@ -347,7 +347,7 @@ namespace ars {
      */
     class GaussianMixtureEstimatorHierarchical : public GaussianMixtureEstimator {
     public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+//        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
         // Private
         using PointContainer = MortonOctree<2, double, int32_t>;
@@ -389,7 +389,7 @@ namespace ars {
          * Computes the Gaussian parameters from the given samples.
          * @param samples sorted in counter-clockwise order
          */
-        virtual void compute(const VectorVector2 &samples);
+        virtual void compute(const VecVec2d &samples);
 
     private:
         PointContainer data_;

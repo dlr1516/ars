@@ -22,12 +22,12 @@ namespace ars {
     ArsKernelIsotropic2d::ArsKernelIsotropic2d() : lambdaSqNorm_(0.0), sigmaValSq_(1.0), phi_(0.0), pnebiLut_(40, 0.001), mode_(ComputeMode::PNEBI_LUT) {
     }
 
-    ArsKernelIsotropic2d::ArsKernelIsotropic2d(const Vector2& mean1, const Vector2& mean2, double sigma)
+    ArsKernelIsotropic2d::ArsKernelIsotropic2d(const Vec2d& mean1, const Vec2d& mean2, double sigma)
     : pnebiLut_(40, 0.001), mode_(ComputeMode::PNEBI_LUT) {
         init(mean1, mean2, sigma);
     }
 
-    ArsKernelIsotropic2d::ArsKernelIsotropic2d(const Vector2& mean1, const Vector2& mean2, double sigma1, double sigma2)
+    ArsKernelIsotropic2d::ArsKernelIsotropic2d(const Vec2d& mean1, const Vec2d& mean2, double sigma1, double sigma2)
     : pnebiLut_(40, 0.001), mode_(ComputeMode::PNEBI_LUT) {
         init(mean1, mean2, sigma1, sigma2);
     }
@@ -35,15 +35,15 @@ namespace ars {
     ArsKernelIsotropic2d::~ArsKernelIsotropic2d() {
     }
 
-    void ArsKernelIsotropic2d::init(const Vector2& mean1, const Vector2& mean2, double sigma) {
+    void ArsKernelIsotropic2d::init(const Vec2d& mean1, const Vec2d& mean2, double sigma) {
         init(mean1, mean2, sigma, sigma);
     }
 
-    void ArsKernelIsotropic2d::init(const Vector2& mean1, const Vector2& mean2, double sigma1, double sigma2) {
+    void ArsKernelIsotropic2d::init(const Vec2d& mean1, const Vec2d& mean2, double sigma1, double sigma2) {
         double dx, dy;
 
-        dx = mean2(0) - mean1(0);
-        dy = mean2(1) - mean1(1);
+        dx = mean2.data_[0] - mean1.data_[0];
+        dy = mean2.data_[1] - mean1.data_[1];
         phi_ = atan2(dy, dx);
         sigmaValSq_ = sigma1 * sigma1 + sigma2 * sigma2;
         lambdaSqNorm_ = 0.25 * (dx * dx + dy * dy) / sigmaValSq_;

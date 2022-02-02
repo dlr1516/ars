@@ -60,7 +60,7 @@ namespace ars {
          * @param covar2 covariance matrix of second gaussian
          * @param nFourier Fourier order to be computed
          */
-        ArsKernelAnisotropic2d(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2, int nFourier = 256);
+        ArsKernelAnisotropic2d(const Vec2d& mean1, const Mat2d& covar1, const Vec2d& mean2, const Mat2d& covar2, int nFourier = 256);
 
         /**
          * Destructor. 
@@ -74,7 +74,7 @@ namespace ars {
          * @param mean2 mean value of second gaussian
          * @param covar2 covariance matrix of second gaussian
          */
-        void init(const Vector2& mean1, const Matrix2& covar1, const Vector2& mean2, const Matrix2& covar2);
+        void init(const Vec2d& mean1, const Mat2d& covar1, const Vec2d& mean2, const Mat2d& covar2);
         
         /**
          * Sets the number of discrete intervals used in numerical integration of over 

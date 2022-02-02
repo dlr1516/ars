@@ -128,7 +128,7 @@ namespace ars {
          * @param means mean values of the distributions
          * @param sigma the standard deviation (not variance!) of the identical isotropic distributions
          */
-        void insertIsotropicGaussians(const VectorVector2& means, double sigma);
+        void insertIsotropicGaussians(const VecVec2d& means, double sigma);
 
         /**
          * Inserts the given points and computes all the data about point pairs and 
@@ -139,7 +139,7 @@ namespace ars {
          * @param means mean values of the distributions
          * @param sigmas standard deviations (not variances!) of the isotropic distributions
          */
-        void insertIsotropicGaussians(const VectorVector2& means, const std::vector<double>& sigmas);
+        void insertIsotropicGaussians(const VecVec2d& means, const std::vector<double>& sigmas);
 
         /**
          * Inserts the given points and computes all the data about point pairs and 
@@ -149,7 +149,7 @@ namespace ars {
          * @param sigmas standard deviations (not variances!) of the isotropic distributions
          * @param weights the weights of each distribution of the mixture
          */
-        void insertIsotropicGaussians(const VectorVector2& means, const std::vector<double>& sigmas, const std::vector<double>& weights);
+        void insertIsotropicGaussians(const VecVec2d& means, const std::vector<double>& sigmas, const std::vector<double>& weights);
 
         /**
          * Inserts the given anisotropic gaussians. 
@@ -157,7 +157,7 @@ namespace ars {
          * @param means the mean values of Gaussians PDF representing points
          * @param covars the covariance matrices of Gaussians PDF representing point uncertainties
          */
-        void insertAnisotropicGaussians(const VectorVector2& means, const VectorMatrix2& covars, const std::vector<double>& weights);
+        void insertAnisotropicGaussians(const VecVec2d& means, const VecMat2d& covars, const std::vector<double>& weights);
 
         /** Initializes LUT (the LUT is used by initARSFRecursDownLUT).
          */

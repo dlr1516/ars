@@ -19,9 +19,10 @@
 #define UTILS_H
 
 #include <ars/definitions.h>
+#include <cmath>
 
 namespace ars {
-    
+
     /**
      * Computes the diagonalization of the given positive definite matrix m. 
      * 
@@ -32,8 +33,8 @@ namespace ars {
      * @param lmax the maximum eigenvalue
      * @param theta the angle of the eigenvector corresponding to lmax w.r.t. axis x
      */
-    void diagonalize(const Matrix2& m, double& lmin, double& lmax, double& theta);
-    
+    void diagonalize(const Mat2d& m, double& lmin, double& lmax, double& theta);
+
     /**
      * Computes the diagonalization of the given positive definite matrix m. 
      * The relation among the matrices:
@@ -44,15 +45,31 @@ namespace ars {
      * @param l the matrix of eigenvalues (the maximum eigenvalue first)
      * @param v the matrix with eigenvectors on columns
      */
-    void diagonalize(const Matrix2& m, Matrix2& l, Matrix2& v);
-    
+    void diagonalize(const Mat2d& m, Mat2d& l, Mat2d& v);
+
     /**
      * Saturates the eigenvalues of the input covariance matrix. 
      * @param covar
      * @param sigmaMinSquare
      */
-    void saturateEigenvalues(Matrix2& covar, double sigmaMinSquare);
-    
+    void saturateEigenvalues(Mat2d& covar, double sigmaMinSquare);
+
+    //
+
+    void zeroResetPointerVals(Vec2d& vec);
+
+    void zeroResetMatrixVals(Mat2d& mtx);
+
+    void mats2by2sum(Mat2d& resultMtx, Mat2d& aMtx, Mat2d& bMtx);
+
+    void mats2by2prod(Mat2d& resultMtx, Mat2d& aMtx, Mat2d& bMtx);
+
+    void vec2sum(Vec2d& result, Vec2d& a, Vec2d& b);
+
+    void vec2diff(Vec2d& result, Vec2d& a, Vec2d& b);
+
+
+
 } // end of namespace
 
 #endif /* UTILS_H */

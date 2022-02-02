@@ -170,8 +170,8 @@ namespace ars {
         coeffs_ = coeffs;
     }
 
-    void AngularRadonSpectrum2d::insertIsotropicGaussians(const VectorVector2& means, double sigma) {
-        int kernelNum = means.size();
+    void AngularRadonSpectrum2d::insertIsotropicGaussians(const VecVec2d& means, double sigma) {
+        size_t kernelNum = means.size();
         double w = 1.0 / (kernelNum * kernelNum);
         //std::cout << "kernelNum " << kernelNum << ", mode_ " << mode_ << " " << MODE_NAME[mode_] << std::endl;
 
@@ -214,12 +214,12 @@ namespace ars {
         }
     }
 
-    void AngularRadonSpectrum2d::insertIsotropicGaussians(const VectorVector2& means, const std::vector<double>& sigmas) {
+    void AngularRadonSpectrum2d::insertIsotropicGaussians(const VecVec2d& means, const std::vector<double>& sigmas) {
         ARS_PRINT("NOT IMPLEMENTED!");
         ARS_ASSERT(false);
     }
 
-    void AngularRadonSpectrum2d::insertIsotropicGaussians(const VectorVector2& means, const std::vector<double>& sigmas, const std::vector<double>& weights) {
+    void AngularRadonSpectrum2d::insertIsotropicGaussians(const VecVec2d& means, const std::vector<double>& sigmas, const std::vector<double>& weights) {
         int kernelNum = means.size();
         double w = 1.0 / (kernelNum * kernelNum);
 
@@ -265,7 +265,7 @@ namespace ars {
         }
     }
 
-    void AngularRadonSpectrum2d::insertAnisotropicGaussians(const VectorVector2& means, const VectorMatrix2& covars, const std::vector<double>& weights) {
+    void AngularRadonSpectrum2d::insertAnisotropicGaussians(const VecVec2d& means, const VecMat2d& covars, const std::vector<double>& weights) {
         ArsKernelAnisotropic2d nik;
         std::vector<double> coeffsPartial(arsfOrder_);
         int kernelNum = means.size();

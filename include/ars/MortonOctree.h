@@ -29,7 +29,7 @@ namespace ars {
         using VectorPointScalar = std::vector<PointScalar, Eigen::aligned_allocator<PointScalar> >;
 
         struct Item {
-            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+            //            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
             PointInt index;
             PointScalar value;
@@ -152,12 +152,12 @@ namespace ars {
         }
 
         int computeLevel(ConstIterator first, ConstIterator last) {
-        	// For iterator syntax interval [first, last[ does not include last iterator,
-        	// but some operations requires access to last item. Hence, we --last
-        	if (last != first) {
-        		--last;
-        	}
-        	return mortonDistance(first->index, last->index);
+            // For iterator syntax interval [first, last[ does not include last iterator,
+            // but some operations requires access to last item. Hence, we --last
+            if (last != first) {
+                --last;
+            }
+            return mortonDistance(first->index, last->index);
         }
 
         /**
@@ -186,11 +186,11 @@ namespace ars {
                     [&](const Item& i1, const Item & i2) -> bool {
                         return mortonCmpInt(i1.index, i2.index);
                     });
-//            if (it != items_.end()) {
-//                ARS_VARIABLE(it->index.transpose());
-//            } else {
-//                ARS_PRINT("it == items_.end()");
-//            }
+            //            if (it != items_.end()) {
+            //                ARS_VARIABLE(it->index.transpose());
+            //            } else {
+            //                ARS_PRINT("it == items_.end()");
+            //            }
             return it;
         }
 
