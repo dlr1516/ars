@@ -60,13 +60,15 @@ namespace ars {
 
     void zeroResetMatrixVals(Mat2d& mtx);
 
-    void mats2by2sum(Mat2d& resultMtx, Mat2d& aMtx, Mat2d& bMtx);
+    void mat2dSum(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx);
 
-    void mats2by2prod(Mat2d& resultMtx, Mat2d& aMtx, Mat2d& bMtx);
+    void mat2dProd(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx);
 
-    void vec2sum(Vec2d& result, Vec2d& a, Vec2d& b);
+    void threeMats2dProd(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx, const Mat2d& cMtx);
 
-    void vec2diff(Vec2d& result, Vec2d& a, Vec2d& b);
+    void vec2sum(Vec2d& result, const Vec2d& a, const Vec2d & b);
+
+    void vec2diff(Vec2d& result, const Vec2d& a, const Vec2d & b);
 
 
 

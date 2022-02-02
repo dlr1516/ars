@@ -67,9 +67,9 @@ namespace ars {
         v.make2dRotMat(theta);
         //                covar = v * covar * v.transpose();
         Mat2d tmpProdResult;
-        mats2by2prod(tmpProdResult, v, covar);
+        mat2dProd(tmpProdResult, v, covar);
         v.transpose();
-        mats2by2prod(covar, tmpProdResult, v);
+        mat2dProd(covar, tmpProdResult, v);
         v.transpose(); //transpose back after using it for the product
     }
 
@@ -87,26 +87,32 @@ namespace ars {
         mtx.data_[3] = 0.0;
     }
 
-    void mats2by2sum(Mat2d& resultMtx, Mat2d& aMtx, Mat2d& bMtx) {
+    void mat2dSum(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx) {
         resultMtx.data_[0] = aMtx.data_[0] * bMtx.data_[0];
         resultMtx.data_[1] = aMtx.data_[1] * bMtx.data_[1];
         resultMtx.data_[2] = aMtx.data_[2] * bMtx.data_[2];
         resultMtx.data_[3] = aMtx.data_[3] * bMtx.data_[3];
     }
 
-    void mats2by2prod(Mat2d& resultMtx, Mat2d& aMtx, Mat2d& bMtx) {
+    void mat2dProd(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx) {
         resultMtx.data_[0] = aMtx.data_[0] * bMtx.data_[0] + aMtx.data_[1] * bMtx.data_[2];
         resultMtx.data_[1] = aMtx.data_[0] * bMtx.data_[1] + aMtx.data_[1] * bMtx.data_[3];
         resultMtx.data_[2] = aMtx.data_[2] * bMtx.data_[0] + aMtx.data_[3] * bMtx.data_[2];
         resultMtx.data_[3] = aMtx.data_[1] * bMtx.data_[2] + aMtx.data_[3] * bMtx.data_[3];
     }
+    
+    void threeMats2dProd(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx, const Mat2d& cMtx) {
+        Mat2d tmp;
+        mat2dProd(tmp,aMtx,bMtx);
+        mat2dProd(resultMtx, tmp, cMtx);
+    }
 
-    void vec2sum(Vec2d& result, Vec2d& a, Vec2d& b) {
+    void vec2sum(Vec2d& result, const Vec2d& a, const Vec2d& b) {
         result.data_[0] = a.data_[0] + b.data_[0];
         result.data_[1] = a.data_[1] + b.data_[1];
     }
 
-    void vec2diff(Vec2d& result, Vec2d& a, Vec2d& b) {
+    void vec2diff(Vec2d& result, const Vec2d& a, const Vec2d& b) {
         result.data_[0] = a.data_[0] - b.data_[0];
         result.data_[1] = a.data_[1] - b.data_[1];
     }

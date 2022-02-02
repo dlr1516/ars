@@ -22,7 +22,7 @@
 #include <iostream>
 #include <vector>
 #include <deque>
-#include <Eigen/Dense>
+
 #include <ars/definitions.h>
 #include <ars/MortonOctree.h>
 #include <ars/DisjointSet.h>
@@ -47,11 +47,11 @@ namespace ars {
         struct Gaussian {
             EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-            Vector2 mean;
-            Matrix2 covar;
+            Vec2d mean;
+            Mat2d covar;
             double weight;
 
-            double eval(const Vector2 &v) const {
+            double eval(const Vec2d &v) const {
                 double k = 1.0 / sqrt(2.0 * M_PI * covar.determinant());
                 double arg = (v - mean).transpose() * covar.inverse() * (v - mean);
                 return k * exp(-0.5 * arg);
@@ -91,14 +91,14 @@ namespace ars {
          * @param i the index of the distribution/hypothesis
          * @return the mean vector
          */
-        const Vector2& mean(int i) const;
+        const Vec2d& mean(int i) const;
 
         /**
          * Returns the estimated covariance of i-th Gaussian distribution in the mixture.
          * @param i the index of the distribution/hypothesis
          * @return the covariance matrix
          */
-        const Matrix2& covariance(int i) const;
+        const Mat2d& covariance(int i) const;
 
         /**
          * Returns the estimated weight of i-th Gaussian distribution in the mixture,
@@ -233,7 +233,7 @@ namespace ars {
          * @param covar the covariance matrix
          */
         void estimateGaussianFromPoints(const VecVec2d &points, int first,
-                int last, Vector2 &mean, Matrix2 &covar) const;
+                int last, Vec2d &mean, Mat2d &covar) const;
 
         /**
          * Computes the Gaussian distribution, i.e. its parameters, assuming the input points
@@ -246,7 +246,7 @@ namespace ars {
          * @param covar the covariance matrix
          */
         void estimateGaussianFromSegment(const VecVec2d &points, int first,
-                int last, Vector2 &mean, Matrix2 &covar) const;
+                int last, Vec2d &mean, Mat2d &covar) const;
 
     };
 
@@ -401,13 +401,13 @@ namespace ars {
         int levelMax_;
 
         bool estimateGaussianFromPoints(const ConstIterator &beg,
-                const ConstIterator &end, Vector2 &mean, Matrix2 &covar, double &w) const;
+                const ConstIterator &end, Vec2d &mean, Mat2d &covar, double &w) const;
 
         bool estimateGaussianFromSegment(const ConstIterator &beg,
-                const ConstIterator &end, Vector2 &mean, Matrix2 &covar, double &w) const;
+                const ConstIterator &end, Vec2d &mean, Mat2d &covar, double &w) const;
 
-        bool estimateGaussianISE(const ConstIterator &beg, const ConstIterator &end, Vector2 &mean,
-                Matrix2 &covar, double &wMerged) const;
+        bool estimateGaussianISE(const ConstIterator &beg, const ConstIterator &end, Vec2d &mean,
+                Mat2d &covar, double &wMerged) const;
 
     };
 

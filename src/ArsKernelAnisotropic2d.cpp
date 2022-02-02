@@ -46,10 +46,10 @@ namespace ars {
 		Mat2d sigma12;
 		double a, b, lmax, lmin, c, s;
 
-		mu12 = mean2 - mean1;
+		vec2diff(mu12, mean2, mean1);
 		muMod_ = mu12.norm();
-		muAng_ = atan2(mu12(1), mu12(0));
-		sigma12 = covar1 + covar2;
+		muAng_ = atan2(mu12.data_[1], mu12.data_[0]);
+		mat2dSum(sigma12, covar1, covar2);
 
 		// Diagonalizes sigma12
 		diagonalize(sigma12, lmin, lmax, sigmaAng_);

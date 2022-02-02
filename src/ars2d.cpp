@@ -190,7 +190,7 @@ namespace ars {
         for (int i = 0; i < kernelNum; ++i) {
             for (int j = i + 1; j < kernelNum; ++j) {
                 ars::ScopedTimer timer("ArsKernelIsotropic2d::computeFourier()");
-                isotropicKer_.init(means[i], means[j], sigma);
+                isotropicKer_.init(means.vv_[i], means.vv_[j], sigma);
                 isotropicKer_.updateFourier(arsfOrder_, coeffs_, w);
                 //                dx = means[i].x() - means[j].x();
                 //                dy = means[i].y() - means[j].y();
@@ -246,7 +246,7 @@ namespace ars {
         //        double dx, dy, sigma2, lambda, scale, ux, uy;
         for (int i = 0; i < kernelNum; ++i) {
             for (int j = i + 1; j < kernelNum; ++j) {
-                isotropicKer_.init(means[i], means[j], sigmas[i], sigmas[j]);
+                isotropicKer_.init(means.vv_[i], means.vv_[j], sigmas[i], sigmas[j]);
                 //                dx = means[i].x() - means[j].x();
                 //                dy = means[i].y() - means[j].y();
                 //                sigma2 = sigmas[i] * sigmas[i] + sigmas[j] * sigmas[j];
@@ -287,7 +287,7 @@ namespace ars {
         for (int i = 0; i < kernelNum; ++i) {
             for (int j = i + 1; j < kernelNum; ++j) {
                 ars::ScopedTimer timer("AnisotropicKernel::computeFourier()");
-                nik.init(means[i], covars[i], means[j], covars[j]);
+                nik.init(means.vv_[i], covars.mm_[i], means.vv_[j], covars.mm_[j]);
                 nik.computeFourier(coeffsPartial);
 
                 wij = weights[i] * weights[j];

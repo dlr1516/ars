@@ -91,12 +91,19 @@ namespace ars {
     class Mat2d {
     public:
         double data_[4];
-        
+
         void resetToZero() {
             data_[0 * Two + 0] = 0.0; // = data[0]
             data_[0 * Two + 1] = 0.0; // = data[1]
             data_[1 * Two + 0] = 0.0; // = data[2]
             data_[1 * Two + 1] = 0.0; // = data[3]
+        }
+        
+        void setToIdentity() {
+            data_[0 * Two + 0] = 1.0; // = data[0]
+            data_[0 * Two + 1] = 0.0; // = data[1]
+            data_[1 * Two + 0] = 0.0; // = data[2]
+            data_[1 * Two + 1] = 1.0; // = data[3]
         }
 
         void fillRowMajor(double a, double b, double c, double d) {
@@ -119,10 +126,53 @@ namespace ars {
             data_[1 * Two + 0] = tmp;
         }
 
+        double determinant() const {
+            return data_[0 * Two + 0] * data_[1 * Two + 1] - data_[0 * Two + 1] * data_[1 * Two + 0];
+        }
+
+        double trace() const {
+            return data_[0 * Two + 0] + data_[1 * Two + 1];
+        }
+
+        void invert() {
+            //            double det = data_[0 * Two + 0] * data_[1 * Two + 1] - data_[0 * Two + 1] * data_[1 * Two + 0]; //maybe use directly determinant() function??
+            double detInv = 1.0 / determinant();
+
+            double aOrig = data_[0 * Two + 0];
+            double bOrig = data_[0 * Two + 1];
+            double cOrig = data_[1 * Two + 0];
+            double dOrig = data_[1 * Two + 1];
+
+            data_[0 * Two + 0] = dOrig * detInv;
+            data_[0 * Two + 1] = -bOrig * detInv;
+            data_[1 * Two + 0] = -cOrig * detInv;
+            data_[1 * Two + 1] = aOrig * detInv;
+
+        }
+
+        Mat2d inverse() const {
+            Mat2d m;
+
+            double detInv = 1.0 / determinant();
+
+            double aOrig = data_[0 * Two + 0];
+            double bOrig = data_[0 * Two + 1];
+            double cOrig = data_[1 * Two + 0];
+            double dOrig = data_[1 * Two + 1];
+
+            m.data_[0 * Two + 0] = dOrig * detInv;
+            m.data_[0 * Two + 1] = -bOrig * detInv;
+            m.data_[1 * Two + 0] = -cOrig * detInv;
+            m.data_[1 * Two + 1] = aOrig * detInv;
+            
+            return m;
+        }
+
         void setDiagonal(double a11, double a22) {
             data_[0 * Two + 0] = a11;
             data_[1 * Two + 1] = a22;
-        }       
+        }
+
     };
 
     //    using VectorMatrix2 = std::vector<Matrix2, Eigen::aligned_allocator<Matrix2> >;
