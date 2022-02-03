@@ -118,12 +118,12 @@ namespace ars {
     //    std::array<std::string, 2> const AngularRadonSpectrum2d::MODE_NAME{"PNEBI_DOWNWARD", "PNEBI_LUT"};
 
     AngularRadonSpectrum2d::AngularRadonSpectrum2d()
-    : coeffs_(), isotropicKer_(), anisotropicKer_(), arsfOrder_(0),
+    : coeffs_(), isotropicKer_(), arsfOrder_(0),
     thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4) { // pnebiLut_(), mode_(PNEBI_LUT), anisotropicStep_(720)
     }
 
     AngularRadonSpectrum2d::AngularRadonSpectrum2d(const std::vector<double>& coeffs)
-    : coeffs_(coeffs), isotropicKer_(), anisotropicKer_(), arsfOrder_(0),
+    : coeffs_(coeffs), isotropicKer_(), arsfOrder_(0),
     thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4) { // pnebiLut_(), mode_(PNEBI_LUT), anisotropicStep_(720)
     }
 
@@ -265,38 +265,7 @@ namespace ars {
         }
     }
 
-    void AngularRadonSpectrum2d::insertAnisotropicGaussians(const VecVec2d& means, const VecMat2d& covars, const std::vector<double>& weights) {
-        ArsKernelAnisotropic2d nik;
-        std::vector<double> coeffsPartial(arsfOrder_);
-        int kernelNum = means.size();
-        double wij;
 
-        if (kernelNum != covars.size()) {
-            std::cerr << __FILE__ << "," << __LINE__ << ": inconsistent vector sizes: found " << means.size()
-                    << " mean values and " << covars.size() << " covariance matrices" << std::endl;
-            return;
-        }
-
-        nik.setFourierOrder(arsfOrder_);
-        //ARS_ASSERT(coeffs_.size() == 2 * arsfOrder_ && coeffsPartial.size() == 2 * arsfOrder_);
-        coeffs_.resize(2 * arsfOrder_);
-        coeffsPartial.resize(2 * arsfOrder_);
-
-
-        std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
-        for (int i = 0; i < kernelNum; ++i) {
-            for (int j = i + 1; j < kernelNum; ++j) {
-                ars::ScopedTimer timer("AnisotropicKernel::computeFourier()");
-                nik.init(means.vv_[i], covars.mm_[i], means.vv_[j], covars.mm_[j]);
-                nik.computeFourier(coeffsPartial);
-
-                wij = weights[i] * weights[j];
-                for (int f = 0; f < coeffs_.size(); ++f) {
-                    coeffs_[f] += wij * coeffsPartial[f];
-                }
-            }
-        }
-    }
 
     //    void AngularRadonSpectrum2d::initARSFRecursDown() {
     //        std::fill(coeffs_.begin(), coeffs_.end(), 0.0);

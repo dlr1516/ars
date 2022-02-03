@@ -118,7 +118,6 @@ int main() {
     for (int i = 0; i < bbnum; ++i) {
         bbbs[i].x0 = M_PI * i / bbnum;
         bbbs[i].x1 = M_PI * (i + 1) / bbnum;
-        //emotion::findARSFLU(ars.coeffsRecursDown(),bbbs[i].x0,bbbs[i].x1,bbbs[i].y0,bbbs[i].y1);
         ars::findLUFourier(ars1.coefficients(), bbbs[i].x0, bbbs[i].x1, bbbs[i].y0, bbbs[i].y1);
         std::cout << i << ": x0 " << RAD2DEG(bbbs[i].x0) << " x1 " << RAD2DEG(bbbs[i].x1) << ", y0 " << bbbs[i].y0 << " y1 " << bbbs[i].y1 << std::endl;
     }
@@ -137,26 +136,6 @@ int main() {
     std::cout << "  repeated evaluation with findGlobalMaxBBFourier(): maximum in x " << xopt2 << " (" << RAD2DEG(xopt2) << " deg), maximum value " << ymax2 << std::endl;
 
 
-    Gnuplot gp("gnuplot -persist");
-    double vieweps = 5e-3;
-    //  std::ostream& gp = std::cout;
-    gp << "set term wxt 0\n";
-    gp << "plot '-' title \"ars\" w l, '-' title \"ars lut\" w l, '-' title \"bb\" w l\n";
-    for (int i = 0; i < thnum; ++i) {
-        gp << (180.0 / thnum * i) << " " << (funcFourierRecursDown[i]) << "\n";
-    }
-    gp << "e" << std::endl;
-    for (int i = 0; i < thnum; ++i) {
-        gp << (180.0 / thnum * i) << " " << (funcFourierRecursDownLUT[i]) << "\n";
-    }
-    gp << "e" << std::endl;
-    plotBranchBoundBox(gp, bbbs);
-    gp << "e" << std::endl;
-    //  std::cout << "\nOptimization: " << std::endl;
-    //  double thetaMax, arsfMax;
-    //  emotion::findARSFMaxBB(ars.coeffsRecursDown(),0,M_PI,M_PI/180.0*0.05,10.0,thetaMax,arsfMax);
-    //  std::cout << "\nMaximum in " << (180.0/M_PI*thetaMax) << " deg, max value " << arsfMax << std::endl;
-
     return 0;
 }
 
@@ -169,14 +148,5 @@ void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, ars
     }
 }
 
-void plotBranchBoundBox(std::ostream& out, const std::vector<BoundInterval>& bbbs) {
-    for (auto& bbb : bbbs) {
-        out << RAD2DEG(bbb.x0) << " " << bbb.y0 << "\n"
-                << RAD2DEG(bbb.x1) << " " << bbb.y0 << "\n"
-                << RAD2DEG(bbb.x1) << " " << bbb.y1 << "\n"
-                << RAD2DEG(bbb.x0) << " " << bbb.y1 << "\n"
-                << RAD2DEG(bbb.x0) << " " << bbb.y0 << "\n\n";
-    }
-}
 
 

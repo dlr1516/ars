@@ -50,7 +50,7 @@ add_library(ars_iso STATIC
   src/ars2d.cpp
   src/functions.cpp
   src/utils.cpp
-#  src/ArsKernelAnisotropic2d.cpp
+  src/ArsKernelAnisotropic2d.cpp
   src/ArsKernelIsotropic2d.cpp
   src/BBOptimizer1d.cpp
   src/DisjointSet.cpp
