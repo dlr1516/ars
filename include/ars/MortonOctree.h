@@ -5,7 +5,7 @@
 #include <cstdint> 
 #include <vector>
 
-#include <Eigen/Dense>
+
 //#include <ars/definitions.h>
 //#include <ars/MortonSort.h>
 #include "definitions.h"
@@ -21,7 +21,6 @@ namespace ars {
     template <unsigned int Dim, typename Scalar, typename Integer = int64_t>
     class MortonOctree {
     public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
         using PointInt = Eigen::Matrix<Integer, Dim, 1>;
         using PointScalar = Eigen::Matrix<Scalar, Dim, 1>;

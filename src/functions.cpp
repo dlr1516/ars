@@ -376,9 +376,9 @@ namespace ars {
         double factor = 2.0 / n;
 
         fft_.fwd(freqvec, funIn);
-        
+
         //ARS_PRINT("fft: input size " << funIn.size() << ", output complex size " << freqvec.size());
-        
+
         coeffs.resize(2 * fourierOrder + 2);
         coeffs[0] = freqvec[0].real() / n;
         coeffs[1] = 0.0;
@@ -386,7 +386,7 @@ namespace ars {
             coeffs[2 * i] = factor * freqvec[i].real();
             coeffs[2 * i + 1] = -factor * freqvec[i].imag();
         }
-        
+
     }
 
 } // end of namespace

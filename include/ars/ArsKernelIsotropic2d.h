@@ -133,7 +133,7 @@ namespace ars {
          * @param sigma2 the standard deviation of the second Gaussian
          */
         void init(const Vec2d& mean1, const Vec2d& mean2, double sigma1, double sigma2);
-        
+
         /**
          * Initializes the LUT (look-up table) of the PNEBI (Product of Negative 
          * Exponential and Bessel I) required for fast computation of Fourier
@@ -149,7 +149,7 @@ namespace ars {
         double getLambdaNorm() const {
             return lambdaSqNorm_;
         }
-        
+
         /**
          * Returns the variance associated to the ARS Kernel. 
          * @return 
@@ -165,7 +165,7 @@ namespace ars {
         double getPhi() const {
             return phi_;
         }
-        
+
         /**
          * Sets the mode for computing ARS coefficients in the case of isotropic kernels. 
          * @param mode the desired mode
@@ -179,18 +179,18 @@ namespace ars {
          * @return 
          */
         const std::string& getComputeModeName() const {
-            int idx = static_cast<int>(mode_);
+            int idx = static_cast<int> (mode_);
             return MODE_NAME[idx];
         }
 
- /**
+        /**
          * Computes the coefficients of Fourier series expansion of the kernel. 
          * The series is truncated to n-th order. 
          * @param nFourier maximum order of the Fourier series 
          * @param coeffs the computed coefficients 
          */
         void computeFourier(int nFourier, std::vector<double>& coeffs);
-        
+
         /**
          * Computes the coefficients of Fourier series expansion of the kernel 
          * and ADD them to the passed ones. (It does not reset them to zero!)
@@ -199,7 +199,7 @@ namespace ars {
          * @param coeffs the computed coefficients 
          */
         void updateFourier(int nFourier, std::vector<double>& coeffs);
-        
+
         /**
          * Computes the coefficients of Fourier series expansion of the kernel 
          * and ADD them to the passed ones. (It does not reset them to zero!)
@@ -210,7 +210,7 @@ namespace ars {
          * @param weight the weight of this specific kernel
          */
         void updateFourier(int nFourier, std::vector<double>& coeffs, double weight);
-        
+
         /**
          * Copmputes the value of the isotropic kernel at a given angle. 
          * @param t
@@ -222,7 +222,7 @@ namespace ars {
 
     private:
         static std::array<std::string, 2> const MODE_NAME;
-        
+
         double lambdaSqNorm_;
         double sigmaValSq_;
         double phi_;

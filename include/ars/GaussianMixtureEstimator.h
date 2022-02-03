@@ -28,6 +28,8 @@
 #include <ars/DisjointSet.h>
 #include <boost/math/distributions/chi_squared.hpp>
 
+#include "utils.h"
+
 namespace ars {
 
     //-----------------------------------------------------
@@ -42,22 +44,20 @@ namespace ars {
     class GaussianMixtureEstimator {
     public:
 
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
         struct Gaussian {
-            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
             Vec2d mean;
             Mat2d covar;
             double weight;
 
             double eval(const Vec2d &v) const {
                 double k = 1.0 / sqrt(2.0 * M_PI * covar.determinant());
-                double arg = (v - mean).transpose() * covar.inverse() * (v - mean);
+                //                double arg = (v - mean).transpose() * covar.inverse() * (v - mean);
+                Vec2d firstMultiplicationResult = row2VecTimesMat2WRV(vec2diffWRV(v, mean), covar.inverse()); //(v - mean).transpose() * covar.inverse()
+                double arg = vec2dotProduct(firstMultiplicationResult, vec2diffWRV(v, mean));
                 return k * exp(-0.5 * arg);
             }
         };
-        using VectorGaussian = std::deque<Gaussian, Eigen::aligned_allocator<Gaussian> >;
+        using VectorGaussian = std::deque<Gaussian>;
 
         /**
          * Default constructor.
@@ -146,9 +146,10 @@ namespace ars {
     class GaussianMixtureEstimatorScan : public GaussianMixtureEstimator {
     public:
 
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 
         //using IndexInterval = std::pair<int, int>;
+
         struct IndexInterval {
             int first;
             int last;
@@ -256,7 +257,7 @@ namespace ars {
 
     class GaussianMixtureEstimatorMeanShift : public GaussianMixtureEstimator {
     public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 
         /**
          * Default constructor.
@@ -347,7 +348,7 @@ namespace ars {
      */
     class GaussianMixtureEstimatorHierarchical : public GaussianMixtureEstimator {
     public:
-//        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+        //        ;
 
         // Private
         using PointContainer = MortonOctree<2, double, int32_t>;
@@ -382,7 +383,7 @@ namespace ars {
         void setChiConfidence(double conf);
 
         void setIseThreshold(double iseTh);
-        
+
         void setCellSizeMax(double s);
 
         /**

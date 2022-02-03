@@ -16,7 +16,8 @@
  * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <iostream>
-#include <Eigen/Dense>
+
+en / Dense>
 
 #include <ars/definitions.h>
 #include <ars/ars2d.h>

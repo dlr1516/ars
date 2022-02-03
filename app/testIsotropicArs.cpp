@@ -16,7 +16,8 @@
  * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <iostream>
-#include <Eigen/Dense>
+
+en / Dense>
 
 #include <ars/definitions.h>
 #include <ars/ars2d.h>
@@ -119,18 +120,18 @@ int main() {
         ars::findLUFourier(ars1.coefficients(), bbbs[i].x0, bbbs[i].x1, bbbs[i].y0, bbbs[i].y1);
         std::cout << i << ": x0 " << RAD2DEG(bbbs[i].x0) << " x1 " << RAD2DEG(bbbs[i].x1) << ", y0 " << bbbs[i].y0 << " y1 " << bbbs[i].y1 << std::endl;
     }
-    
+
     ars::FourierOptimizerBB1D optim(ars1.coefficients());
     double xopt, ymin, ymax;
     optim.enableXTolerance(true);
     optim.enableYTolerance(true);
-    optim.setXTolerance(M_PI/180.0*0.5);
+    optim.setXTolerance(M_PI / 180.0 * 0.5);
     optim.setYTolerance(1.0);
-    optim.findGlobalMax(0,M_PI,xopt,ymin,ymax);
+    optim.findGlobalMax(0, M_PI, xopt, ymin, ymax);
     std::cout << "\n****\nMaximum in x = " << xopt << " (" << RAD2DEG(xopt) << " deg), maximum between [" << ymin << "," << ymax << "]" << std::endl;
 
     double xopt2, ymax2;
-    ars::findGlobalMaxBBFourier(ars1.coefficients(), 0, M_PI, M_PI/180.0*0.5, 1.0, xopt2, ymax2);
+    ars::findGlobalMaxBBFourier(ars1.coefficients(), 0, M_PI, M_PI / 180.0 * 0.5, 1.0, xopt2, ymax2);
     std::cout << "  repeated evaluation with findGlobalMaxBBFourier(): maximum in x " << xopt2 << " (" << RAD2DEG(xopt2) << " deg), maximum value " << ymax2 << std::endl;
 
 

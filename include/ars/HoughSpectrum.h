@@ -18,7 +18,6 @@
 #pragma once
 
 #include <iostream>
-#include <Eigen/Dense>
 
 namespace ars {
 
@@ -38,7 +37,6 @@ namespace ars {
      */
     class HoughSpectrum {
     public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
         /** Constructor with deafult parameters. 
          */

@@ -18,7 +18,7 @@
 #include <ars/MortonOrderedPoints.h>
 
 namespace ars {
-    
+
     template class MortonOrderedPoints<2, 4, float>;
     template class MortonOrderedPoints<2, 4, double>;
     template class MortonOrderedPoints<2, 8, float>;
@@ -29,7 +29,7 @@ namespace ars {
     template class MortonOrderedPoints<2, 24, double>;
     template class MortonOrderedPoints<2, 32, float>;
     template class MortonOrderedPoints<2, 32, double>;
-    
+
     template class MortonOrderedPoints<3, 4, float>;
     template class MortonOrderedPoints<3, 4, double>;
     template class MortonOrderedPoints<3, 8, float>;

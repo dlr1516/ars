@@ -162,9 +162,9 @@ int main(int argc, char** argv) {
             << ", lambda " << sqrt(mean12.dot(mean12))
             << ", lambda^2 / (8 * sigmaVal^2) " << lambdaSqNorm
             << ", phi[rad] " << phi << " [deg] " << (180.0 / M_PI * phi)
-            << ", normalization const " << normalizer 
+            << ", normalization const " << normalizer
             << "\n");
-    
+
     ik.init(mean1, mean2, sigmaVal);
     ik.setComputeMode(ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD);
     ik.computeFourier(arsOrder, fourierCoeffsIsot);
@@ -173,20 +173,20 @@ int main(int argc, char** argv) {
             << ", lambdaSqNorm " << ik.getLambdaNorm()
             << ", phi[rad] " << ik.getPhi() << " [deg] " << (180.0 / M_PI * ik.getPhi())
             << "\n");
-    
+
     std::cout << "Fourier coefficients (anisotropic - isotropic): "
             << "fourierCoeffsAnisot.size() " << fourierCoeffsAnisot.size()
-            << ", fourierCoeffsIsotRaw.size() " << fourierCoeffsIsotRaw.size() 
-            << ", fourierCoeffsIsot.size() " << fourierCoeffsIsot.size() 
+            << ", fourierCoeffsIsotRaw.size() " << fourierCoeffsIsotRaw.size()
+            << ", fourierCoeffsIsot.size() " << fourierCoeffsIsot.size()
             << "\n";
     for (int f = 0; f < arsOrder; ++f) {
-        std::cout << "  " << f << " cos: \t" << fourierCoeffsAnisot[2 * f] 
-                << "\t" << normalizer * fourierCoeffsIsotRaw[2 * f] 
-                << "\t" << fourierCoeffsIsot[2 * f] 
+        std::cout << "  " << f << " cos: \t" << fourierCoeffsAnisot[2 * f]
+                << "\t" << normalizer * fourierCoeffsIsotRaw[2 * f]
+                << "\t" << fourierCoeffsIsot[2 * f]
                 << "\n"
-                << "  " << f << " sin: \t" << fourierCoeffsAnisot[2 * f + 1] 
-                << "\t" << normalizer * fourierCoeffsIsotRaw[2 * f + 1] 
-                << "\t" << fourierCoeffsIsot[2 * f + 1] 
+                << "  " << f << " sin: \t" << fourierCoeffsAnisot[2 * f + 1]
+                << "\t" << normalizer * fourierCoeffsIsotRaw[2 * f + 1]
+                << "\t" << fourierCoeffsIsot[2 * f + 1]
                 << "\n";
     }
     std::cout << std::endl;

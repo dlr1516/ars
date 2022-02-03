@@ -21,7 +21,7 @@
 #include <vector>
 #include <queue>
 #include <cmath>
-//#include <Eigen/Dense>
+//en/Dense>
 
 namespace ars {
 
@@ -42,7 +42,7 @@ namespace ars {
      *  http://stackoverflow.com/questions/18662261/fastest-implementation-of-sine-cosine-and-square-root-in-c-doesnt-need-to-b
      */
     void fastCosSin(double x, double& c, double& s);
-    
+
     /**
      * Computes atan() using a polynomial approximation on interval [-1,1]. See:
      * 
@@ -52,7 +52,7 @@ namespace ars {
      * @return the value of atan
      */
     double fastAtan(double x);
-    
+
     /**
      * Computes atan2() using fastAtan(). It uses clever interval as suggested by:
      *    https://www.dsprelated.com/showarticle/1052.php
@@ -62,7 +62,7 @@ namespace ars {
      * @return the approximate atan2. 
      */
     double fastAtan2(double x, double y);
-    
+
     /**
      * Computes the value of the given Fourier series at the given point theta. 
      * The user must provide the vector of serie coefficients:
@@ -168,21 +168,21 @@ namespace ars {
          * Computes the value of PNEBI for all the available orders.
          */
         void eval(double x, std::vector<double>& y) const;
-        
+
         /**
          * Prints the given number of LUT entries.
          * @param out output stream 
          * @param n number of entries to print (as rows)
          * @param k maximum order of PNEBI to be printed (as columns)
          */
-        void printLUT(std::ostream& out,int n,int k = 0);
+        void printLUT(std::ostream& out, int n, int k = 0);
 
     private:
         std::vector<PnebiPoint> lut_;
         int orderMax_;
         double tolerance_;
     };
-    
+
     // --------------------------------------------------------
     // INTERVAL FUNCTIONS
     // --------------------------------------------------------
@@ -197,7 +197,7 @@ namespace ars {
      *   S(x) = \sum_{i=0}^{n} ( coeffs[2*i] * cos(2*i*x) + coeffs[2*i+1] * sin(2*i*x) )
      */
     void findLUFourier(const std::vector<double>& coeffs, double theta0, double theta1, double& fourierMin, double& fourierfMax);
-    
+
     void fft(const std::vector<double>& funIn, std::vector<double>& coeff, int fourierOrder);
 
 } // end of namespace

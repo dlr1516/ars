@@ -40,7 +40,7 @@ namespace ars {
      */
     class ArsKernelAnisotropic2d {
     public:
-    	static constexpr double INV_SQRT_2_PI = 0.3989422804;   // 1 / sqrt(2.0 * M_PI)
+        static constexpr double INV_SQRT_2_PI = 0.3989422804; // 1 / sqrt(2.0 * M_PI)
 
         /**
          * Creates a flat kernel
@@ -75,15 +75,15 @@ namespace ars {
          * @param covar2 covariance matrix of second gaussian
          */
         void init(const Vec2d& mean1, const Mat2d& covar1, const Vec2d& mean2, const Mat2d& covar2);
-        
+
         /**
          * Sets the number of discrete intervals used in numerical integration of over 
          * the period M_PI.
          * @param nRes number of interval 
          */
-//        void setIntervalNum(int nRes) {
-//            nRes_ = nRes;
-//        }
+        //        void setIntervalNum(int nRes) {
+        //            nRes_ = nRes;
+        //        }
 
         /**
          * Returns the module of the sinusoidal numerator. 
@@ -107,14 +107,14 @@ namespace ars {
         double getVarianceModule() const {
             return sigmaMod_;
         }
-        
+
         /**
          * Return the phase of the sinusoidal denominator.
          */
         double getVariancePhase() const {
             return sigmaAng_;
         }
-        
+
         /**
          * Returns the "eccentricity" of the eigenvalues of covariance matrix. 
          */
@@ -123,10 +123,10 @@ namespace ars {
         }
 
         void setFourierOrder(int nFourier) {
-        	if (nFourier_ != nFourier) {
-        		nFourier_ = nFourier;
-        		initCosSinLut();
-        	}
+            if (nFourier_ != nFourier) {
+                nFourier_ = nFourier;
+                initCosSinLut();
+            }
         }
 
         /**
@@ -150,7 +150,7 @@ namespace ars {
          * @param coeffs the computed coefficients 
          */
         void computeFourier(std::vector<double>& coeffs);
-        
+
         /**
          * Computes the coefficients of Fourier series expansion of the kernel 
          * and ADD them to the passed ones. (It does not reset them to zero!)
@@ -164,14 +164,15 @@ namespace ars {
         //void updateFourier(std::vector<double>& coeffs);
 
     private:
+
         struct DataLut {
-        	double varCos;
-        	double varSin;
-        	double meanConst;
-        	double meanCos;
-        	double meanSin;
-        	std::vector<double> cosTh;
-        	std::vector<double> sinTh;
+            double varCos;
+            double varSin;
+            double meanConst;
+            double meanCos;
+            double meanSin;
+            std::vector<double> cosTh;
+            std::vector<double> sinTh;
         };
 
         int nFourier_;

@@ -103,10 +103,10 @@ int main(int argc, char** argv) {
     for (int i = 0; i < gme->size(); ++i) {
         ars::diagonalize(gme->covariance(i), lmin, lmax, theta);
         //if (gme->size() < 30) {
-//        std::cout << "---\n " << i << ": weight " << gme->weight(i) << ", "
-//                << "mean [" << gme->mean(i).transpose() << "], covar\n"
-//                << gme->covariance(i) << "\n"
-//                << "  (lmin " << lmin << ", lmax " << lmax << ", theta[deg] " << (180.0 / M_PI * theta) << ")\n";
+        //        std::cout << "---\n " << i << ": weight " << gme->weight(i) << ", "
+        //                << "mean [" << gme->mean(i).transpose() << "], covar\n"
+        //                << gme->covariance(i) << "\n"
+        //                << "  (lmin " << lmin << ", lmax " << lmax << ", theta[deg] " << (180.0 / M_PI * theta) << ")\n";
         //}
         weightSum += gme->weight(i);
     }

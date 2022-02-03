@@ -29,43 +29,60 @@ find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 # Library files
-add_library(ars STATIC
+#add_library(ars STATIC
+#  src/ars2d.cpp
+#  src/functions.cpp
+#  src/utils.cpp
+#  src/ArsKernelAnisotropic2d.cpp
+#  src/ArsKernelIsotropic2d.cpp
+#  src/BBOptimizer1d.cpp
+#  src/DisjointSet.cpp
+#  src/GaussianMixtureEstimator.cpp
+#  src/HistogramCircularCorrelation.cpp
+#  src/HoughSpectrum.cpp
+#  #src/MortonOrderedPoints2d.cpp
+#  src/MortonSort.cpp
+#  src/ParamMap.cpp
+#  src/Profiler.cpp
+#)
+
+add_library(ars_iso STATIC
   src/ars2d.cpp
   src/functions.cpp
   src/utils.cpp
-  src/ArsKernelAnisotropic2d.cpp
+#  src/ArsKernelAnisotropic2d.cpp
   src/ArsKernelIsotropic2d.cpp
   src/BBOptimizer1d.cpp
   src/DisjointSet.cpp
-  src/GaussianMixtureEstimator.cpp
-  src/HistogramCircularCorrelation.cpp
-  src/HoughSpectrum.cpp
+#  src/GaussianMixtureEstimator.cpp
+#  src/HistogramCircularCorrelation.cpp
+#  src/HoughSpectrum.cpp
   #src/MortonOrderedPoints2d.cpp
-  src/MortonSort.cpp
+#  src/MortonSort.cpp
   src/ParamMap.cpp
   src/Profiler.cpp
 )
 
-add_executable(testFunctions app/testFunctions.cpp )
-target_link_libraries(testFunctions ${ars_LINK_LIBS} ars)
-
-add_executable(testIsotropicArs app/testIsotropicArs.cpp )
-target_link_libraries(testIsotropicArs ${ars_LINK_LIBS} ars)
+#add_executable(testFunctions app/testFunctions.cpp )
+#target_link_libraries(testFunctions ${ars_LINK_LIBS} ars)
+#
+#add_executable(testIsotropicArs app/testIsotropicArs.cpp )
+#target_link_libraries(testIsotropicArs ${ars_LINK_LIBS} ars)
 
 add_executable(gpu_testIsotropicArs app/gpu_testIsotropicArs.cu )
-target_link_libraries(gpu_testIsotropicArs ${ars_LINK_LIBS} ars)
+target_link_libraries(gpu_testIsotropicArs ${ars_LINK_LIBS} ars_iso)
 
-add_executable(testAnisotropicArs app/testAnisotropicArs.cpp)
-target_link_libraries(testAnisotropicArs ${ars_LINK_LIBS} ars)
-
-add_executable(testCorrelationArs app/testCorrelationArs.cpp)
-target_link_libraries(testCorrelationArs ${ars_LINK_LIBS} ars)
-
-add_executable(testAnisotropicKernel app/testAnisotropicKernel.cpp)
-target_link_libraries(testAnisotropicKernel ${ars_LINK_LIBS} ars)
-
-add_executable(testGaussianMixtureEstimator app/testGaussianMixtureEstimator.cpp)
-target_link_libraries(testGaussianMixtureEstimator ${ars_LINK_LIBS} ars)
+#add_executable(testAnisotropicArs app/testAnisotropicArs.cpp)
+#target_link_libraries(testAnisotropicArs ${ars_LINK_LIBS} ars)
+#
+#add_executable(testCorrelationArs app/testCorrelationArs.cpp)
+#target_link_libraries(testCorrelationArs ${ars_LINK_LIBS} ars)
+#
+#add_executable(testAnisotropicKernel app/testAnisotropicKernel.cpp)
+#target_link_libraries(testAnisotropicKernel ${ars_LINK_LIBS} ars)
+#
+#add_executable(testGaussianMixtureEstimator app/testGaussianMixtureEstimator.cpp)
+#target_link_libraries(testGaussianMixtureEstimator ${ars_LINK_LIBS} ars)
 
 #add_executable(testMortonOrderedPoints app/testMortonOrderedPoints.cpp)
 #target_link_libraries(testMortonOrderedPoints ${ars_LINK_LIBS} ars)

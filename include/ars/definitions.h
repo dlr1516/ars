@@ -19,6 +19,8 @@
 #define DEFINITIONS_H
 
 #include <iostream>
+#include <limits>
+#include <vector>
 #include <cmath>
 
 #define ARS_PRINT(MSG) std::cout << __FILE__ << "," << __LINE__ << ": " << MSG << std::endl;
@@ -60,10 +62,46 @@ namespace ars {
     class Vec2d {
     public:
         double data_[2];
+        bool isCol_; //default -> true
+
+        //        Vec2d() {
+        //            data_[0] = 0.0;
+        //            data_[1] = 0.0;
+        //
+        //            isCol_ = true;
+        //        }
+
+        Vec2d(double v0, double v1, bool isCol=true) {
+            data_[0] = v0;
+            data_[1] = v1;
+
+            isCol_ = isCol;
+        }
+
+        Vec2d(bool isCol = true) {
+            data_[0] = 0.0;
+            data_[1] = 0.0;
+
+            isCol_ = isCol;
+        }
+
+        virtual ~Vec2d() {
+            isCol_ = true;
+        }
 
         void resetToZero() {
             data_[0] = 0.0;
             data_[1] = 0.0;
+        }
+
+        void multiplyByScalar(double sc) {
+            data_[0] *= sc;
+            data_[1] *= sc;
+        }
+
+        void divideByScalar(double sc) {
+            data_[0] /= sc;
+            data_[1] /= sc;
         }
 
         double norm() {
@@ -76,11 +114,59 @@ namespace ars {
     class VecVec2d {
     private:
         size_t size_; //number of elements
+        size_t capacity_;
     public:
         Vec2d *vv_;
 
+        VecVec2d(size_t size = 0) {
+            //            ptr = (cast-type*) malloc(byte-size)
+            vv_ = (Vec2d*) malloc(size * sizeof (Vec2d));
+
+            size_ = 0;
+            capacity_ = size;
+        }
+
+        virtual ~VecVec2d() {
+            free(vv_);
+
+            size_ = 0;
+            capacity_ = 0;
+        }
+
+        void pushback(Vec2d& newV) {
+            if (size_ < capacity_) {
+                vv_[size_] = newV;
+                size_++;
+            } else {
+                vv_ = (Vec2d*) realloc(vv_, (capacity_ + 1) * sizeof (Vec2d));
+
+                vv_[size_] = newV;
+
+                size_++;
+                capacity_++;
+            }
+        }
+
+        void pushback(const Vec2d& newV) {
+            if (size_ < capacity_) {
+                vv_[size_] = newV;
+                size_++;
+            } else {
+                vv_ = (Vec2d*) realloc(vv_, (capacity_ + 1) * sizeof (Vec2d));
+
+                vv_[size_] = newV;
+
+                size_++;
+                capacity_++;
+            }
+        }
+
         size_t size() const {
             return size_;
+        }
+
+        void resize(size_t sz) {
+            size_ = sz;
         }
     };
 
@@ -92,18 +178,42 @@ namespace ars {
     public:
         double data_[4];
 
+        Mat2d() {
+            data_[0] = 0.0;
+            data_[1] = 0.0;
+            data_[2] = 0.0;
+            data_[3] = 0.0;
+        }
+
+        virtual ~Mat2d() {
+        }
+
         void resetToZero() {
             data_[0 * Two + 0] = 0.0; // = data[0]
             data_[0 * Two + 1] = 0.0; // = data[1]
             data_[1 * Two + 0] = 0.0; // = data[2]
             data_[1 * Two + 1] = 0.0; // = data[3]
         }
-        
+
         void setToIdentity() {
             data_[0 * Two + 0] = 1.0; // = data[0]
             data_[0 * Two + 1] = 0.0; // = data[1]
             data_[1 * Two + 0] = 0.0; // = data[2]
             data_[1 * Two + 1] = 1.0; // = data[3]
+        }
+
+        void multiplyByScalar(double sc) {
+            data_[0] *= sc;
+            data_[1] *= sc;
+            data_[2] *= sc;
+            data_[3] *= sc;
+        }
+
+        void divideByScalar(double sc) {
+            data_[0] /= sc;
+            data_[1] /= sc;
+            data_[2] /= sc;
+            data_[3] /= sc;
         }
 
         void fillRowMajor(double a, double b, double c, double d) {
@@ -124,6 +234,16 @@ namespace ars {
             double tmp = data_[0 * Two + 1];
             data_[0 * Two + 1] = data_[1 * Two + 0];
             data_[1 * Two + 0] = tmp;
+        }
+
+        Mat2d transposeReturningValue() {
+            Mat2d transposed;
+            transposed.data_[0 * Two + 0] = data_[0 * Two + 0];
+            transposed.data_[0 * Two + 1] = data_[0 * Two + 1];
+            transposed.data_[1 * Two + 0] = data_[1 * Two + 0];
+            transposed.data_[1 * Two + 1] = data_[1 * Two + 1];
+
+            return transposed;
         }
 
         double determinant() const {
@@ -164,7 +284,7 @@ namespace ars {
             m.data_[0 * Two + 1] = -bOrig * detInv;
             m.data_[1 * Two + 0] = -cOrig * detInv;
             m.data_[1 * Two + 1] = aOrig * detInv;
-            
+
             return m;
         }
 
@@ -180,11 +300,60 @@ namespace ars {
     class VecMat2d {
     private:
         size_t size_; //number of elements
+        size_t capacity_;
+
     public:
         Mat2d *mm_;
 
+        VecMat2d(size_t size = 0) {
+            //            ptr = (cast-type*) malloc(byte-size)
+            mm_ = (Mat2d*) malloc(size * sizeof (Mat2d));
+
+            size_ = 0;
+            capacity_ = size;
+        }
+
+        virtual ~VecMat2d() {
+            free(mm_);
+
+            size_ = 0;
+            capacity_ = 0;
+        }
+
+        void pushback(Mat2d& newM) {
+            if (size_ < capacity_) {
+                mm_[size_] = newM;
+                size_++;
+            } else {
+                mm_ = (Mat2d*) realloc(mm_, (capacity_ + 1) * sizeof (Vec2d));
+
+                mm_[size_] = newM;
+
+                size_++;
+                capacity_++;
+            }
+        }
+
+        void pushback(const Mat2d& newM) {
+            if (size_ < capacity_) {
+                mm_[size_] = newM;
+                size_++;
+            } else {
+                mm_ = (Mat2d*) realloc(mm_, (capacity_ + 1) * sizeof (Vec2d));
+
+                mm_[size_] = newM;
+
+                size_++;
+                capacity_++;
+            }
+        }
+
         size_t size() const {
             return size_;
+        }
+
+        void resize(size_t sz) {
+            size_ = sz;
         }
     };
 

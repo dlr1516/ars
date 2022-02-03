@@ -105,13 +105,16 @@ namespace ars {
 
             // Maximization
             for (int j = 0; j < gaussians_.size(); ++j) {
-                gaussians_[j].mean = Vec2d::Zero();
-                gaussians_[j].covar = Mat2d::Zero();
+                (gaussians_[j].mean).resetToZero();
+                (gaussians_[j].covar).resetToZero();
                 gaussians_[j].weight = 0.0;
                 sumC = 0.0;
 
                 // Computes the mean value
                 for (int i = 0; i < samples.size(); ++i) {
+                    gaussians_[j].mean += samples[i] * c(i, j);
+
+                    vec2sum(gauss)
                     gaussians_[j].mean += samples[i] * c(i, j);
                     sumC += c(i, j);
                 }
@@ -245,6 +248,7 @@ namespace ars {
         ARS_ASSERT(first >= 0 && last < points.size());
 
         // Computes the mean value vector
+        //        mean = Vec2d::Zero();
         mean = Vec2d::Zero();
         for (int i = first; i <= last; ++i) {
             mean += points[i];
@@ -252,7 +256,8 @@ namespace ars {
         mean = mean / (last - first + 1);
 
         // Computes the covariance
-        covar = Mat2d::Zero();
+        //        covar = Mat2d::Zero();
+        covar.resetToZero();
         for (int i = first; i <= last; ++i) {
             tmp = (points[i] - mean);
             covar = tmp * tmp.transpose();
@@ -290,7 +295,7 @@ namespace ars {
         mean = mean / (last - first + 1);
 
         // Computes the covariance
-        covar = Mat2d::Zero();
+        covar.resetToZero();
         for (int i = first; i <= last; ++i) {
             tmp = (points[i] - mean);
             covar = tmp * tmp.transpose();
@@ -311,7 +316,7 @@ namespace ars {
             if (lmax < sigmaMinSquare) {
                 lmax = sigmaMinSquare;
             }
-            covar << lmax, 0.0, 0.0, lmin;
+            covar.fillRowMajor(lmax, 0.0, 0.0, lmin);
             v = Eigen::Rotation2Dd(theta);
             covar = v * covar * v.transpose();
             //            ARS_PRINT("[" << first << "," << last << "]: lmin " << lmin << ", lmax " << lmax << ", theta[deg] " << (180.0 / M_PI * theta)
@@ -576,7 +581,7 @@ namespace ars {
         int num, inlier;
 
         // Computes the mean value vector
-        mean = Vec2d::Zero();
+        mean.resetToZero();
         num = 0;
         for (auto it = beg; it != end; ++it) {
             mean += it->value;
@@ -587,7 +592,7 @@ namespace ars {
         //	ARS_VARIABLE2(num, mean.transpose());
 
         // Computes the covariance
-        covar = Mat2d::Zero();
+        covar.resetToZero();
         for (auto it = beg; it != end; ++it) {
             tmp = (it->value - mean);
             covar += tmp * tmp.transpose();
@@ -595,14 +600,14 @@ namespace ars {
 
         if (num <= 1) {
             // Only one point: use the point uncertainty
-            covar << sigmaMinSquare, 0.0, 0.0, sigmaMinSquare;
+            covar.fillRowMajor(sigmaMinSquare, 0.0, 0.0, sigmaMinSquare);
         } else {
             covar = covar / (num - 1);
             diagonalize(covar, l, v);
-            if (l(0, 0) < sigmaMinSquare)
-                l(0, 0) = sigmaMinSquare;
-            if (l(1, 1) < sigmaMinSquare)
-                l(1, 1) = sigmaMinSquare;
+            if (l.data_[0 * Two + 0] < sigmaMinSquare)
+                l.data_[0 * Two + 0] = sigmaMinSquare;
+            if (l.data_[1 * Two + 1] < sigmaMinSquare)
+                l.data_[1 * Two + 1] = sigmaMinSquare;
             covar = v * l * v.transpose();
         }
 
@@ -631,7 +636,7 @@ namespace ars {
         double lmin, lmax, theta, ct, st, distSqr, d, dfirst, dlast;
 
         // Computes the mean value vector
-        mean = Vec2d::Zero();
+        mean.resetToZero();
         num = 0;
         for (auto it = beg; it != end; ++it) {
             mean += it->value;
@@ -640,7 +645,7 @@ namespace ars {
         mean = mean / num;
 
         // Computes the covariance
-        covar = Mat2d::Zero();
+        covar.resetToZero();
         for (auto it = beg; it != end; ++it) {
             tmp = (it->value - mean);
             covar += tmp * tmp.transpose();
@@ -670,8 +675,8 @@ namespace ars {
             if (lmax < sigmaMinSquare) {
                 lmax = sigmaMinSquare;
             }
-            covar << lmax, 0.0, 0.0, lmin;
-            v = Eigen::Rotation2Dd(theta);
+            covar.fillRowMajor(lmax, 0.0, 0.0, lmin);
+            v.make2dRotMat(theta);
             covar = v * covar * v.transpose();
         }
 
@@ -702,7 +707,7 @@ namespace ars {
 
 
         int num = 0;
-        mean = Vec2d::Zero();
+        mean.resetToZero();
         for (auto it = beg; it != end; ++it) {
             mean += it->value;
             num++;
@@ -717,14 +722,16 @@ namespace ars {
 
         wMerged = wOrig*num; //w_L
 
-        covar = Mat2d::Zero();
+        covar.resetToZero();
         for (auto it = beg; it != end; ++it) {
-            Vec2d tmp = it->value - mean;
-            covar += tmp * tmp.transpose();
+            Vec2d tmp = vec2diffWRV(it->value, mean);
+            //            covar += tmp * tmp.transpose();
+            mat2dSum(covar, vec2outerProductWRV(tmp, tmp));
         }
-        covar = covar / num;
-        covar(0, 0) += sigmaMinSqrd;
-        covar(1, 1) += sigmaMinSqrd;
+        //        covar = covar / num;
+        covar.divideByScalar(num);
+        covar.data_[0 * Two + 0] += sigmaMinSqrd;
+        covar.data_[1 * Two + 1] += sigmaMinSqrd;
 
         //std::cout << "covar\n" << covar << std::endl;
 

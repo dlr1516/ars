@@ -27,10 +27,10 @@
 #include <algorithm>
 #include <type_traits> // for static_assert()
 
-#include <Eigen/Dense>
+en / Dense>
 #include <ars/definitions.h>
 
-namespace ars {
+        namespace ars {
 
     /**
      * Converts the input integer to its corresponding std::bitset. 
@@ -144,13 +144,13 @@ namespace ars {
          * @return 
          */
         size_t size() const;
-        
+
         /**
          * Returns the iterator to the first point according to Morton order.
          * @return 
          */
         ConstIterator begin() const;
-        
+
         /**
          * Returns the iterator to the end of point set according to Morton order.
          * @return 
@@ -369,13 +369,13 @@ namespace ars {
     MortonOrderedPoints<Dim, Height, Scalar>::size() const {
         return points_.size();
     }
-    
+
     template <unsigned int Dim, unsigned int Height, typename Scalar>
     typename MortonOrderedPoints<Dim, Height, Scalar>::ConstIterator
     MortonOrderedPoints<Dim, Height, Scalar>::begin() const {
         return points_.begin();
     }
-    
+
     template <unsigned int Dim, unsigned int Height, typename Scalar>
     typename MortonOrderedPoints<Dim, Height, Scalar>::ConstIterator
     MortonOrderedPoints<Dim, Height, Scalar>::end() const {

@@ -24,135 +24,135 @@
 
 namespace ars {
 
-	// Declarations
-	class Profiler;
-	class ScopedTimer;
+    // Declarations
+    class Profiler;
+    class ScopedTimer;
 
-	/**
-	 * Class Profiler collects the statistics about the execution time.
-	 * It is implemented as a Singleton.
-	 */
-	class Profiler {
-	public:
+    /**
+     * Class Profiler collects the statistics about the execution time.
+     * It is implemented as a Singleton.
+     */
+    class Profiler {
+    public:
 
-		/**
-		 * Struct for storing time stats.
-		 */
-		struct MeasureStatistic {
-			double timeAvg;
-			double timeVar;
-			double timeMin;
-			double timeMax;
-			size_t count;
+        /**
+         * Struct for storing time stats.
+         */
+        struct MeasureStatistic {
+            double timeAvg;
+            double timeVar;
+            double timeMin;
+            double timeMax;
+            size_t count;
 
-			MeasureStatistic(double time) :
-					timeAvg(time), timeVar(0.0), timeMin(time), timeMax(time), count(1) {
-			}
+            MeasureStatistic(double time) :
+            timeAvg(time), timeVar(0.0), timeMin(time), timeMax(time), count(1) {
+            }
 
-			double getVariance() const {
-				if (count > 1) {
-					return (timeAvg / (count - 1));
-				} else {
-					return 0.0;
-				}
-			}
-		};
+            double getVariance() const {
+                if (count > 1) {
+                    return (timeAvg / (count - 1));
+                } else {
+                    return 0.0;
+                }
+            }
+        };
 
-		/**
-		 * Returns the only instance of profiler.
-		 */
-		static inline Profiler& getProfiler() {
-			static Profiler profiler;
-			return profiler;
-		}
+        /**
+         * Returns the only instance of profiler.
+         */
+        static inline Profiler& getProfiler() {
+            static Profiler profiler;
+            return profiler;
+        }
 
-		/**
-		 * Updates the statistics associated to a given label.
-		 * @param label identifier of a series of measurements
-		 * @param time the last measurement of the event associated to a label
-		 */
-		void updateStat(const std::string &label, double time);
+        /**
+         * Updates the statistics associated to a given label.
+         * @param label identifier of a series of measurements
+         * @param time the last measurement of the event associated to a label
+         */
+        void updateStat(const std::string &label, double time);
 
-		/**
-		 * Gets the statistics associated to the given label.
-		 * @return true if there are statistics associated to the given label
-		 */
-		bool getStat(const std::string &label, double &timeAvg, double &timeVar, double &timeMin, double &timeMax, int &conunt) const;
+        /**
+         * Gets the statistics associated to the given label.
+         * @return true if there are statistics associated to the given label
+         */
+        bool getStat(const std::string &label, double &timeAvg, double &timeVar, double &timeMin, double &timeMax, int &conunt) const;
 
-		/**
-		 * Gets the statistics associated to the given label.
-		 * @return true if there are statistics associated to the given label
-		 */
-		bool getStat(const std::string &label, double &timeAvg, double &timeVar, int &count) const;
+        /**
+         * Gets the statistics associated to the given label.
+         * @return true if there are statistics associated to the given label
+         */
+        bool getStat(const std::string &label, double &timeAvg, double &timeVar, int &count) const;
 
-		/**
-		 * Gets the statistics associated to the given label.
-		 * @return true if there are statistics associated to the given label
-		 */
-		bool getStat(const std::string &label, double &timeAvg) const;
+        /**
+         * Gets the statistics associated to the given label.
+         * @return true if there are statistics associated to the given label
+         */
+        bool getStat(const std::string &label, double &timeAvg) const;
 
-		/**
-		 * Prints the statistics on the given output stream
-		 * @param out the output stream
-		 */
-		void printStats(std::ostream &out) const;
+        /**
+         * Prints the statistics on the given output stream
+         * @param out the output stream
+         */
+        void printStats(std::ostream &out) const;
 
-	protected:
-		std::map<std::string, MeasureStatistic> stats_;
+    protected:
+        std::map<std::string, MeasureStatistic> stats_;
 
-		/**
-		 * Default constructor as private member of the class.
-		 */
-		Profiler() :
-				stats_() {
-		}
+        /**
+         * Default constructor as private member of the class.
+         */
+        Profiler() :
+        stats_() {
+        }
 
-		/**
-		 * Default destructor.
-		 */
-		~Profiler() {
-		}
+        /**
+         * Default destructor.
+         */
+        ~Profiler() {
+        }
 
-		/**
-		 * Copy constructor as private member of the class.
-		 */
-		Profiler(const Profiler &p) = delete;
+        /**
+         * Copy constructor as private member of the class.
+         */
+        Profiler(const Profiler &p) = delete;
 
-		/**
-		 * Assignment operator as private member.
-		 */
-		void operator=(const Profiler &p) = delete;
-	};
+        /**
+         * Assignment operator as private member.
+         */
+        void operator=(const Profiler &p) = delete;
+    };
 
-	/**
-	 * ScopedTimer measures the time elapsed from constructor to the invocation of destructor.
-	 */
-	class ScopedTimer {
-	public:
-		typedef std::chrono::steady_clock timer_type;
-		//        typedef std::chrono::high_resolution_clock timer_type;
+    /**
+     * ScopedTimer measures the time elapsed from constructor to the invocation of destructor.
+     */
+    class ScopedTimer {
+    public:
+        typedef std::chrono::steady_clock timer_type;
+        //        typedef std::chrono::high_resolution_clock timer_type;
 
-		/**
-		 * Constructor of timer inside scope with the given label
-		 * @param label label associated to a measurement serie
-		 */
-		ScopedTimer(std::string label);
+        /**
+         * Constructor of timer inside scope with the given label
+         * @param label label associated to a measurement serie
+         */
+        ScopedTimer(std::string label);
 
-		/**
-		 * Destructor. It saves stats when destructor is called.
-		 */
-		~ScopedTimer();
+        /**
+         * Destructor. It saves stats when destructor is called.
+         */
+        ~ScopedTimer();
 
-		/**
-		 * Returns the elapsed time in milliseconds.
-		 */
-		double elapsedTimeMs() const;
+        /**
+         * Returns the elapsed time in milliseconds.
+         */
+        double elapsedTimeMs() const;
 
-	protected:
-		std::string label_;
-		//std::chrono::time_point<std::chrono::high_resolution_clock> timeStart_;
-		std::chrono::time_point<timer_type> timeStart_;
-	};
+    protected:
+        std::string label_;
+        //std::chrono::time_point<std::chrono::high_resolution_clock> timeStart_;
+        std::chrono::time_point<timer_type> timeStart_;
+    };
 
 } // end of namespace
 

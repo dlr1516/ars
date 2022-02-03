@@ -75,17 +75,17 @@ namespace ars {
 
     //
 
-    void zeroResetPointerVals(Vec2d& vec) {
-        vec.data_[0] = 0.0;
-        vec.data_[1] = 0.0;
-    }
-
-    void zeroResetMatrixVals(Mat2d& mtx) {
-        mtx.data_[0] = 0.0;
-        mtx.data_[1] = 0.0;
-        mtx.data_[2] = 0.0;
-        mtx.data_[3] = 0.0;
-    }
+    //    void zeroResetPointerVals(Vec2d& vec) {
+    //        vec.data_[0] = 0.0;
+    //        vec.data_[1] = 0.0;
+    //    }
+    //
+    //    void zeroResetMatrixVals(Mat2d& mtx) {
+    //        mtx.data_[0] = 0.0;
+    //        mtx.data_[1] = 0.0;
+    //        mtx.data_[2] = 0.0;
+    //        mtx.data_[3] = 0.0;
+    //    }
 
     void mat2dSum(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx) {
         resultMtx.data_[0] = aMtx.data_[0] * bMtx.data_[0];
@@ -100,10 +100,10 @@ namespace ars {
         resultMtx.data_[2] = aMtx.data_[2] * bMtx.data_[0] + aMtx.data_[3] * bMtx.data_[2];
         resultMtx.data_[3] = aMtx.data_[1] * bMtx.data_[2] + aMtx.data_[3] * bMtx.data_[3];
     }
-    
+
     void threeMats2dProd(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx, const Mat2d& cMtx) {
         Mat2d tmp;
-        mat2dProd(tmp,aMtx,bMtx);
+        mat2dProd(tmp, aMtx, bMtx);
         mat2dProd(resultMtx, tmp, cMtx);
     }
 
@@ -112,10 +112,57 @@ namespace ars {
         result.data_[1] = a.data_[1] + b.data_[1];
     }
 
+    Vec2d vec2sumWRV(Vec2d& a, Vec2d& b) {
+        Vec2d result;
+        result.data_[0] = a.data_[0] + b.data_[0];
+        result.data_[1] = a.data_[1] + b.data_[1];
+        return result;
+    }
+
     void vec2diff(Vec2d& result, const Vec2d& a, const Vec2d& b) {
         result.data_[0] = a.data_[0] - b.data_[0];
         result.data_[1] = a.data_[1] - b.data_[1];
     }
+
+    Vec2d vec2diffWRV(Vec2d& a, Vec2d& b) {
+        Vec2d result;
+        result.data_[0] = a.data_[0] - b.data_[0];
+        result.data_[1] = a.data_[1] - b.data_[1];
+        return result;
+    }
+
+    double vec2dotProduct(Vec2d& a, Vec2d& b) {
+        return a.data_[0] * b.data_[0] + a.data_[1] * b.data_[1];
+    }
+
+    void vec2outerProduct(Mat2d& result, Vec2d& a, Vec2d& b) {
+        result.data_[0 * Two + 0] = a.data_[0] * b.data_[0];
+        result.data_[0 * Two + 1] = a.data_[1] * b.data_[0];
+        result.data_[1 * Two + 0] = a.data_[0] * b.data_[1];
+        result.data_[1 * Two + 1] = a.data_[1] * b.data_[1];
+    }
+
+    Mat2d vec2outerProductWRV(Vec2d& a, Vec2d& b) {
+        Mat2d result;
+
+        result.data_[0 * Two + 0] = a.data_[0] * b.data_[0];
+        result.data_[0 * Two + 1] = a.data_[1] * b.data_[0];
+        result.data_[1 * Two + 0] = a.data_[0] * b.data_[1];
+        result.data_[1 * Two + 1] = a.data_[1] * b.data_[1];
+
+        return result;
+    }
+
+    Vec2d row2VecTimesMat2WRV(const Vec2d& v, const Mat2d& m) {
+        Vec2d result;
+        result.data_[0] = v.data_[0] * m.data_[0] + v.data_[1] * m.data_[2];
+        result.data_[1] = v.data_[0] * m.data_[1] + v.data_[1] * m.data_[3];
+
+        result.isCol_ = false;
+
+        return result;
+    }
+
 
 
 

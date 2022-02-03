@@ -19,6 +19,7 @@
 #define UTILS_H
 
 #include <ars/definitions.h>
+
 #include <cmath>
 
 namespace ars {
@@ -68,7 +69,19 @@ namespace ars {
 
     void vec2sum(Vec2d& result, const Vec2d& a, const Vec2d & b);
 
+    Vec2d vec2sumWRV(Vec2d& a, Vec2d& b);
+
     void vec2diff(Vec2d& result, const Vec2d& a, const Vec2d & b);
+
+    Vec2d vec2diffWRV(Vec2d& a, Vec2d& b);
+
+    double vec2dotProduct(Vec2d& a, Vec2d& b);
+
+    void vec2outerProduct(Mat2d& result, Vec2d& a, Vec2d& b); //"anti-dot" product: terms are switched
+
+    Mat2d vec2outerProductWRV(Vec2d& a, Vec2d& b); //"anti-dot" product: terms are switched
+
+    Vec2d row2VecTimesMat2WRV(Vec2d& v, Mat2d& m);
 
 
 

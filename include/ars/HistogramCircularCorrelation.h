@@ -20,7 +20,6 @@
 #define HISTOGRAM_CIRCULAR_CORRELATION_H
 
 #include <iostream>
-#include <Eigen/Dense>
 
 namespace ars {
 
