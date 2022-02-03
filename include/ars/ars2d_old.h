@@ -24,6 +24,7 @@
 #include <ars/functions.h>
 #include <ars/BBOptimizer1d.h>
 #include <ars/ArsKernelIsotropic2d.h>
+#include <ars/ArsKernelAnisotropic2d.h>
 
 namespace ars {
 
@@ -194,6 +195,7 @@ namespace ars {
     protected:
         std::vector<double> coeffs_;
         ArsKernelIsotropic2d isotropicKer_;
+        ArsKernelAnisotropic2d anisotropicKer_;
         int arsfOrder_;
         double thetaToll_;
         int threadNumOMP_;
