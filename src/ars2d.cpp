@@ -17,7 +17,6 @@
  */
 #include <ars/ars2d.h>
 #include <boost/numeric/interval.hpp>
-#include <queue>
 
 #include <ars/Profiler.h>
 
@@ -119,12 +118,12 @@ namespace ars {
 
     AngularRadonSpectrum2d::AngularRadonSpectrum2d()
     : coeffs_(), isotropicKer_(), arsfOrder_(0),
-    thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4) { // pnebiLut_(), mode_(PNEBI_LUT), anisotropicStep_(720)
+    thetaToll_(M_PI / 180.0 * 0.5) { // pnebiLut_(), mode_(PNEBI_LUT), anisotropicStep_(720)
     }
 
     AngularRadonSpectrum2d::AngularRadonSpectrum2d(const std::vector<double>& coeffs)
     : coeffs_(coeffs), isotropicKer_(), arsfOrder_(0),
-    thetaToll_(M_PI / 180.0 * 0.5), threadNumOMP_(4) { // pnebiLut_(), mode_(PNEBI_LUT), anisotropicStep_(720)
+    thetaToll_(M_PI / 180.0 * 0.5) { // pnebiLut_(), mode_(PNEBI_LUT), anisotropicStep_(720)
     }
 
     AngularRadonSpectrum2d::~AngularRadonSpectrum2d() {
@@ -138,10 +137,6 @@ namespace ars {
 
     void AngularRadonSpectrum2d::setThetaToll(double thetaToll) {
         thetaToll_ = thetaToll;
-    }
-
-    void AngularRadonSpectrum2d::setThreadNumOMP(int tno) {
-        threadNumOMP_ = tno;
     }
 
     void AngularRadonSpectrum2d::setComputeMode(ArsKernelIsotropic2d::ComputeMode mode) {

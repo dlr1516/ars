@@ -17,7 +17,7 @@
  */
 #include <iostream>
 
-en / Dense>
+#include <eigen3/Eigen/Dense>
 
 #include <ars/definitions.h>
 #include <ars/ars2d.h>

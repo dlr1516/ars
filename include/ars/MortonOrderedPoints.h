@@ -27,7 +27,7 @@
 #include <algorithm>
 #include <type_traits> // for static_assert()
 
-en / Dense>
+#include <eigen3/Eigen/Dense>
 #include <ars/definitions.h>
 
         namespace ars {

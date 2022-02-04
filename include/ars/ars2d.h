@@ -18,12 +18,15 @@
 #pragma once
 
 #include <iostream>
-#include <thrust/host_vector.h>
-#include <cmath>
+
 #include <ars/definitions.h>
 #include <ars/functions.h>
 #include <ars/BBOptimizer1d.h>
 #include <ars/ArsKernelIsotropic2d.h>
+
+#include <thrust/host_vector.h>
+
+
 
 namespace ars {
 
@@ -70,10 +73,6 @@ namespace ars {
         /** Sets the maximum tollerance on theta during the computation of maximum.
          */
         void setThetaToll(double thetaToll);
-
-        /** Sets the number of thread used by OpenMP routines. 
-         */
-        void setThreadNumOMP(int tno);
 
         /**
          * Sets the mode for computing ARS coefficients in the case of isotropic kernels. 
@@ -196,7 +195,6 @@ namespace ars {
         ArsKernelIsotropic2d isotropicKer_;
         int arsfOrder_;
         double thetaToll_;
-        int threadNumOMP_;
         // Parameters for computation of the Fourier coefficients of anisotropic kernels
         //int anisotropicStep_;
     };

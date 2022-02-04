@@ -42,7 +42,7 @@ void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, ars
 
 void plotBranchBoundBox(std::ostream& out, const std::vector<BoundInterval>& bbbs);
 
-int main() {
+int main(void) {
     ars::AngularRadonSpectrum2d ars1;
     ars::AngularRadonSpectrum2d ars2;
     ars::VecVec2d acesPoints1;
@@ -66,33 +66,33 @@ int main() {
     const int trialNum = 1;
     ars1.initLUT(0.0001);
     ars1.setComputeMode(ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD);
-    for (int threadNum = 1; threadNum <= 1; ++threadNum) {
-        ars1.setThreadNumOMP(threadNum);
-        timeStart = std::chrono::system_clock::now();
-        for (int t = 0; t < trialNum; ++t) {
-            ars1.insertIsotropicGaussians(acesPoints1, sigma);
 
-            std::cout << "trial " << t << ": ars.coefficients().at(0) " << ars1.coefficients().at(0) << ", ars.coefficients().at(2) " << ars1.coefficients().at(2) << std::endl;
-        }
-        timeStop = std::chrono::system_clock::now();
-        double timeAvg = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count() / (double) trialNum;
-        std::cout << "insertIsotropicGaussians() [" << threadNum << " threads]: " << timeAvg << " ms" << std::endl;
+
+    timeStart = std::chrono::system_clock::now();
+    for (int t = 0; t < trialNum; ++t) {
+        ars1.insertIsotropicGaussians(acesPoints1, sigma);
+
+        std::cout << "trial " << t << ": ars.coefficients().at(0) " << ars1.coefficients().at(0) << ", ars.coefficients().at(2) " << ars1.coefficients().at(2) << std::endl;
     }
+    timeStop = std::chrono::system_clock::now();
+    double timeAvg = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count() / (double) trialNum;
+    std::cout << "insertIsotropicGaussians() " << timeAvg << " ms" << std::endl;
+
 
     std::cout << "\n------\n" << std::endl;
 
     ars2.setComputeMode(ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT);
-    for (int threadNum = 1; threadNum <= 1; ++threadNum) {
-        ars2.setThreadNumOMP(threadNum);
-        timeStart = std::chrono::system_clock::now();
-        for (int t = 0; t < trialNum; ++t) {
-            ars2.insertIsotropicGaussians(acesPoints1, sigma);
-            std::cout << "trial " << t << ": ars2.coefficients().at(0) " << ars2.coefficients().at(0) << ", ars2.coefficients().at(2) " << ars2.coefficients().at(2) << std::endl;
-        }
-        timeStop = std::chrono::system_clock::now();
-        double timeAvg = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count() / trialNum;
-        std::cout << "insertIsotropicGaussians() [" << threadNum << " threads]: " << timeAvg << " ms" << std::endl;
+
+
+    timeStart = std::chrono::system_clock::now();
+    for (int t = 0; t < trialNum; ++t) {
+        ars2.insertIsotropicGaussians(acesPoints1, sigma);
+        std::cout << "trial " << t << ": ars2.coefficients().at(0) " << ars2.coefficients().at(0) << ", ars2.coefficients().at(2) " << ars2.coefficients().at(2) << std::endl;
     }
+    timeStop = std::chrono::system_clock::now();
+    double timeAvg2 = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count() / trialNum;
+    std::cout << "insertIsotropicGaussians() " << timeAvg2 << " ms" << std::endl;
+
 
     std::cout << "\nARS Coefficients:\n";
     std::cout << "\ti \tDownward \tLUT\n";
