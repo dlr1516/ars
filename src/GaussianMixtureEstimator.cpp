@@ -17,7 +17,7 @@
  * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <ars/GaussianMixtureEstimator.h>
-#include <vector>
+#include <thrust/host_vector.h>
 #include <deque>
 #include <signal.h>
 

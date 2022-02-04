@@ -63,7 +63,7 @@ THE SOFTWARE.
 #include <string>
 #include <utility>
 #include <iomanip>
-#include <vector>
+#include <thrust/host_vector.h>
 #include <complex>
 #include <cstdlib>
 #include <cmath>
@@ -307,7 +307,7 @@ namespace gnuplotio {
 #ifdef GNUPLOT_ENABLE_PTY
 #define GNUPLOT_ENABLE_FEEDBACK
 
-class GnuplotFeedbackPty : public GnuplotFeedback {
+    class GnuplotFeedbackPty : public GnuplotFeedback {
     public:
 
         explicit GnuplotFeedbackPty(bool debug_messages) :
@@ -982,7 +982,7 @@ class GnuplotFeedbackPty : public GnuplotFeedback {
     // It supports gp.send1d(std::forward_as_tuple(x, std::move(y)));
 #if GNUPLOT_ENABLE_CXX11
 
-template <typename T>
+    template <typename T>
     class ArrayTraits<T&&> : public ArrayTraits<T> {
     };
 #endif

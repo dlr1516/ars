@@ -20,7 +20,7 @@
 #define DISJOINT_SET_H
 
 #include <iostream>
-#include <vector>
+#include <thrust/host_vector.h>
 
 namespace ars {
 

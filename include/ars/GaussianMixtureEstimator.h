@@ -20,7 +20,7 @@
 #define GAUSSIANMIXTUREESTIMATOR_H
 
 #include <iostream>
-#include <vector>
+#include <thrust/host_vector.h>
 #include <deque>
 
 #include <ars/definitions.h>

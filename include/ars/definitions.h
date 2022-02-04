@@ -20,7 +20,7 @@
 
 #include <iostream>
 #include <limits>
-#include <vector>
+#include <thrust/host_vector.h>
 #include <cmath>
 
 #define ARS_PRINT(MSG) std::cout << __FILE__ << "," << __LINE__ << ": " << MSG << std::endl;
@@ -71,7 +71,7 @@ namespace ars {
         //            isCol_ = true;
         //        }
 
-        Vec2d(double v0, double v1, bool isCol=true) {
+        Vec2d(double v0, double v1, bool isCol = true) {
             data_[0] = v0;
             data_[1] = v1;
 

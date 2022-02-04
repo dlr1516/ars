@@ -18,7 +18,7 @@
 #pragma once
 
 #include <iostream>
-#include <vector>
+#include <thrust/host_vector.h>
 #include <queue>
 #include <cmath>
 //en/Dense>

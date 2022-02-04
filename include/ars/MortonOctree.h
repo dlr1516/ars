@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <cstdint> 
-#include <vector>
+#include <thrust/host_vector.h>
 
 
 //#include <ars/definitions.h>

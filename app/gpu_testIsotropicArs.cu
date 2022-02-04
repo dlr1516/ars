@@ -23,7 +23,7 @@
 #include <ars/BBOptimizer1d.h>
 
 #include <chrono>
-#include <ars/thirdparty/gnuplot-iostream.h>
+
 
 #define PRINT_DIM(X) std::cout << #X << " rows " << X.rows() << " cols " << X.cols() << std::endl;
 #define RAD2DEG(X) (180.0/M_PI*(X))

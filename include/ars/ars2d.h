@@ -18,7 +18,7 @@
 #pragma once
 
 #include <iostream>
-#include <vector>
+#include <thrust/host_vector.h>
 #include <cmath>
 #include <ars/definitions.h>
 #include <ars/functions.h>

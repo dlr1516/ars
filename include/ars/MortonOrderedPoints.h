@@ -22,7 +22,7 @@
 #include <cstdint> 
 #include <bitset>
 #include <array>
-#include <vector>
+#include <thrust/host_vector.h>
 #include <map>
 #include <algorithm>
 #include <type_traits> // for static_assert()

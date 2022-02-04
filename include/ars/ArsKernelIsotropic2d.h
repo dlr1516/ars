@@ -19,7 +19,7 @@
 #define ISOTROPICKERNEL_H
 
 #include <iostream>
-#include <vector>
+#include <thrust/host_vector.h>
 #include <array>
 #include <type_traits>   // for std::underlying_type_t()
 #include <ars/definitions.h>
