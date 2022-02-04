@@ -48,6 +48,7 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 
 add_library(ars_iso STATIC
   src/ars2d.cpp
+  src/definitions.cpp
   src/functions.cpp
   src/utils.cpp
   src/ArsKernelAnisotropic2d.cpp

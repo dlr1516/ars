@@ -70,43 +70,22 @@ namespace ars {
         //
         //            isCol_ = true;
         //        }
+        
+        Vec2d();
 
-        Vec2d(double v0, double v1, bool isCol = true) {
-            data_[0] = v0;
-            data_[1] = v1;
+        Vec2d(double v0, double v1, bool isCol);
 
-            isCol_ = isCol;
-        }
+        Vec2d(bool isCol);
 
-        Vec2d(bool isCol = true) {
-            data_[0] = 0.0;
-            data_[1] = 0.0;
+        virtual ~Vec2d();
 
-            isCol_ = isCol;
-        }
+        void resetToZero();
 
-        virtual ~Vec2d() {
-            isCol_ = true;
-        }
+        void multiplyByScalar(double sc);
 
-        void resetToZero() {
-            data_[0] = 0.0;
-            data_[1] = 0.0;
-        }
+        void divideByScalar(double sc);
 
-        void multiplyByScalar(double sc) {
-            data_[0] *= sc;
-            data_[1] *= sc;
-        }
-
-        void divideByScalar(double sc) {
-            data_[0] /= sc;
-            data_[1] /= sc;
-        }
-
-        double norm() {
-            return sqrt(data_[0] * data_[0] + data_[1] * data_[1]);
-        }
+        double norm();
     };
 
     //    using VectorVector2 = std::vector<Vector2, Eigen::aligned_allocator<Vector2> >    
@@ -118,56 +97,19 @@ namespace ars {
     public:
         Vec2d *vv_;
 
-        VecVec2d(size_t size = 0) {
-            //            ptr = (cast-type*) malloc(byte-size)
-            vv_ = (Vec2d*) malloc(size * sizeof (Vec2d));
+        VecVec2d();
+        
+        VecVec2d(size_t size);
 
-            size_ = 0;
-            capacity_ = size;
-        }
+        virtual ~VecVec2d();
 
-        virtual ~VecVec2d() {
-            free(vv_);
+        void pushback(Vec2d& newV);
 
-            size_ = 0;
-            capacity_ = 0;
-        }
+        void pushback(const Vec2d& newV);
 
-        void pushback(Vec2d& newV) {
-            if (size_ < capacity_) {
-                vv_[size_] = newV;
-                size_++;
-            } else {
-                vv_ = (Vec2d*) realloc(vv_, (capacity_ + 1) * sizeof (Vec2d));
+        size_t size() const;
 
-                vv_[size_] = newV;
-
-                size_++;
-                capacity_++;
-            }
-        }
-
-        void pushback(const Vec2d& newV) {
-            if (size_ < capacity_) {
-                vv_[size_] = newV;
-                size_++;
-            } else {
-                vv_ = (Vec2d*) realloc(vv_, (capacity_ + 1) * sizeof (Vec2d));
-
-                vv_[size_] = newV;
-
-                size_++;
-                capacity_++;
-            }
-        }
-
-        size_t size() const {
-            return size_;
-        }
-
-        void resize(size_t sz) {
-            size_ = sz;
-        }
+        void resize(size_t sz);
     };
 
 

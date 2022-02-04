@@ -55,7 +55,7 @@ namespace ars {
      */
     void saturateEigenvalues(Mat2d& covar, double sigmaMinSquare);
 
-    //
+    // Below: Vec2d and Mat2d util functions (simpler reimplementation of basic Eigen functions)
 
     void zeroResetPointerVals(Vec2d& vec);
 
