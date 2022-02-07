@@ -164,7 +164,6 @@ namespace ars {
         coeffs_ = coeffs;
     }
 
-    __host__ __device__
     void AngularRadonSpectrum2d::insertIsotropicGaussians(const VecVec2d& means, double sigma) {
         size_t kernelNum = means.size();
         double w = 1.0 / (kernelNum * kernelNum);
@@ -186,114 +185,12 @@ namespace ars {
                 ars::ScopedTimer timer("ArsKernelIsotropic2d::computeFourier()");
                 isotropicKer_.init(means[i], means[j], sigma);
                 isotropicKer_.updateFourier(arsfOrder_, coeffs_, w);
-                //                dx = means[i].x() - means[j].x();
-                //                dy = means[i].y() - means[j].y();
-                //                sigma2 = 2.0 * sigma * sigma;
-                //                lambda = (dx * dx + dy * dy);
-                //                phi = atan2(dy, dx);
-                //                scale = 1.0 / sqrt(lambda);
-                //                ux = dx * scale;
-                //                uy = dy * scale;
-                //                lambda = lambda / (2.0 * sigma2);
-
-                //                //std::cout << "i " << i << ", j " << j << ": lambda " << lambda << ", phi " << phi << std::endl;
-                //                if (mode_ == PNEBI_DOWNWARD) {
-                //                    //updateARSF2CoeffRecursDown(lambda, ux * ux - uy*uy, 2.0 * ux * uy, 1.0, arsfOrder_, coeffs_);
-                //                    updateARSF2CoeffRecursDown(lambda, phi, w, arsfOrder_, coeffs_);
-                //                } else if (mode_ == PNEBI_LUT) {
-                //                    //updateARSF2CoeffRecursDownLUT(lambda, ux * ux - uy*uy, 2.0 * ux * uy, 1.0, arsfOrder_, pnebiLut_, coeffs_);
-                //                    updateARSF2CoeffRecursDownLUT(lambda, phi, w, arsfOrder_, pnebiLut_, coeffs_);
-                //                }
+                
             }
         }
     }
 
-    void AngularRadonSpectrum2d::insertIsotropicGaussians(const VecVec2d& means, const std::vector<double>& sigmas) {
-        ARS_PRINT("NOT IMPLEMENTED!");
-        ARS_ASSERT(false);
-    }
-
-    void AngularRadonSpectrum2d::insertIsotropicGaussians(const VecVec2d& means, const std::vector<double>& sigmas, const std::vector<double>& weights) {
-        int kernelNum = means.size();
-        double w = 1.0 / (kernelNum * kernelNum);
-
-        ARS_PRINT("IMPLEMENTATION NOT FINISHED!");
-        ARS_ASSERT(false);
-
-        if (kernelNum != sigmas.size()) {
-            std::cerr << __FILE__ << "," << __LINE__ << ": inconsistent vector sizes: found " << means.size()
-                    << " mean values and " << sigmas.size() << " standard deviations" << std::endl;
-            return;
-        }
-
-        if (coeffs_.size() != 2 * arsfOrder_ + 2) {
-            coeffs_.resize(2 * arsfOrder_ + 2);
-        }
-
-        //        if (pnebiLut_.getOrderMax() < arsfOrder_) {
-        //            std::cerr << __FILE__ << "," << __LINE__ << ": LUT not initialized to right order. Initialized now." << std::endl;
-        //            pnebiLut_.init(arsfOrder_, 0.005);
-        //        }
-
-        std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
-
-
-        for (int i = 0; i < kernelNum; ++i) {
-            for (int j = i + 1; j < kernelNum; ++j) {
-                isotropicKer_.init(means[i], means[j], sigmas[i], sigmas[j]);
-                //                dx = means[i].x() - means[j].x();
-                //                dy = means[i].y() - means[j].y();
-                //                sigma2 = sigmas[i] * sigmas[i] + sigmas[j] * sigmas[j];
-                //                lambda = (dx * dx + dy * dy);
-                //                scale = 1.0 / sqrt(lambda);
-                //                ux = dx * scale;
-                //                uy = dy * scale;
-                //                lambda = lambda / (2.0 * sigma2);
-
-
-                //                if (mode_ == PNEBI_DOWNWARD) {
-                //                    updateARSF2CoeffRecursDown(lambda, ux * ux - uy*uy, 2.0 * ux * uy, w, arsfOrder_, coeffs_);
-                //                } else {
-                //                    updateARSF2CoeffRecursDownLUT(lambda, ux * ux - uy*uy, 2.0 * ux * uy, w, arsfOrder_, pnebiLut_, coeffs_);
-                //                }
-            }
-        }
-    }
-
-
-
-    //    void AngularRadonSpectrum2d::initARSFRecursDown() {
-    //        std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
-    //        //std::cout << __FILE__ << "," << __LINE__ << ": \n" << coeffsRecursDown_.transpose() << std::endl;
-    //        //  std::cout << __FILE__ << "," << __LINE__ << ": coeffsRecursDown_\n" << std::endl;
-    //        for (auto& p : pairData_) {
-    //            updateARSF2CoeffRecursDown(p.lambda, p.phi, 1.0, arsfOrder_, coeffs_);
-    //        }
-    //        //        coeffsRecursDown_(0) += 0.5 * pointNum_;
-    //        //        coeffsRecursDown_ = coeffsRecursDown_ / (sigma_ * sqrt(M_PI));
-    //    }
-    //
-    //    void AngularRadonSpectrum2d::initARSFRecursDownLUT() {
-    //        // Check PNEBI function LUT
-    //        if (pnebiLut_.getOrderMax() < arsfOrder_) {
-    //            std::cerr << __FILE__ << "," << __LINE__ << ": LUT not initialized to right order. Initialized now." << std::endl;
-    //            pnebiLut_.init(arsfOrder_, 0.005);
-    //        }
-    //
-    //        // Checking Fourier coefficients vector
-    //        if (coeffs_.size() != 2 * arsfOrder_ + 2) {
-    //            std::cerr << __FILE__ << "," << __LINE__ << ": size of Fourier coefficients vector " << coeffs_.size()
-    //                    << " should be " << (2 * arsfOrder_ + 2) << ": resized" << std::endl;
-    //            coeffs_.resize(2 * arsfOrder_ + 2);
-    //        }
-    //
-    //        // Variables
-    //        std::vector<double> pnebis(arsfOrder_ + 1);
-    //        std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
-    //        for (auto& p : pairData_) {
-    //            updateARSF2CoeffRecursDownLUT(p.lambda, p.phi, 1.0, arsfOrder_, pnebiLut_, coeffs_);
-    //        }
-    //    }
+    
 
     void AngularRadonSpectrum2d::initLUT(double precision = 0.001) {
         //pnebiLut_.init(arsfOrder_, precision);

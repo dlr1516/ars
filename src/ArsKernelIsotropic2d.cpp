@@ -42,8 +42,8 @@ namespace ars {
     void ArsKernelIsotropic2d::init(const Vec2d& mean1, const Vec2d& mean2, double sigma1, double sigma2) {
         double dx, dy;
 
-        dx = mean2.data_[0] - mean1.data_[0];
-        dy = mean2.data_[1] - mean1.data_[1];
+        dx = mean2.x - mean1.x;
+        dy = mean2.y - mean1.y;
         phi_ = atan2(dy, dx);
         sigmaValSq_ = sigma1 * sigma1 + sigma2 * sigma2;
         lambdaSqNorm_ = 0.25 * (dx * dx + dy * dy) / sigmaValSq_;

@@ -43,7 +43,13 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 #)
 
 add_library(mylib STATIC
-    src/ars2d.cu
+    src/ars2d.cpp
+#    src/definitions.cpp #since using double2 and double4, those definitions are sorta obsolete
+    src/functions.cpp
+
+    src/ArsKernelIsotropic2d.cpp
+    src/BBOptimizer1d.cpp
+    src/Profiler.cpp
 )
 
 #add_executable(testFunctions app/testFunctions.cpp )

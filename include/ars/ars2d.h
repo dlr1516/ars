@@ -127,7 +127,6 @@ namespace ars {
          * @param means mean values of the distributions
          * @param sigma the standard deviation (not variance!) of the identical isotropic distributions
          */
-        __host__ __device__
         void insertIsotropicGaussians(const VecVec2d& means, double sigma);
 
         /**

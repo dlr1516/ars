@@ -40,17 +40,38 @@ struct BoundInterval {
 double acesRanges1[] = {50.00, 50.00, 50.00, 5.26, 5.21, 5.06, 5.01, 3.01, 2.94, 2.89, 2.84, 2.74, 2.69, 2.64, 2.59, 2.54, 2.49, 2.49, 2.44, 2.39, 2.34, 2.29, 2.29, 2.29, 2.39, 2.39, 2.49, 2.51, 2.61, 2.66, 2.76, 2.81, 2.96, 3.01, 3.11, 3.26, 3.01, 3.01, 3.01, 3.06, 3.21, 6.86, 6.86, 6.81, 6.76, 6.71, 6.71, 6.66, 6.61, 6.66, 6.56, 6.56, 6.56, 6.46, 6.46, 6.41, 6.46, 6.46, 4.11, 3.96, 3.96, 4.96, 4.86, 5.21, 7.41, 4.61, 5.16, 6.26, 6.26, 6.31, 4.86, 5.01, 5.86, 5.81, 4.21, 4.26, 4.31, 4.41, 4.39, 4.46, 5.31, 5.06, 5.26, 4.96, 6.01, 5.76, 5.61, 5.36, 5.26, 5.01, 4.21, 4.16, 4.01, 3.91, 3.61, 3.21, 3.26, 3.16, 3.06, 3.01, 3.31, 3.21, 3.16, 2.16, 2.19, 2.16, 2.21, 2.11, 2.01, 2.01, 2.06, 2.84, 2.91, 2.91, 3.01, 3.11, 3.21, 3.81, 4.06, 7.11, 7.06, 7.01, 6.96, 6.86, 4.31, 6.76, 6.71, 6.66, 6.61, 5.46, 5.41, 6.46, 6.21, 6.31, 6.51, 7.26, 7.46, 50.00, 2.01, 1.94, 1.94, 1.94, 2.31, 1.86, 1.84, 1.84, 1.81, 1.96, 26.46, 20.76, 2.11, 2.12, 2.17, 2.14, 2.09, 2.09, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.19, 2.19, 2.24, 2.24, 2.24, 2.24, 2.29, 2.29, 2.29, 2.29, 2.29, 2.39, 2.39, 2.39, 2.44};
 
 
-void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, ars::VecVec2d& points);
+void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, thrust::device_vector<ars::Vec2d>& points);
 
 __global__
-void iigKernel(ars::AngularRadonSpectrum2d& a, ars::VecVec2d& points, double& sigma) {
-    a.insertIsotropicGaussians(points, sigma);
+void iigKernel(ars::Vec2d* mean1data, ars::Vec2d* mean2data, double sigma1, double sigma2, size_t kernelNum) {
+    //    a.insertIsotropicGaussians(points, sigma);
+
+    for (size_t i = 0; i < kernelNum; ++i) {
+        for (size_t j = i + 1; j < kernelNum; ++j) {
+            //            isotropicKer_.init(means[i], means[j], sigma);
+            double dx, dy;
+
+            ars::Vec2d vecI = mean1data[i];
+            ars::Vec2d vecJ = mean2data[j];
+
+            dx = vecJ.x - vecI.x;
+            dy = vecJ.y - vecI.y;
+            double phi_ = atan2(dy, dx);
+            double sigmaValSq_ = sigma1 * sigma1 + sigma2 * sigma2;
+            double lambdaSqNorm_ = 0.25 * (dx * dx + dy * dy) / sigmaValSq_;
+
+
+            //            isotropicKer_.updateFourier(arsfOrder_, coeffs_, w);
+
+
+        }
+    }
 }
 
 int main(void) {
     ars::AngularRadonSpectrum2d ars1;
     ars::AngularRadonSpectrum2d ars2;
-    ars::VecVec2d acesPoints1;
+    thrust::device_vector<ars::Vec2d> acesPoints1;
     std::chrono::system_clock::time_point timeStart, timeStop;
     double sigma = 0.05;
     int fourierOrder = 20;
@@ -61,7 +82,9 @@ int main(void) {
     rangeToPoint(acesRanges1, 180, -0.5 * M_PI, M_PI / 180.0 * 1.0, acesPoints1);
     //        acesPoints1.push_back(ars::Vector2::Zero());
     ars::Vec2d firstElement;
-    firstElement.resetToZero(); //probably useless, as constructor initializes to 0
+    //    firstElement.resetToZero(); 
+    firstElement.x = 0.0;
+    firstElement.y = 0.0;
     acesPoints1.push_back(firstElement);
     std::cout << "Number of input points: " << acesPoints1.size() << std::endl;
     //    for (int i = 0; i < acesPoints1.size(); ++i) {
@@ -75,8 +98,8 @@ int main(void) {
 
     timeStart = std::chrono::system_clock::now();
     //    ars1.insertIsotropicGaussians(acesPoints1, sigma);
-    iigKernel << <1, 1 >> >(ars1, acesPoints1, sigma);
-
+    ars::Vec2d* kernelInput1 = thrust::raw_pointer_cast(acesPoints1.data());
+    iigKernel << <1, 1 >> >(kernelInput1, kernelInput1, sigma, sigma, acesPoints1.size());
     timeStop = std::chrono::system_clock::now();
     double timeArs1 = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count();
     cudaDeviceSynchronize();
@@ -88,13 +111,15 @@ int main(void) {
     ars2.setComputeMode(ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT);
 
 
+
     timeStart = std::chrono::system_clock::now();
     //    ars2.insertIsotropicGaussians(acesPoints1, sigma);
-    iigKernel << <1, 1 >> >(ars2, acesPoints1, sigma);
-
+    ars::Vec2d* kernelInput2 = thrust::raw_pointer_cast(acesPoints1.data());
+    iigKernel << <1, 1 >> >(kernelInput2, kernelInput2, sigma, sigma, acesPoints1.size());
     timeStop = std::chrono::system_clock::now();
     double timeArs2 = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count();
     std::cout << "insertIsotropicGaussians() " << timeArs2 << " ms" << std::endl;
+
 
 
     std::cout << "\nARS Coefficients:\n";
@@ -143,7 +168,7 @@ int main(void) {
     return 0;
 }
 
-void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, ars::VecVec2d& points) {
+void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, thrust::device_vector<ars::Vec2d>& points) {
     ars::Vec2d p;
     for (int i = 0; i < num; ++i) {
         double a = angleMin + angleRes * i;
