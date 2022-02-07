@@ -22,6 +22,8 @@
 #include <ars/ars2d.h>
 #include <ars/BBOptimizer1d.h>
 
+#include <thrust/device_vector.h>
+
 #include <chrono>
 
 
@@ -40,7 +42,10 @@ double acesRanges1[] = {50.00, 50.00, 50.00, 5.26, 5.21, 5.06, 5.01, 3.01, 2.94,
 
 void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, ars::VecVec2d& points);
 
-void plotBranchBoundBox(std::ostream& out, const std::vector<BoundInterval>& bbbs);
+__global__
+void iigKernel(ars::AngularRadonSpectrum2d& a, ars::VecVec2d& points, double& sigma) {
+    a.insertIsotropicGaussians(points, sigma);
+}
 
 int main(void) {
     ars::AngularRadonSpectrum2d ars1;
@@ -63,20 +68,19 @@ int main(void) {
     //        std::cout << i << "\t" << acesPoints1[i].x() << "\t" << acesPoints1[i].y() << std::endl;
     //    }
 
-    const int trialNum = 1;
+    //    const int trialNum = 1;
     ars1.initLUT(0.0001);
     ars1.setComputeMode(ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD);
 
 
     timeStart = std::chrono::system_clock::now();
-    for (int t = 0; t < trialNum; ++t) {
-        ars1.insertIsotropicGaussians(acesPoints1, sigma);
+    //    ars1.insertIsotropicGaussians(acesPoints1, sigma);
+    iigKernel << <1, 1 >> >(ars1, acesPoints1, sigma);
 
-        std::cout << "trial " << t << ": ars.coefficients().at(0) " << ars1.coefficients().at(0) << ", ars.coefficients().at(2) " << ars1.coefficients().at(2) << std::endl;
-    }
     timeStop = std::chrono::system_clock::now();
-    double timeAvg = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count() / (double) trialNum;
-    std::cout << "insertIsotropicGaussians() " << timeAvg << " ms" << std::endl;
+    double timeArs1 = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count();
+    cudaDeviceSynchronize();
+    std::cout << "insertIsotropicGaussians() " << timeArs1 << " ms" << std::endl;
 
 
     std::cout << "\n------\n" << std::endl;
@@ -85,13 +89,12 @@ int main(void) {
 
 
     timeStart = std::chrono::system_clock::now();
-    for (int t = 0; t < trialNum; ++t) {
-        ars2.insertIsotropicGaussians(acesPoints1, sigma);
-        std::cout << "trial " << t << ": ars2.coefficients().at(0) " << ars2.coefficients().at(0) << ", ars2.coefficients().at(2) " << ars2.coefficients().at(2) << std::endl;
-    }
+    //    ars2.insertIsotropicGaussians(acesPoints1, sigma);
+    iigKernel << <1, 1 >> >(ars2, acesPoints1, sigma);
+
     timeStop = std::chrono::system_clock::now();
-    double timeAvg2 = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count() / trialNum;
-    std::cout << "insertIsotropicGaussians() " << timeAvg2 << " ms" << std::endl;
+    double timeArs2 = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count();
+    std::cout << "insertIsotropicGaussians() " << timeArs2 << " ms" << std::endl;
 
 
     std::cout << "\nARS Coefficients:\n";
@@ -121,7 +124,7 @@ int main(void) {
         ars::findLUFourier(ars1.coefficients(), bbbs[i].x0, bbbs[i].x1, bbbs[i].y0, bbbs[i].y1);
         std::cout << i << ": x0 " << RAD2DEG(bbbs[i].x0) << " x1 " << RAD2DEG(bbbs[i].x1) << ", y0 " << bbbs[i].y0 << " y1 " << bbbs[i].y1 << std::endl;
     }
-    
+
 
     ars::FourierOptimizerBB1D optim(ars1.coefficients());
     double xopt, ymin, ymax;

@@ -4,16 +4,9 @@ project(ars-cuda LANGUAGES CXX CUDA)
 
 set(CMAKE_BUILD_TYPE RelWithDebugInfo)
 
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -gencode arch=compute_75,code=sm_75)
 
-# Set the output directory for the build executables and libraries
-#SET(ars_RUNTIME_OUTPUT_DIRECTORY ${ars_SOURCE_DIR}/bin CACHE PATH "Target for the binaries")
-#SET(ars_LIBRARY_OUTPUT_DIRECTORY ${ars_SOURCE_DIR}/lib CACHE PATH "Target for the libraries")
-#SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${ars_LIBRARY_OUTPUT_DIRECTORY})
-#SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${ars_LIBRARY_OUTPUT_DIRECTORY})
-#SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${ars_RUNTIME_OUTPUT_DIRECTORY})
-#SET(ars_ENABLE_PCL 0)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 
 
 include_directories(include)
@@ -22,46 +15,35 @@ include_directories(src)
 include(CTest)
 
 
-list(APPEND ars_LINK_LIBS boost_iostreams boost_system boost_filesystem)
+#list(APPEND ars_LINK_LIBS boost_iostreams boost_system boost_filesystem)
+find_library(CUDART_LIBRARY cudart ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
+
 
 # Eigen library v. 3
 find_package(Eigen3 REQUIRED) #needed until swtich to cuFFT is made
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 # Library files
-#add_library(ars STATIC
+#add_library(ars_iso STATIC
 #  src/ars2d.cpp
+#  src/definitions.cpp
 #  src/functions.cpp
 #  src/utils.cpp
 #  src/ArsKernelAnisotropic2d.cpp
 #  src/ArsKernelIsotropic2d.cpp
 #  src/BBOptimizer1d.cpp
 #  src/DisjointSet.cpp
-#  src/GaussianMixtureEstimator.cpp
-#  src/HistogramCircularCorrelation.cpp
-#  src/HoughSpectrum.cpp
+##  src/GaussianMixtureEstimator.cpp
+##  src/HistogramCircularCorrelation.cpp
+##  src/HoughSpectrum.cpp
 #  #src/MortonOrderedPoints2d.cpp
-#  src/MortonSort.cpp
+##  src/MortonSort.cpp
 #  src/ParamMap.cpp
 #  src/Profiler.cpp
 #)
 
-add_library(ars_iso STATIC
-  src/ars2d.cpp
-  src/definitions.cpp
-  src/functions.cpp
-  src/utils.cpp
-  src/ArsKernelAnisotropic2d.cpp
-  src/ArsKernelIsotropic2d.cpp
-  src/BBOptimizer1d.cpp
-  src/DisjointSet.cpp
-#  src/GaussianMixtureEstimator.cpp
-#  src/HistogramCircularCorrelation.cpp
-#  src/HoughSpectrum.cpp
-  #src/MortonOrderedPoints2d.cpp
-#  src/MortonSort.cpp
-  src/ParamMap.cpp
-  src/Profiler.cpp
+add_library(mylib STATIC
+    src/ars2d.cu
 )
 
 #add_executable(testFunctions app/testFunctions.cpp )
@@ -73,10 +55,11 @@ add_library(ars_iso STATIC
 
 
 add_executable(gpu_testIsotropicArs app/gpu_testIsotropicArs.cu )
-target_link_libraries(gpu_testIsotropicArs ${ars_LINK_LIBS} ars_iso)
+target_link_libraries(gpu_testIsotropicArs ${ars_LINK_LIBS} mylib)
 
 target_compile_features(gpu_testIsotropicArs PUBLIC cxx_std_11)
 set_target_properties(gpu_testIsotropicArs PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(gpu_testIsotropicArs PROPERTIES CUDA_ARCHITECTURES "75")
 
 #add_executable(testAnisotropicArs app/testAnisotropicArs.cpp)
 #target_link_libraries(testAnisotropicArs ${ars_LINK_LIBS} ars)
