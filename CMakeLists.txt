@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 project(ars-cuda LANGUAGES CXX CUDA)
 #add_definitions(-std=c++0x)
 
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE RelWithDebugInfo)
 
 
 # Set the output directory for the build executables and libraries
@@ -25,7 +25,7 @@ include(CTest)
 list(APPEND ars_LINK_LIBS boost_iostreams boost_system boost_filesystem)
 
 # Eigen library v. 3
-find_package(Eigen3 REQUIRED)
+find_package(Eigen3 REQUIRED) #needed until swtich to cuFFT is made
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 # Library files
@@ -70,8 +70,13 @@ add_library(ars_iso STATIC
 #add_executable(testIsotropicArs app/testIsotropicArs.cpp )
 #target_link_libraries(testIsotropicArs ${ars_LINK_LIBS} ars)
 
+
+
 add_executable(gpu_testIsotropicArs app/gpu_testIsotropicArs.cu )
 target_link_libraries(gpu_testIsotropicArs ${ars_LINK_LIBS} ars_iso)
+
+target_compile_features(gpu_testIsotropicArs PUBLIC cxx_std_11)
+set_target_properties(gpu_testIsotropicArs PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 #add_executable(testAnisotropicArs app/testAnisotropicArs.cpp)
 #target_link_libraries(testAnisotropicArs ${ars_LINK_LIBS} ars)

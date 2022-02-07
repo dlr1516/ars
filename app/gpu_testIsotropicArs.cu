@@ -57,7 +57,7 @@ int main(void) {
     //        acesPoints1.push_back(ars::Vector2::Zero());
     ars::Vec2d firstElement;
     firstElement.resetToZero(); //probably useless, as constructor initializes to 0
-    acesPoints1.pushback(firstElement);
+    acesPoints1.push_back(firstElement);
     std::cout << "Number of input points: " << acesPoints1.size() << std::endl;
     //    for (int i = 0; i < acesPoints1.size(); ++i) {
     //        std::cout << i << "\t" << acesPoints1[i].x() << "\t" << acesPoints1[i].y() << std::endl;
@@ -121,6 +121,7 @@ int main(void) {
         ars::findLUFourier(ars1.coefficients(), bbbs[i].x0, bbbs[i].x1, bbbs[i].y0, bbbs[i].y1);
         std::cout << i << ": x0 " << RAD2DEG(bbbs[i].x0) << " x1 " << RAD2DEG(bbbs[i].x1) << ", y0 " << bbbs[i].y0 << " y1 " << bbbs[i].y1 << std::endl;
     }
+    
 
     ars::FourierOptimizerBB1D optim(ars1.coefficients());
     double xopt, ymin, ymax;
@@ -144,7 +145,7 @@ void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, ars
     for (int i = 0; i < num; ++i) {
         double a = angleMin + angleRes * i;
         ranges[i] * cos(a), ranges[i] * sin(a);
-        points.pushback(p);
+        points.push_back(p);
     }
 }
 

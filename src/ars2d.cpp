@@ -20,7 +20,6 @@
 
 #include <ars/Profiler.h>
 
-//#include <omp.h>
 
 namespace ars {
 
@@ -180,12 +179,11 @@ namespace ars {
         }
 
         std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
-        //#pragma omp parallel num_threads(threadNumOMP_) shared(means,sigmas,kernelNum) 
-        //double dx, dy, sigma2, lambda, phi, scale, ux, uy;
+        
         for (int i = 0; i < kernelNum; ++i) {
             for (int j = i + 1; j < kernelNum; ++j) {
                 ars::ScopedTimer timer("ArsKernelIsotropic2d::computeFourier()");
-                isotropicKer_.init(means.vv_[i], means.vv_[j], sigma);
+                isotropicKer_.init(means[i], means[j], sigma);
                 isotropicKer_.updateFourier(arsfOrder_, coeffs_, w);
                 //                dx = means[i].x() - means[j].x();
                 //                dy = means[i].y() - means[j].y();
@@ -196,7 +194,7 @@ namespace ars {
                 //                ux = dx * scale;
                 //                uy = dy * scale;
                 //                lambda = lambda / (2.0 * sigma2);
-                //                //#pragma omp atomic
+                
                 //                //std::cout << "i " << i << ", j " << j << ": lambda " << lambda << ", phi " << phi << std::endl;
                 //                if (mode_ == PNEBI_DOWNWARD) {
                 //                    //updateARSF2CoeffRecursDown(lambda, ux * ux - uy*uy, 2.0 * ux * uy, 1.0, arsfOrder_, coeffs_);
@@ -237,11 +235,11 @@ namespace ars {
         //        }
 
         std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
-#pragma omp parallel num_threads(threadNumOMP_) shared(means,sigmas,kernelNum) 
-        //        double dx, dy, sigma2, lambda, scale, ux, uy;
+        
+        
         for (int i = 0; i < kernelNum; ++i) {
             for (int j = i + 1; j < kernelNum; ++j) {
-                isotropicKer_.init(means.vv_[i], means.vv_[j], sigmas[i], sigmas[j]);
+                isotropicKer_.init(means[i], means[j], sigmas[i], sigmas[j]);
                 //                dx = means[i].x() - means[j].x();
                 //                dy = means[i].y() - means[j].y();
                 //                sigma2 = sigmas[i] * sigmas[i] + sigmas[j] * sigmas[j];
@@ -250,7 +248,8 @@ namespace ars {
                 //                ux = dx * scale;
                 //                uy = dy * scale;
                 //                lambda = lambda / (2.0 * sigma2);
-#pragma omp atomic
+
+               
                 //                if (mode_ == PNEBI_DOWNWARD) {
                 //                    updateARSF2CoeffRecursDown(lambda, ux * ux - uy*uy, 2.0 * ux * uy, w, arsfOrder_, coeffs_);
                 //                } else {
