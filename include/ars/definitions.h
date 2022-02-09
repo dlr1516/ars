@@ -60,35 +60,35 @@ namespace ars {
     //    using Vector2 = Eigen::Vector2d;
 
     using Vec2d = double2;
-    
-//    class Vec2d {
-//    public:
-//        double data_[2];
-//        bool isCol_; //default -> true
-//
-//        //        Vec2d() {
-//        //            data_[0] = 0.0;
-//        //            data_[1] = 0.0;
-//        //
-//        //            isCol_ = true;
-//        //        }
-//
-//        Vec2d();
-//
-//        Vec2d(double v0, double v1, bool isCol);
-//
-//        Vec2d(bool isCol);
-//
-//        virtual ~Vec2d();
-//
-//        void resetToZero();
-//
-//        void multiplyByScalar(double sc);
-//
-//        void divideByScalar(double sc);
-//
-//        double norm();
-//    };
+
+    //    class Vec2d {
+    //    public:
+    //        double data_[2];
+    //        bool isCol_; //default -> true
+    //
+    //        //        Vec2d() {
+    //        //            data_[0] = 0.0;
+    //        //            data_[1] = 0.0;
+    //        //
+    //        //            isCol_ = true;
+    //        //        }
+    //
+    //        Vec2d();
+    //
+    //        Vec2d(double v0, double v1, bool isCol);
+    //
+    //        Vec2d(bool isCol);
+    //
+    //        virtual ~Vec2d();
+    //
+    //        void resetToZero();
+    //
+    //        void multiplyByScalar(double sc);
+    //
+    //        void divideByScalar(double sc);
+    //
+    //        double norm();
+    //    };
 
     using VecVec2d = thrust::host_vector<Vec2d>;
 
@@ -118,42 +118,42 @@ namespace ars {
 
     //    using Matrix2 = Eigen::Matrix2d;
 
-//    class Mat2d {
-//    public:
-//        double data_[4];
-//
-//        Mat2d();
-//
-//        virtual ~Mat2d();
-//
-//        void resetToZero();
-//
-//        void setToIdentity();
-//
-//        void multiplyByScalar(double sc);
-//
-//        void divideByScalar(double sc);
-//
-//        void fillRowMajor(double a, double b, double c, double d);
-//
-//        void make2dRotMat(double theta);
-//
-//        void transpose();
-//
-//        Mat2d transposeReturningValue();
-//
-//        double determinant() const;
-//
-//        double trace() const;
-//
-//        void invert();
-//
-//        Mat2d inverse() const;
-//
-//        void setDiagonal(double a11, double a22);
-//
-//    };
-    
+    //    class Mat2d {
+    //    public:
+    //        double data_[4];
+    //
+    //        Mat2d();
+    //
+    //        virtual ~Mat2d();
+    //
+    //        void resetToZero();
+    //
+    //        void setToIdentity();
+    //
+    //        void multiplyByScalar(double sc);
+    //
+    //        void divideByScalar(double sc);
+    //
+    //        void fillRowMajor(double a, double b, double c, double d);
+    //
+    //        void make2dRotMat(double theta);
+    //
+    //        void transpose();
+    //
+    //        Mat2d transposeReturningValue();
+    //
+    //        double determinant() const;
+    //
+    //        double trace() const;
+    //
+    //        void invert();
+    //
+    //        Mat2d inverse() const;
+    //
+    //        void setDiagonal(double a11, double a22);
+    //
+    //    };
+
     using Mat2d = double4; //w x \n y z
 
     using VecMat2d = thrust::host_vector<Mat2d>;

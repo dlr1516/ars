@@ -30,7 +30,7 @@
 #include <eigen3/Eigen/Dense>
 #include <ars/definitions.h>
 
-        namespace ars {
+namespace ars {
 
     /**
      * Converts the input integer to its corresponding std::bitset. 

@@ -185,12 +185,10 @@ namespace ars {
                 ars::ScopedTimer timer("ArsKernelIsotropic2d::computeFourier()");
                 isotropicKer_.init(means[i], means[j], sigma);
                 isotropicKer_.updateFourier(arsfOrder_, coeffs_, w);
-                
+
             }
         }
     }
-
-    
 
     void AngularRadonSpectrum2d::initLUT(double precision = 0.001) {
         //pnebiLut_.init(arsfOrder_, precision);

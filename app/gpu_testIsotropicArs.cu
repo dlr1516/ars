@@ -241,11 +241,21 @@ int main(void) {
     ars::Vec2d* kernelInput1 = thrust::raw_pointer_cast(acesPoints1.data());
     size_t kernelNum = acesPoints1.size(); //numero di punti in input
     bool pnebiMode = false;
-    double *coefficientsArs1;
+    double *coefficientsArs1, *d_coefficientsArs1; //d_ stands for device
+    const size_t coeffsVectorSz = 2 * fourierOrder + 2;
+    coefficientsArs1 = (double*) malloc(coeffsVectorSz * sizeof (double)); //verify that this initializes to 0
+    cudaMalloc(&d_coefficientsArs1, fourierOrder * sizeof (double));
+    cudaMemset(&d_coefficientsArs1, 0, coeffsVectorSz * sizeof (double));
+
     ars::PnebiLUT pnebiLUT1; //LUT setup
-    double lutPrecision = 0.001;
+    double lutPrecision = 0.001; //LUT setup
     pnebiLUT1.init(fourierOrder, lutPrecision); //LUT setup
-    iigKernel << <1, 1 >> >(kernelInput1, kernelInput1, sigma, sigma, kernelNum, fourierOrder, pnebiMode, pnebiLUT1, coefficientsArs1);
+    if (pnebiLUT1.getOrderMax() < fourierOrder) { //LUT setup
+        ARS_ERROR("LUT not initialized to right order. Initialized now."); //LUT setup
+        pnebiLUT1.init(fourierOrder, 0.0001); //LUT setup
+    }
+
+    iigKernel << <1, 1 >> >(kernelInput1, kernelInput1, sigma, sigma, kernelNum, fourierOrder, pnebiMode, pnebiLUT1, d_coefficientsArs1);
     //end of kernel call
 
     timeStop = std::chrono::system_clock::now();
@@ -267,8 +277,20 @@ int main(void) {
     ars::Vec2d* kernelInput2 = thrust::raw_pointer_cast(acesPoints1.data());
     kernelNum = acesPoints1.size(); //for this dummy example atleast
     pnebiMode = true;
-    double *coefficientsArs2;
-    //    iigKernel << <1, 1 >> >(kernelInput1, kernelInput1, sigma, sigma, kernelNum, fourierOrder, pnebiMode, coefficientsArs2);
+    double *coefficientsArs2, *d_coefficientsArs2;
+    coefficientsArs2 = (double*) malloc(coeffsVectorSz * sizeof (double)); //verify that this initializes to 0
+    cudaMalloc(&d_coefficientsArs2, fourierOrder * sizeof (double));
+    cudaMemset(&d_coefficientsArs2, 0, coeffsVectorSz * sizeof (double));
+
+    ars::PnebiLUT pnebiLUT2; //LUT setup
+    //    double lutPrecision = 0.001; //already initialized for pnebiLUT1
+    pnebiLUT2.init(fourierOrder, lutPrecision); //LUT setup
+    if (pnebiLUT2.getOrderMax() < fourierOrder) { //LUT setup
+        ARS_ERROR("LUT not initialized to right order. Initialized now."); //LUT setup
+        pnebiLUT2.init(fourierOrder, 0.0001); //LUT setup
+    }
+
+    iigKernel << <1, 1 >> >(kernelInput1, kernelInput1, sigma, sigma, kernelNum, fourierOrder, pnebiMode, pnebiLUT2, d_coefficientsArs2);
     //end of kernel call
 
 
