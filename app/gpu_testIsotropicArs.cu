@@ -43,7 +43,7 @@ double acesRanges1[] = {50.00, 50.00, 50.00, 5.26, 5.21, 5.06, 5.01, 3.01, 2.94,
 void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, thrust::device_vector<ars::Vec2d>& points);
 
 __global__
-void iigKernel(ars::Vec2d* mean1data, ars::Vec2d* mean2data, double sigma1, double sigma2, size_t kernelNum /*!!!! kernelNum = means.size() */, int fourierOrder, bool pnebiMode, double* coefficients) {
+void iigKernel(ars::Vec2d* mean1data, ars::Vec2d* mean2data, double sigma1, double sigma2, size_t kernelNum /*!!!! kernelNum = means.size() */, int fourierOrder, bool pnebiMode, ars::PnebiLUT& pnebiLUT, double* coefficients) {
     //    a.insertIsotropicGaussians(points, sigma);
 
     //TODO 1): 4 righe sotto: DA FARE NEL MAIN PRIMA DI CHIAMARE LA FUNZIONE; vengono fatte una tantum prima del for
@@ -129,6 +129,76 @@ void iigKernel(ars::Vec2d* mean1data, ars::Vec2d* mean2data, double sigma1, doub
                 }
             } else if (pnebiMode == true) {
                 //                updateARSF2CoeffRecursDownLUT(lambdaSqNorm_, phi_, w2, nFourier, pnebiLut_, coeffs);
+                double cth2, sth2;
+                //fastCosSin(2.0 * phi, cth2, sth2); 
+                cth2 = cos(2.0 * phi);
+                sth2 = sin(2.0 * phi);
+
+                //TODO 6): find a workaround for this pnebis vector; for now I just initialize here a double* pnebis;
+                //                std::vector<double> pnebis(fourierOrder + 1); //prima riga della funzione omonima chiamata da dentro l'inline
+                double* pnebis;
+                double sgn, cth, sth, ctmp, stmp;
+
+                //TODO 7): minor problem... seems just to be a check of standing conditions. Still... might be useful to understand it in order to fix dimensions of pointers passed to iigKernel
+                // Fourier Coefficients 
+                //                if (coeffs.size() != 2 * fourierOrder + 2 || pnebiLUT.getOrderMax() < fourierOrder) {
+                //                    std::cerr << __FILE__ << "," << __LINE__ << ": one of these conditions failed:"
+                //                            << "\n  size of Fourier coefficients vector " << coeffs.size() << " should be " << (2 * n + 2)
+                //                            << "\n  LUT max order is " << pnebiLUT.getOrderMax() << " >= " << n
+                //                            << std::endl;
+                //                    return;
+                //                }
+
+                // TODO 8): SOLVE PROBLEM OF FUNCTION COMMENTED BELOW (NOTE THAT ITS CODE HAS ALREADY BEEN COPIED IN THE SCOPE BELOW THE COMMENTED CALLING OF THE FUNCTION)
+                //                pnebiLUT.eval(lambdaSqNorm, pnebis);
+                //                {
+                //                    double val, w;
+                //
+                //                    // Checkes LUT initialization
+                //                    if (lut_.empty()) {
+                //                        std::cerr << __FILE__ << "," << __LINE__ << ": empty LUT" << std::endl;
+                //                        return;
+                //                    }
+                //
+                //                    // Checks that 1) argument x is positive; 2) order of PNEBI has been computed;
+                //                    if (x < 0.0) x = -x;
+                //
+                //                    // Checkes the size of vector (and adapt it if needed)
+                //                    if (y.size() < orderMax_ + 1) {
+                //                        y.resize(orderMax_ + 1);
+                //                    }
+                //
+                //                    PnebiPoint tmp(0, x);
+                //                    auto upper = std::upper_bound(lut_.begin(), lut_.end(), tmp);
+                //                    auto lower = upper;
+                //                    std::advance(lower, -1);
+                //
+                //                    if (upper == lut_.end()) {
+                //                        std::copy(lower->y.begin(), lower->y.end(), y.begin());
+                //                        //evaluatePnebiVector(orderMax_,x,y);
+                //                    } else {
+                //                        w = (x - lower->x) / (upper->x - lower->x);
+                //                        for (int i = 0; i < lower->y.size() && i < upper->y.size() && i < y.size(); ++i) {
+                //                            y[i] = (1.0 - w) * lower->y[i] + w * upper->y[i];
+                //                        }
+                //                    }
+                //                }
+                //                //ARS_PRINT(pnebis[0]);
+
+
+                coefficients[0] += 0.5 * w2 * pnebis[0]; //factor = w2
+                sgn = -1.0;
+                cth = cth2;
+                sth = sth2;
+                for (int k = 1; k <= fourierOrder; ++k) {
+                    coefficients[2 * k] += pnebis[k] * w2 * sgn * cth;
+                    coefficients[2 * k + 1] += pnebis[k] * w2 * sgn * sth;
+                    sgn = -sgn;
+                    ctmp = cth2 * cth - sth2 * sth;
+                    stmp = sth2 * cth + cth2 * sth;
+                    cth = ctmp;
+                    sth = stmp;
+                }
             }
 
 
@@ -172,7 +242,10 @@ int main(void) {
     size_t kernelNum = acesPoints1.size(); //numero di punti in input
     bool pnebiMode = false;
     double *coefficientsArs1;
-    iigKernel << <1, 1 >> >(kernelInput1, kernelInput1, sigma, sigma, kernelNum, fourierOrder, pnebiMode, coefficientsArs1);
+    ars::PnebiLUT pnebiLUT1; //LUT setup
+    double lutPrecision = 0.001;
+    pnebiLUT1.init(fourierOrder, lutPrecision); //LUT setup
+    iigKernel << <1, 1 >> >(kernelInput1, kernelInput1, sigma, sigma, kernelNum, fourierOrder, pnebiMode, pnebiLUT1, coefficientsArs1);
     //end of kernel call
 
     timeStop = std::chrono::system_clock::now();
@@ -195,7 +268,7 @@ int main(void) {
     kernelNum = acesPoints1.size(); //for this dummy example atleast
     pnebiMode = true;
     double *coefficientsArs2;
-    iigKernel << <1, 1 >> >(kernelInput1, kernelInput1, sigma, sigma, kernelNum, fourierOrder, pnebiMode, coefficientsArs2);
+    //    iigKernel << <1, 1 >> >(kernelInput1, kernelInput1, sigma, sigma, kernelNum, fourierOrder, pnebiMode, coefficientsArs2);
     //end of kernel call
 
 
