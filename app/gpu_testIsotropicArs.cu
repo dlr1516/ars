@@ -43,8 +43,14 @@ double acesRanges1[] = {50.00, 50.00, 50.00, 5.26, 5.21, 5.06, 5.01, 3.01, 2.94,
 void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, thrust::device_vector<ars::Vec2d>& points);
 
 __global__
-void iigKernel(ars::Vec2d* mean1data, ars::Vec2d* mean2data, double sigma1, double sigma2, size_t kernelNum) {
+void iigKernel(ars::Vec2d* mean1data, ars::Vec2d* mean2data, double sigma1, double sigma2, size_t kernelNum /*!!!! kernelNum = means.size() */, int fourierOrder, bool pnebiMode, double* coefficients) {
     //    a.insertIsotropicGaussians(points, sigma);
+
+    //TODO 1): 4 righe sotto: DA FARE NEL MAIN PRIMA DI CHIAMARE LA FUNZIONE; vengono fatte una tantum prima del for
+    //    if (coeffs_.size() != 2 * arsfOrder_ + 2) {
+    //        coeffs_.resize(2 * arsfOrder_ + 2);
+    //    }
+    //    std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
 
     for (size_t i = 0; i < kernelNum; ++i) {
         for (size_t j = i + 1; j < kernelNum; ++j) {
@@ -56,12 +62,74 @@ void iigKernel(ars::Vec2d* mean1data, ars::Vec2d* mean2data, double sigma1, doub
 
             dx = vecJ.x - vecI.x;
             dy = vecJ.y - vecI.y;
-            double phi_ = atan2(dy, dx);
-            double sigmaValSq_ = sigma1 * sigma1 + sigma2 * sigma2;
-            double lambdaSqNorm_ = 0.25 * (dx * dx + dy * dy) / sigmaValSq_;
+            double phi = atan2(dy, dx);
+            double sigmaValSq = sigma1 * sigma1 + sigma2 * sigma2;
+            double lambdaSqNorm = 0.25 * (dx * dx + dy * dy) / sigmaValSq;
 
 
             //            isotropicKer_.updateFourier(arsfOrder_, coeffs_, w);
+            double weight = 1.0 / (kernelNum * kernelNum);
+            double w2 = weight / sqrt(2.0 * M_PI * sigmaValSq);
+
+            //TODO 2): TROVARE UNA SOLUZIONE A QUESTO RESIZING (farlo prima di dimensione fissa sufficiente nel main?)
+            //            if (coeffs.size() != 2 * nFourier + 2) {
+            //                coeffs.resize(2 * nFourier + 2);
+            //            }
+
+            //TODO 3): fare questa inizializzazione della LUT nel main
+            //            if (pnebiLut_.getOrderMax() < nFourier) {
+            //                ARS_ERROR("LUT not initialized to right order. Initialized now.");
+            //                pnebiLut_.init(nFourier, 0.0001);
+            //            }
+
+            if (pnebiMode == false) {
+                //                updateARSF2CoeffRecursDown(lambdaSqNorm, phi, w2, nFourier, coeffs);
+
+                double cth2, sth2;
+                cth2 = cos(2.0 * phi);
+                sth2 = sin(2.0 * phi);
+                //                updateARSF2CoeffRecursDown(lambda, cth2, sth2, factor, n, coeffs);
+
+
+                //TODO 4): make pnebis a double*
+                //can solve it with cuda/gpu malloc here? otherwise just pass the needed pointer to the function?
+                //for now I just declare it here
+                //                std::vector<double> pnebis(n + 1);
+                double *pnebis;
+
+                double sgn, cth, sth, ctmp, stmp;
+
+                // Fourier Coefficients 
+                //                if (coeffs.size() != 2 * n + 2) {
+                //                    std::cerr << __FILE__ << "," << __LINE__ << ": invalid size of Fourier coefficients vector " << coeffs.size() << " should be " << (2 * n + 2) << std::endl;
+                //                    return;
+                //                }
+
+                //                TODO 5): expand evaluatePnebiVector() below
+                //                evaluatePnebiVector(n, lambda, pnebis);
+                //ARS_PRINT(pnebis[0]);
+
+                //!!!! factor = w2
+                double factor = w2;
+                coefficients[0] += 0.5 * factor * pnebis[0];
+                sgn = -1.0;
+                cth = cth2;
+                sth = sth2;
+                //!!!! n in the for below is fourierOrder
+                //                for (int k = 1; k <= n; ++k) {
+                for (int k = 1; k <= fourierOrder; ++k) {
+
+                    coefficients[2 * k] += factor * pnebis[k] * sgn * cth;
+                    coefficients[2 * k + 1] += factor * pnebis[k] * sgn * sth;
+                    sgn = -sgn;
+                    ctmp = cth2 * cth - sth2 * sth;
+                    stmp = sth2 * cth + cth2 * sth;
+                    cth = ctmp;
+                    sth = stmp;
+                }
+            } else if (pnebiMode == true) {
+                //                updateARSF2CoeffRecursDownLUT(lambdaSqNorm_, phi_, w2, nFourier, pnebiLut_, coeffs);
+            }
 
 
         }
@@ -97,9 +165,16 @@ int main(void) {
 
 
     timeStart = std::chrono::system_clock::now();
+
+    //kernel call
     //    ars1.insertIsotropicGaussians(acesPoints1, sigma);
     ars::Vec2d* kernelInput1 = thrust::raw_pointer_cast(acesPoints1.data());
-    iigKernel << <1, 1 >> >(kernelInput1, kernelInput1, sigma, sigma, acesPoints1.size());
+    size_t kernelNum = acesPoints1.size(); //numero di punti in input
+    bool pnebiMode = false;
+    double *coefficientsArs1;
+    iigKernel << <1, 1 >> >(kernelInput1, kernelInput1, sigma, sigma, kernelNum, fourierOrder, pnebiMode, coefficientsArs1);
+    //end of kernel call
+
     timeStop = std::chrono::system_clock::now();
     double timeArs1 = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count();
     cudaDeviceSynchronize();
@@ -113,9 +188,17 @@ int main(void) {
 
 
     timeStart = std::chrono::system_clock::now();
+
+    //kernel call
     //    ars2.insertIsotropicGaussians(acesPoints1, sigma);
     ars::Vec2d* kernelInput2 = thrust::raw_pointer_cast(acesPoints1.data());
-    iigKernel << <1, 1 >> >(kernelInput2, kernelInput2, sigma, sigma, acesPoints1.size());
+    kernelNum = acesPoints1.size(); //for this dummy example atleast
+    pnebiMode = true;
+    double *coefficientsArs2;
+    iigKernel << <1, 1 >> >(kernelInput1, kernelInput1, sigma, sigma, kernelNum, fourierOrder, pnebiMode, coefficientsArs2);
+    //end of kernel call
+
+
     timeStop = std::chrono::system_clock::now();
     double timeArs2 = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count();
     std::cout << "insertIsotropicGaussians() " << timeArs2 << " ms" << std::endl;
