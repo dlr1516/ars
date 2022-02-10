@@ -95,7 +95,7 @@ void iigKernel(ars::Vec2d* mean1data, ars::Vec2d* mean2data, double sigma1, doub
                 //can solve it with cuda/gpu malloc here? otherwise just pass the needed pointer to the function?
                 //for now I just declare it here
                 //                std::vector<double> pnebis(n + 1);
-                double *pnebis;
+                double *pnebis = new double[fourierOrder + 1];
 
                 double sgn, cth, sth, ctmp, stmp;
 
@@ -136,7 +136,7 @@ void iigKernel(ars::Vec2d* mean1data, ars::Vec2d* mean2data, double sigma1, doub
 
                 //TODO 6): find a workaround for this pnebis vector; for now I just initialize here a double* pnebis;
                 //                std::vector<double> pnebis(fourierOrder + 1); //prima riga della funzione omonima chiamata da dentro l'inline
-                double* pnebis;
+                double *pnebis = new double[fourierOrder + 1];
                 double sgn, cth, sth, ctmp, stmp;
 
                 //TODO 7): minor problem... seems just to be a check of standing conditions. Still... might be useful to understand it in order to fix dimensions of pointers passed to iigKernel
@@ -245,7 +245,7 @@ int main(void) {
     const size_t coeffsVectorSz = 2 * fourierOrder + 2;
     coefficientsArs1 = (double*) malloc(coeffsVectorSz * sizeof (double)); //verify that this initializes to 0
     cudaMalloc(&d_coefficientsArs1, fourierOrder * sizeof (double));
-    cudaMemset(&d_coefficientsArs1, 0, coeffsVectorSz * sizeof (double));
+    cudaMemset(&d_coefficientsArs1, 0.0, coeffsVectorSz * sizeof (double));
 
     ars::PnebiLUT pnebiLUT1; //LUT setup
     double lutPrecision = 0.001; //LUT setup
@@ -280,7 +280,7 @@ int main(void) {
     double *coefficientsArs2, *d_coefficientsArs2;
     coefficientsArs2 = (double*) malloc(coeffsVectorSz * sizeof (double)); //verify that this initializes to 0
     cudaMalloc(&d_coefficientsArs2, fourierOrder * sizeof (double));
-    cudaMemset(&d_coefficientsArs2, 0, coeffsVectorSz * sizeof (double));
+    cudaMemset(&d_coefficientsArs2, 0.0, coeffsVectorSz * sizeof (double));
 
     ars::PnebiLUT pnebiLUT2; //LUT setup
     //    double lutPrecision = 0.001; //already initialized for pnebiLUT1
