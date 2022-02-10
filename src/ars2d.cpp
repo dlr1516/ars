@@ -164,6 +164,14 @@ namespace ars {
         coeffs_ = coeffs;
     }
 
+    void AngularRadonSpectrum2d::setCoefficients(double* coeffs, size_t coeffsSz) {
+        coeffs_.clear();
+        for (size_t i = 0; i < coeffsSz; i++) {
+            double c = coeffs[i];
+            coeffs_.push_back(c);
+        }
+    }
+
     void AngularRadonSpectrum2d::insertIsotropicGaussians(const VecVec2d& means, double sigma) {
         size_t kernelNum = means.size();
         double w = 1.0 / (kernelNum * kernelNum);

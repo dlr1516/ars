@@ -118,6 +118,11 @@ namespace ars {
          * @param coeffs the coefficients
          */
         void setCoefficients(const std::vector<double>& coeffs);
+        
+        /**
+         * Alternative to std::vector method; the only difference is the type of the parameter
+         */
+        void setCoefficients(double* coeffs, size_t coeffsSz);
 
         /** * Inserts the given points and computes all the data about point pairs and 
          * computes the coefficients of the Fourier series representing the ARS 
