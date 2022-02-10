@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 project(ars-cuda LANGUAGES CXX CUDA)
 #add_definitions(-std=c++0x)
 
-set(CMAKE_BUILD_TYPE RelWithDebugInfo)
+set(CMAKE_BUILD_TYPE Debug)
 
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -gencode arch=compute_75,code=sm_75)
 
