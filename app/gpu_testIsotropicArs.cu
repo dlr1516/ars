@@ -27,6 +27,7 @@
 #include <chrono>
 
 
+
 #define PRINT_DIM(X) std::cout << #X << " rows " << X.rows() << " cols " << X.cols() << std::endl;
 #define RAD2DEG(X) (180.0/M_PI*(X))
 
@@ -41,6 +42,15 @@ double acesRanges1[] = {50.00, 50.00, 50.00, 5.26, 5.21, 5.06, 5.01, 3.01, 2.94,
 
 
 void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, thrust::device_vector<ars::Vec2d>& points);
+
+int ceilPow2(int n) {
+    int res = 1;
+    int exp = 0;
+    while (res < n) {
+        return 0;
+    }
+    return 1;
+}
 
 __device__
 double evaluatePnebi0Polynom(double x) {
@@ -111,7 +121,7 @@ void evaluatePnebiVectorGPU(int n, double x, double* pnebis, int pnebisSz) {
 }
 
 __global__
-void iigKernel(ars::Vec2d* mean1data, ars::Vec2d* mean2data, double sigma1, double sigma2, size_t kernelNum /*!!!! kernelNum = means.size() */, int fourierOrder, bool pnebiMode, ars::PnebiLUT& pnebiLUT, double* coefficients) {
+void iigKernel(ars::Vec2d* means, double sigma1, double sigma2, size_t numPts /*!!!! numPts = means.size() */, int fourierOrder, ars::ArsKernelIsotropic2d::ComputeMode pnebiMode, ars::PnebiLUT& pnebiLUT, double* coefficients) {
     //    a.insertIsotropicGaussians(points, sigma);
 
     //TODO 1): 4 righe sotto: DA FARE NEL MAIN PRIMA DI CHIAMARE LA FUNZIONE; vengono fatte una tantum prima del for
@@ -120,13 +130,13 @@ void iigKernel(ars::Vec2d* mean1data, ars::Vec2d* mean2data, double sigma1, doub
     //    }
     //    std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
 
-    for (size_t i = 0; i < kernelNum; ++i) {
-        for (size_t j = i + 1; j < kernelNum; ++j) {
+    for (size_t i = 0; i < numPts; ++i) {
+        for (size_t j = i + 1; j < numPts; ++j) {
             //            isotropicKer_.init(means[i], means[j], sigma);
             double dx, dy;
 
-            ars::Vec2d vecI = mean1data[i];
-            ars::Vec2d vecJ = mean2data[j];
+            ars::Vec2d vecI = means[i];
+            ars::Vec2d vecJ = means[j];
 
             dx = vecJ.x - vecI.x;
             dy = vecJ.y - vecI.y;
@@ -136,7 +146,7 @@ void iigKernel(ars::Vec2d* mean1data, ars::Vec2d* mean2data, double sigma1, doub
 
 
             //            isotropicKer_.updateFourier(arsfOrder_, coeffs_, w);
-            double weight = 1.0 / (kernelNum * kernelNum);
+            double weight = 1.0 / (numPts * numPts);
             double w2 = weight / sqrt(2.0 * M_PI * sigmaValSq);
 
             //TODO 2): TROVARE UNA SOLUZIONE A QUESTO RESIZING (farlo prima di dimensione fissa sufficiente nel main?)
@@ -150,7 +160,7 @@ void iigKernel(ars::Vec2d* mean1data, ars::Vec2d* mean2data, double sigma1, doub
             //                pnebiLut_.init(nFourier, 0.0001);
             //            }
 
-            if (pnebiMode == false) {
+            if (pnebiMode == ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD) {
                 //                updateARSF2CoeffRecursDown(lambdaSqNorm, phi, w2, nFourier, coeffs);
 
                 double cth2, sth2;
@@ -196,7 +206,7 @@ void iigKernel(ars::Vec2d* mean1data, ars::Vec2d* mean2data, double sigma1, doub
                     cth = ctmp;
                     sth = stmp;
                 }
-            } else if (pnebiMode == true) {
+            } else if (pnebiMode == ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT) {
                 //                updateARSF2CoeffRecursDownLUT(lambdaSqNorm_, phi_, w2, nFourier, pnebiLut_, coeffs);
                 double cth2, sth2;
                 //fastCosSin(2.0 * phi, cth2, sth2); //già commentata nell'originale
@@ -259,7 +269,6 @@ int main(void) {
     rangeToPoint(acesRanges1, 180, -0.5 * M_PI, M_PI / 180.0 * 1.0, acesPoints1);
     //        acesPoints1.push_back(ars::Vector2::Zero());
     ars::Vec2d firstElement;
-    //    firstElement.resetToZero(); 
     firstElement.x = 0.0;
     firstElement.y = 0.0;
     acesPoints1.push_back(firstElement);
@@ -277,9 +286,9 @@ int main(void) {
 
     //ars1 kernel call
     //    ars1.insertIsotropicGaussians(acesPoints1, sigma);
-    bool pnebiMode = false;
+    ars::ArsKernelIsotropic2d::ComputeMode pnebiMode = ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD;
 
-    size_t kernelNum = acesPoints1.size(); //numero di punti in input
+    size_t numPts = acesPoints1.size(); //numero di punti in input
     ars::Vec2d* kernelInput1 = thrust::raw_pointer_cast(acesPoints1.data());
 
     double *coefficientsArs1 = new double[2 * fourierOrder + 2](); //() initialize to 0
@@ -297,7 +306,9 @@ int main(void) {
         pnebiLUT1.init(fourierOrder, 0.0001); //LUT setup
     }
 
-    iigKernel << <1, 1 >> >(kernelInput1, kernelInput1, sigma, sigma, kernelNum, fourierOrder, pnebiMode, pnebiLUT1, d_coefficientsArs1);
+    int blockSize = 32; //<<<blockSize, 
+    int numBlocks = (acesPoints1.size() + blockSize - 1) / blockSize; // numBlocks >>>
+    iigKernel << <1, 1 >> >(kernelInput1, sigma, sigma, numPts, fourierOrder, pnebiMode, pnebiLUT1, d_coefficientsArs1);
     cudaMemcpy(coefficientsArs1, d_coefficientsArs1, coeffsVectorMaxSz * sizeof (double), cudaMemcpyDeviceToHost);
     //end of kernel call
 
@@ -321,8 +332,8 @@ int main(void) {
     //kernel call
     //    ars2.insertIsotropicGaussians(acesPoints1, sigma);
     ars::Vec2d* kernelInput2 = thrust::raw_pointer_cast(acesPoints1.data());
-    kernelNum = acesPoints1.size(); //for this dummy example atleast
-    pnebiMode = true;
+    numPts = acesPoints1.size(); //for this dummy example atleast
+    pnebiMode = ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT;
 
     double *coefficientsArs2 = new double[2 * fourierOrder + 2](); //() initialize to 0
     double *d_coefficientsArs2; //d_ stands for device
@@ -339,7 +350,7 @@ int main(void) {
         pnebiLUT2.init(fourierOrder, 0.0001); //LUT setup
     }
 
-    //    iigKernel << <1, 1 >> >(kernelInput1, kernelInput1, sigma, sigma, kernelNum, fourierOrder, pnebiMode, pnebiLUT2, d_coefficientsArs2);
+    //    iigKernel << <1, 1 >> >(kernelInput1, sigma, sigma, numPts, fourierOrder, pnebiMode, pnebiLUT2, d_coefficientsArs2);
     cudaMemcpy(coefficientsArs2, d_coefficientsArs2, coeffsVectorMaxSz * sizeof (double), cudaMemcpyDeviceToHost);
     //end of kernel call for ARS2
 
@@ -395,6 +406,11 @@ int main(void) {
     std::cout << "  repeated evaluation with findGlobalMaxBBFourier(): maximum in x " << xopt2 << " (" << RAD2DEG(xopt2) << " deg), maximum value " << ymax2 << std::endl;
 
 
+    cudaFree(d_coefficientsArs2);
+    free(coefficientsArs2);
+    cudaFree(d_coefficientsArs1);
+    free(coefficientsArs1);
+
     return 0;
 }
 
@@ -405,7 +421,7 @@ void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, thr
         p.x = ranges[i] * cos(a);
         p.y = ranges[i] * sin(a);
         points.push_back(p);
-//                std::cout << p.x << " " << p.y << std::endl;
+        //                std::cout << p.x << " " << p.y << std::endl;
     }
 }
 
