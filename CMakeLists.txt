@@ -65,7 +65,7 @@ target_link_libraries(gpu_testIsotropicArs ${ars_LINK_LIBS} mylib)
 
 target_compile_features(gpu_testIsotropicArs PUBLIC cxx_std_11)
 set_target_properties(gpu_testIsotropicArs PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-set_target_properties(gpu_testIsotropicArs PROPERTIES CUDA_ARCHITECTURES "75")
+set_target_properties(gpu_testIsotropicArs PROPERTIES CUDA_ARCHITECTURES "52")
 
 #add_executable(testAnisotropicArs app/testAnisotropicArs.cpp)
 #target_link_libraries(testAnisotropicArs ${ars_LINK_LIBS} ars)

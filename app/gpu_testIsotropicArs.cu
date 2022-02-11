@@ -40,9 +40,6 @@ struct BoundInterval {
     double y1;
 };
 
-double acesRanges[] = {50.00, 50.00, 50.00, 5.26, 5.21, 5.06, 5.01, 3.01, 2.94, 2.89, 2.84, 2.74, 2.69, 2.64, 2.59, 2.54, 2.49, 2.49, 2.44, 2.39, 2.34, 2.29, 2.29, 2.29, 2.39, 2.39, 2.49, 2.51, 2.61, 2.66, 2.76, 2.81, 2.96, 3.01, 3.11, 3.26, 3.01, 3.01, 3.01, 3.06, 3.21, 6.86, 6.86, 6.81, 6.76, 6.71, 6.71, 6.66, 6.61, 6.66, 6.56, 6.56, 6.56, 6.46, 6.46, 6.41, 6.46, 6.46, 4.11, 3.96, 3.96, 4.96, 4.86, 5.21, 7.41, 4.61, 5.16, 6.26, 6.26, 6.31, 4.86, 5.01, 5.86, 5.81, 4.21, 4.26, 4.31, 4.41, 4.39, 4.46, 5.31, 5.06, 5.26, 4.96, 6.01, 5.76, 5.61, 5.36, 5.26, 5.01, 4.21, 4.16, 4.01, 3.91, 3.61, 3.21, 3.26, 3.16, 3.06, 3.01, 3.31, 3.21, 3.16, 2.16, 2.19, 2.16, 2.21, 2.11, 2.01, 2.01, 2.06, 2.84, 2.91, 2.91, 3.01, 3.11, 3.21, 3.81, 4.06, 7.11, 7.06, 7.01, 6.96, 6.86, 4.31, 6.76, 6.71, 6.66, 6.61, 5.46, 5.41, 6.46, 6.21, 6.31, 6.51, 7.26, 7.46, 50.00, 2.01, 1.94, 1.94, 1.94, 2.31, 1.86, 1.84, 1.84, 1.81, 1.96, 26.46, 20.76, 2.11, 2.12, 2.17, 2.14, 2.09, 2.09, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.19, 2.19, 2.24, 2.24, 2.24, 2.24, 2.29, 2.29, 2.29, 2.29, 2.29, 2.39, 2.39, 2.39, 2.44};
-
-
 void rangeToPoint(double* ranges, int num, int numPadded, double angleMin, double angleRes, thrust::device_vector<ars::Vec2d>& points);
 
 int ceilPow2(int n) {
@@ -131,17 +128,16 @@ void iigKernel(ars::Vec2d* means, double sigma1, double sigma2, size_t numPtsAft
     //    }
     //    std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
 
-    size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
-    size_t stride = 8 * 32;
+    size_t index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block
+    size_t stride = blockDim.x * gridDim.x; //total number of threads in the grid
 
+    size_t totalNumComparisons = numPtsAfterPadding * numPtsAfterPadding;
 
-    //    size_t index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block
-    //    size_t stride = blockDim.x * gridDim.x; // = total number of threads in the grid
-    if (tid < numPtsAfterPadding * numPtsAfterPadding) {
-        //    for (size_t totId = tid; totId < 256*256; totId += stride) {
+    for (size_t tid = index; tid < totalNumComparisons; tid += stride) {
 
         size_t j = tid % numPtsAfterPadding;
-        size_t i = (tid - j) / numPtsAfterPadding; // equivalent of floor(totId/numPtsPadded)
+        size_t i = (tid - j) / numPtsAfterPadding;
+
         ars::Vec2d vecI = means[i];
         ars::Vec2d vecJ = means[j];
 
@@ -265,6 +261,9 @@ void iigKernel(ars::Vec2d* means, double sigma1, double sigma2, size_t numPtsAft
 }
 
 int main(void) {
+    double acesRanges[] = {50.00, 50.00, 50.00, 5.26, 5.21, 5.06, 5.01, 3.01, 2.94, 2.89, 2.84, 2.74, 2.69, 2.64, 2.59, 2.54, 2.49, 2.49, 2.44, 2.39, 2.34, 2.29, 2.29, 2.29, 2.39, 2.39, 2.49, 2.51, 2.61, 2.66, 2.76, 2.81, 2.96, 3.01, 3.11, 3.26, 3.01, 3.01, 3.01, 3.06, 3.21, 6.86, 6.86, 6.81, 6.76, 6.71, 6.71, 6.66, 6.61, 6.66, 6.56, 6.56, 6.56, 6.46, 6.46, 6.41, 6.46, 6.46, 4.11, 3.96, 3.96, 4.96, 4.86, 5.21, 7.41, 4.61, 5.16, 6.26, 6.26, 6.31, 4.86, 5.01, 5.86, 5.81, 4.21, 4.26, 4.31, 4.41, 4.39, 4.46, 5.31, 5.06, 5.26, 4.96, 6.01, 5.76, 5.61, 5.36, 5.26, 5.01, 4.21, 4.16, 4.01, 3.91, 3.61, 3.21, 3.26, 3.16, 3.06, 3.01, 3.31, 3.21, 3.16, 2.16, 2.19, 2.16, 2.21, 2.11, 2.01, 2.01, 2.06, 2.84, 2.91, 2.91, 3.01, 3.11, 3.21, 3.81, 4.06, 7.11, 7.06, 7.01, 6.96, 6.86, 4.31, 6.76, 6.71, 6.66, 6.61, 5.46, 5.41, 6.46, 6.21, 6.31, 6.51, 7.26, 7.46, 50.00, 2.01, 1.94, 1.94, 1.94, 2.31, 1.86, 1.84, 1.84, 1.81, 1.96, 26.46, 20.76, 2.11, 2.12, 2.17, 2.14, 2.09, 2.09, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.19, 2.19, 2.24, 2.24, 2.24, 2.24, 2.29, 2.29, 2.29, 2.29, 2.29, 2.39, 2.39, 2.39, 2.44};
+
+
     ars::AngularRadonSpectrum2d ars1;
     ars::AngularRadonSpectrum2d ars2;
     thrust::device_vector<ars::Vec2d> acesPoints;
@@ -278,9 +277,11 @@ int main(void) {
     //parallelization parameters
     size_t numPts = 180; // = acesRanges.size()
     const size_t paddedPtVecSz = ceilPow2(numPts);
-    const size_t blockSize = 32;
-    const size_t numBlocks = (paddedPtVecSz * paddedPtVecSz) / blockSize;
-    const size_t gridTotalSize = blockSize*numBlocks;
+    const size_t blockSize = 256; //num threads per block
+    const size_t numBlocks = (paddedPtVecSz * paddedPtVecSz) / blockSize; //number of blocks in grid (each block contains blockSize threads)
+    const size_t gridTotalSize = blockSize*numBlocks; //total number of threads in grid
+    
+    //conversion
     rangeToPoint(acesRanges, numPts, paddedPtVecSz, -0.5 * M_PI, M_PI / 180.0 * 1.0, acesPoints);
     //        acesPoints1.push_back(ars::Vector2::Zero());
     ars::Vec2d firstElement;
@@ -438,15 +439,14 @@ void rangeToPoint(double* ranges, int num, int numPadded, double angleMin, doubl
             p.x = ranges[i] * cos(a);
             p.y = ranges[i] * sin(a);
             points.push_back(p);
-            //                std::cout << p.x << " " << p.y << std::endl;
         } else {
             //padding with zeros
             p.x = 0.0;
             p.y = 0.0;
             points.push_back(p);
         }
-
     }
+    std::cout << p.x << " " << p.y << std::endl;
 }
 
 
