@@ -53,7 +53,7 @@
 #define ARS_ASSERT(COND) if (!(COND)) { std::cerr << __FILE__ << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; exit(-1); }
 
 
-namespace ars {
+namespace cuars {
 
     static const size_t Two = 2; //useful for expanding (i,j) indexing into  i*Two+j
 

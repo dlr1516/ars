@@ -19,7 +19,7 @@
 
 //#define STREAM_BOUND_INTERVAL(X)  "depth " << (X).depth << "[" << (X).xmin.transpose() << "; " << (X).xmax.transpose() << "]: values in  [" << (X).ylower << "," << (X).yupper << "]"
 
-namespace ars {
+namespace cuars {
 
     // --------------------------------------------------------
     // OPTIMIZATION

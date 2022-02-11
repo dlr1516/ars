@@ -56,11 +56,11 @@ int main(int argc, char** argv) {
     std::cout << "Computing PNEBI(k," << x << ") = 2.0 * exp(-" << x << ") * besseli(k," << x << ") for k = 0, ..., " << n << std::endl;
 
     {
-        ars::ScopedTimer timer("evaluatePNEBIVector()");
-        ars::evaluatePnebiVector(n, x, pnebiRecursDown);
+        cuars::ScopedTimer timer("evaluatePNEBIVector()");
+        cuars::evaluatePnebiVector(n, x, pnebiRecursDown);
     }
 
-    ars::PnebiLUT pnebiLUT(n, prec);
+    cuars::PnebiLUT pnebiLUT(n, prec);
 
     std::cout << "\nPNEBI LUT summary: " << std::endl;
     pnebiLUT.printLUT(std::cout, 10, 2);
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
     }
     std::cout << std::endl;
 
-    std::cout << "Polynom  PNEBI(0," << x << ") = " << ars::evaluatePnebi0Polynom(x) << std::endl;
+    std::cout << "Polynom  PNEBI(0," << x << ") = " << cuars::evaluatePnebi0Polynom(x) << std::endl;
     std::cout << "LUT  PNEBI(0," << x << ") = " << pnebiLUT.eval(0, x) << std::endl;
 
     int argnum = 1000;
@@ -100,9 +100,9 @@ int main(int argc, char** argv) {
     std::fill(arsCoeffsLUT.begin(), arsCoeffsLUT.end(), 0.0);
     lambda = 2.4;
     phi = M_PI / 180.0 * (63.0);
-    ars::fastCosSin(phi, cth2, sth2);
-    ars::updateARSF2CoeffRecursDown(lambda, cth2, sth2, 1.0, n, arsCoeffsRecursDown);
-    ars::updateARSF2CoeffRecursDownLUT(lambda, cth2, sth2, 1.0, n, pnebiLUT, arsCoeffsLUT);
+    cuars::fastCosSin(phi, cth2, sth2);
+    cuars::updateARSF2CoeffRecursDown(lambda, cth2, sth2, 1.0, n, arsCoeffsRecursDown);
+    cuars::updateARSF2CoeffRecursDownLUT(lambda, cth2, sth2, 1.0, n, pnebiLUT, arsCoeffsLUT);
     std::cout << "\nARS coefficients: lambda " << lambda << ", phi[deg] " << (180.0 / M_PI * phi) << ":" << std::endl;
     for (int i = 0; i <= 2 * n && i < arsCoeffsRecursDown.size() && i < arsCoeffsLUT.size(); ++i) {
         std::cout << i << " \t" << arsCoeffsRecursDown[i] << " \t" << arsCoeffsLUT[i] << " \n";
@@ -118,8 +118,8 @@ int main(int argc, char** argv) {
         //      plotPnebiStd[k].values.push_back( std::make_pair(arg,ans) );
         //    }
         {
-            ars::ScopedTimer timer("evaluatePNEBIVector");
-            ars::evaluatePnebiVector(pnebiOrder, arg, pnebiValues);
+            cuars::ScopedTimer timer("evaluatePNEBIVector");
+            cuars::evaluatePnebiVector(pnebiOrder, arg, pnebiValues);
         }
 
         for (int k = 0; k < pnebiOrder; ++k) {
@@ -128,14 +128,14 @@ int main(int argc, char** argv) {
         }
         for (int k = 0; k < pnebiOrder; ++k) {
             assert(k < plotPnebiLUT.size());
-            ars::ScopedTimer timer("LUT PNEBI eval");
+            cuars::ScopedTimer timer("LUT PNEBI eval");
             double ans = pnebiLUT.eval(k, arg);
             plotPnebiLUT[k].values.push_back(std::make_pair(arg, ans));
         }
     }
 
     std::cout << "\nProfiler stats:\n";
-    ars::Profiler::getProfiler().printStats(std::cout);
+    cuars::Profiler::getProfiler().printStats(std::cout);
     std::cout << std::endl;
 
     Gnuplot gp("gnuplot -persist");
@@ -191,7 +191,7 @@ int main(int argc, char** argv) {
         theta[i] = 4.0 * M_PI * i / trigNum;
         cosMath[i] = cos(theta[i]);
         sinMath[i] = sin(theta[i]);
-        ars::fastCosSin(theta[i], cosFast[i], sinFast[i]);
+        cuars::fastCosSin(theta[i], cosFast[i], sinFast[i]);
         errCosMax = std::max(errCosMax, fabs(cosMath[i] - cosFast[i]));
         errSinMax = std::max(errSinMax, fabs(sinMath[i] - sinFast[i]));
     }
@@ -216,14 +216,14 @@ int main(int argc, char** argv) {
     gp << "e\n";
 
     // Test diagonlaization
-    ars::Matrix2 l = ars::Matrix2::Zero();
-    ars::Matrix2 v = Eigen::Rotation2Dd(M_PI / 180.0 * (-32)).matrix();
-    ars::Matrix2 m;
+    cuars::Matrix2 l = cuars::Matrix2::Zero();
+    cuars::Matrix2 v = Eigen::Rotation2Dd(M_PI / 180.0 * (-32)).matrix();
+    cuars::Matrix2 m;
     l.diagonal() << 2.0, 5.0;
     m = v * l * v.transpose();
     std::cout << "\ninput matrix m:\n" << m << "\ndiagonal l:\n" << l << "\nv:\n" << v << std::endl;
 
-    ars::diagonalize(m, l, v);
+    cuars::diagonalize(m, l, v);
     std::cout << "\nestimated diagonal l:\n" << l << "\nv:\n" << v << "\nv * l * v':\n" << (v * l * v.transpose()) << std::endl;
 
     return 0;

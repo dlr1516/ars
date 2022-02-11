@@ -21,7 +21,7 @@
 #include <ars/Profiler.h>
 
 
-namespace ars {
+namespace cuars {
 
     // --------------------------------------------------------
     // ARSF FUNCTIONS
@@ -168,6 +168,7 @@ namespace ars {
         coeffs_.clear();
         for (size_t i = 0; i < coeffsSz; i++) {
             double c = coeffs[i];
+//            std::cout << "coeff[" << i << "] " << coeffs[i] << std::endl;
             coeffs_.push_back(c);
         }
     }
@@ -190,7 +191,7 @@ namespace ars {
 
         for (int i = 0; i < kernelNum; ++i) {
             for (int j = i + 1; j < kernelNum; ++j) {
-                ars::ScopedTimer timer("ArsKernelIsotropic2d::computeFourier()");
+                cuars::ScopedTimer timer("ArsKernelIsotropic2d::computeFourier()");
                 isotropicKer_.init(means[i], means[j], sigma);
                 isotropicKer_.updateFourier(arsfOrder_, coeffs_, w);
 

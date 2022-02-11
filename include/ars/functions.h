@@ -23,7 +23,7 @@
 #include <cmath>
 
 
-namespace ars {
+namespace cuars {
 
     const double PNEBI_ARG_MAX = 600.0;
     const double BIG_NUM = 1.0e+10;

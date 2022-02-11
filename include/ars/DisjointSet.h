@@ -22,7 +22,7 @@
 #include <iostream>
 #include <thrust/host_vector.h>
 
-namespace ars {
+namespace cuars {
 
     /**
      * Class DisjointSet is a lightweight implementation of the standard Robert Tarjan 

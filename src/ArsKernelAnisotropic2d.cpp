@@ -20,7 +20,7 @@
 
 #include <ars/functions.h>
 
-namespace ars {
+namespace cuars {
 
     ArsKernelAnisotropic2d::ArsKernelAnisotropic2d() :
     nFourier_(256), muMod_(0.0), muAng_(0.0), sigmaMod_(0.0), sigmaAng_(0.0), sigmaDif_(0.0), fft_(), kernelVal_(), freqvec_() {

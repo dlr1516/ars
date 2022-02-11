@@ -22,10 +22,11 @@
 #include <ars/ars2d.h>
 #include <ars/BBOptimizer1d.h>
 
-#include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
+#include <thrust/device_malloc.h>
 
 #include <chrono>
-#include <sys/param.h>
+
 #include <device_launch_parameters.h>
 
 
@@ -40,15 +41,9 @@ struct BoundInterval {
     double y1;
 };
 
-void rangeToPoint(double* ranges, int num, int numPadded, double angleMin, double angleRes, thrust::device_vector<ars::Vec2d>& points);
+void rangeToPoint(double* ranges, int num, int numPadded, double angleMin, double angleRes, std::vector<cuars::Vec2d>& points);
 
-int ceilPow2(int n) {
-    ARS_ASSERT(n > 0);
-
-    int exponent = ceil(sqrt(n));
-
-    return (int) std::pow<int>(2, exponent);
-}
+int ceilPow2(int n);
 
 __device__
 double evaluatePnebi0Polynom(double x) {
@@ -102,11 +97,11 @@ void evaluatePnebiVectorGPU(int n, double x, double* pnebis, int pnebisSz) {
             pnebis[k] = seqPrev;
         }
         // To avoid overflow!
-        if (seqCurr > ars::BIG_NUM) {
-            seqPrev *= ars::SMALL_NUM;
-            seqCurr *= ars::SMALL_NUM;
+        if (seqCurr > cuars::BIG_NUM) {
+            seqPrev *= cuars::SMALL_NUM;
+            seqCurr *= cuars::SMALL_NUM;
             for (int i = 0; i < pnebisSz; ++i) {
-                pnebis[i] *= ars::SMALL_NUM;
+                pnebis[i] *= cuars::SMALL_NUM;
             }
             //std::cerr << __FILE__ << "," << __LINE__ << ": ANTI-OVERFLOW!" << std::endl;
         }
@@ -119,7 +114,7 @@ void evaluatePnebiVectorGPU(int n, double x, double* pnebis, int pnebisSz) {
 }
 
 __global__
-void iigKernel(ars::Vec2d* means, double sigma1, double sigma2, size_t numPtsAfterPadding, int fourierOrder, ars::ArsKernelIsotropic2d::ComputeMode pnebiMode, ars::PnebiLUT& pnebiLUT, double* coefficients) {
+void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, size_t numPts, size_t numPtsAfterPadding, int fourierOrder, cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode, cuars::PnebiLUT& pnebiLUT, double* coefficients) {
     //    a.insertIsotropicGaussians(points, sigma);
 
     //TODO 1): 4 righe sotto: DA FARE NEL MAIN PRIMA DI CHIAMARE LA FUNZIONE; vengono fatte una tantum prima del for
@@ -138,14 +133,23 @@ void iigKernel(ars::Vec2d* means, double sigma1, double sigma2, size_t numPtsAft
         size_t j = tid % numPtsAfterPadding;
         size_t i = (tid - j) / numPtsAfterPadding;
 
-        ars::Vec2d vecI = means[i];
-        ars::Vec2d vecJ = means[j];
+        if (i >= numPts || j >= numPts)
+            continue;
+
+        cuars::Vec2d vecI = means[i];
+        cuars::Vec2d vecJ = means[j];
 
         //            isotropicKer_.init(means[i], means[j], sigma);
         double dx, dy;
         dx = vecJ.x - vecI.x;
         dy = vecJ.y - vecI.y;
-        double phi = atan2(dy, dx);
+        double phi;
+        if (dx == 0 && dy == 0)
+            //            phi = 0.0;
+            continue;
+        else
+            phi = atan2(dy, dx);
+
         double sigmaValSq = sigma1 * sigma1 + sigma2 * sigma2;
         double lambdaSqNorm = 0.25 * (dx * dx + dy * dy) / sigmaValSq;
 
@@ -165,7 +169,8 @@ void iigKernel(ars::Vec2d* means, double sigma1, double sigma2, size_t numPtsAft
         //                pnebiLut_.init(nFourier, 0.0001);
         //            }
 
-        if (pnebiMode == ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD) {
+        //updating Fourier coefficients (2 modes)
+        if (pnebiMode == cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD) {
             //                updateARSF2CoeffRecursDown(lambdaSqNorm, phi, w2, nFourier, coeffs);
 
             double cth2, sth2;
@@ -211,7 +216,7 @@ void iigKernel(ars::Vec2d* means, double sigma1, double sigma2, size_t numPtsAft
                 cth = ctmp;
                 sth = stmp;
             }
-        } else if (pnebiMode == ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT) {
+        } else if (pnebiMode == cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT) {
             //                updateARSF2CoeffRecursDownLUT(lambdaSqNorm_, phi_, w2, nFourier, pnebiLut_, coeffs);
             double cth2, sth2;
             //fastCosSin(2.0 * phi, cth2, sth2); //già commentata nell'originale
@@ -264,9 +269,8 @@ int main(void) {
     double acesRanges[] = {50.00, 50.00, 50.00, 5.26, 5.21, 5.06, 5.01, 3.01, 2.94, 2.89, 2.84, 2.74, 2.69, 2.64, 2.59, 2.54, 2.49, 2.49, 2.44, 2.39, 2.34, 2.29, 2.29, 2.29, 2.39, 2.39, 2.49, 2.51, 2.61, 2.66, 2.76, 2.81, 2.96, 3.01, 3.11, 3.26, 3.01, 3.01, 3.01, 3.06, 3.21, 6.86, 6.86, 6.81, 6.76, 6.71, 6.71, 6.66, 6.61, 6.66, 6.56, 6.56, 6.56, 6.46, 6.46, 6.41, 6.46, 6.46, 4.11, 3.96, 3.96, 4.96, 4.86, 5.21, 7.41, 4.61, 5.16, 6.26, 6.26, 6.31, 4.86, 5.01, 5.86, 5.81, 4.21, 4.26, 4.31, 4.41, 4.39, 4.46, 5.31, 5.06, 5.26, 4.96, 6.01, 5.76, 5.61, 5.36, 5.26, 5.01, 4.21, 4.16, 4.01, 3.91, 3.61, 3.21, 3.26, 3.16, 3.06, 3.01, 3.31, 3.21, 3.16, 2.16, 2.19, 2.16, 2.21, 2.11, 2.01, 2.01, 2.06, 2.84, 2.91, 2.91, 3.01, 3.11, 3.21, 3.81, 4.06, 7.11, 7.06, 7.01, 6.96, 6.86, 4.31, 6.76, 6.71, 6.66, 6.61, 5.46, 5.41, 6.46, 6.21, 6.31, 6.51, 7.26, 7.46, 50.00, 2.01, 1.94, 1.94, 1.94, 2.31, 1.86, 1.84, 1.84, 1.81, 1.96, 26.46, 20.76, 2.11, 2.12, 2.17, 2.14, 2.09, 2.09, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.19, 2.19, 2.24, 2.24, 2.24, 2.24, 2.29, 2.29, 2.29, 2.29, 2.29, 2.39, 2.39, 2.39, 2.44};
 
 
-    ars::AngularRadonSpectrum2d ars1;
-    ars::AngularRadonSpectrum2d ars2;
-    thrust::device_vector<ars::Vec2d> acesPoints;
+    cuars::AngularRadonSpectrum2d ars1;
+    cuars::AngularRadonSpectrum2d ars2;
     std::chrono::system_clock::time_point timeStart, timeStop;
     double sigma = 0.05;
     int fourierOrder = 20;
@@ -280,42 +284,46 @@ int main(void) {
     const size_t blockSize = 256; //num threads per block
     const size_t numBlocks = (paddedPtVecSz * paddedPtVecSz) / blockSize; //number of blocks in grid (each block contains blockSize threads)
     const size_t gridTotalSize = blockSize*numBlocks; //total number of threads in grid
-    
-    //conversion
-    rangeToPoint(acesRanges, numPts, paddedPtVecSz, -0.5 * M_PI, M_PI / 180.0 * 1.0, acesPoints);
-    //        acesPoints1.push_back(ars::Vector2::Zero());
-    ars::Vec2d firstElement;
-    //    firstElement.x = 0.0;
-    //    firstElement.y = 0.0;
-    //    acesPoints.push_back(firstElement);
-    std::cout << "Number of input points: " << acesPoints.size() << std::endl;
-    //    for (int i = 0; i < acesPoints1.size(); ++i) {
-    //        std::cout << i << "\t" << acesPoints1[i].x() << "\t" << acesPoints1[i].y() << std::endl;
-    //    }
 
-    //    const int trialNum = 1;
-    ars1.initLUT(0.0001);
-    ars1.setComputeMode(ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD);
+    //conversion
+    std::vector<cuars::Vec2d> acesPointsSTL;
+    rangeToPoint(acesRanges, numPts, paddedPtVecSz, -0.5 * M_PI, M_PI / 180.0 * 1.0, acesPointsSTL);
+
+    thrust::host_vector<cuars::Vec2d> acesPointsHost(acesPointsSTL.begin(), acesPointsSTL.end());
+
+
+    //    cuars::Vec2d firstElement; //??
 
 
 
     timeStart = std::chrono::system_clock::now();
-
     //ars1 kernel call
     //    ars1.insertIsotropicGaussians(acesPoints1, sigma);
-    ars::ArsKernelIsotropic2d::ComputeMode pnebiMode = ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD;
+    cuars::Vec2d* kernelInput1;
+    cudaMallocManaged((void**) &kernelInput1, paddedPtVecSz * sizeof (cuars::Vec2d));
+    cudaMemcpy(kernelInput1, acesPointsHost.data(), paddedPtVecSz * sizeof (cuars::Vec2d), cudaMemcpyDefault);
+
+    //    cudaDeviceSynchronize();
+    //    std::cout << "acesPointsHost.size() " << acesPointsHost.size() << std::endl;
+    //    for (size_t s = 0; s < acesPointsHost.size(); s++) {
+    //        std::cout << "s " << s << std::endl;
+    //        std::cout << kernelInput1[s].x << " " << kernelInput1[s].y << std::endl;
+    //    }
 
 
-    ars::VecVec2d kernelInput1(paddedPtVecSz);
+    ars1.initLUT(0.0001);
+    ars1.setComputeMode(cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD);
+    cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode = cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD;
+
 
 
     const size_t coeffsVectorMaxSz = 2 * fourierOrder + 2;
-    double *coefficientsArs1 = new double[coeffsVectorMaxSz](); //() initialize to 0
-    double *d_coefficientsArs1; //d_ stands for device
-    cudaMalloc(&d_coefficientsArs1, coeffsVectorMaxSz * sizeof (double));
-    cudaMemcpy(d_coefficientsArs1, coefficientsArs1, coeffsVectorMaxSz * sizeof (double), cudaMemcpyHostToDevice);
+    double *coefficientsArs1;
+    cudaMallocManaged((void**) &coefficientsArs1, coeffsVectorMaxSz * sizeof (double));
+    cudaMemset(coefficientsArs1, 0.0, coeffsVectorMaxSz * sizeof (double));
 
-    ars::PnebiLUT pnebiLUT1; //LUT setup
+
+    cuars::PnebiLUT pnebiLUT1; //LUT setup
     double lutPrecision = 0.001; //LUT setup
     pnebiLUT1.init(fourierOrder, lutPrecision); //LUT setup
     if (pnebiLUT1.getOrderMax() < fourierOrder) { //LUT setup
@@ -324,16 +332,14 @@ int main(void) {
     }
 
 
-    iigKernel << < numBlocks, blockSize >> >(thrust::raw_pointer_cast<ars::Vec2d*>(kernelInput1.data()), sigma, sigma, paddedPtVecSz, fourierOrder, pnebiMode, pnebiLUT1, d_coefficientsArs1);
-    cudaMemcpy(coefficientsArs1, d_coefficientsArs1, coeffsVectorMaxSz * sizeof (double), cudaMemcpyDeviceToHost);
+    iigKernel << < numBlocks, blockSize >> >(kernelInput1, sigma, sigma, numPts, paddedPtVecSz, fourierOrder, pnebiMode, pnebiLUT1, coefficientsArs1);
+    //    cudaMemcpy(coefficientsArs1, d_coefficientsArs1, coeffsVectorMaxSz * sizeof (double), cudaMemcpyDefault);
     //end of kernel call
 
     timeStop = std::chrono::system_clock::now();
     double timeArs1 = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count();
     cudaDeviceSynchronize();
     std::cout << "insertIsotropicGaussians() " << timeArs1 << " ms" << std::endl;
-
-
     //END OF ARS1
 
 
@@ -341,15 +347,15 @@ int main(void) {
 
 
     //ARS2    
-    ars2.setComputeMode(ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT);
+    ars2.setComputeMode(cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT);
 
     timeStart = std::chrono::system_clock::now();
 
     //kernel call
     //    ars2.insertIsotropicGaussians(acesPoints1, sigma);
-    ars::Vec2d* kernelInput2 = thrust::raw_pointer_cast(acesPoints.data());
-    numPts = acesPoints.size(); //for this dummy example atleast
-    pnebiMode = ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT;
+    cuars::Vec2d* kernelInput2;
+    cudaMalloc((void **) &kernelInput2, paddedPtVecSz * sizeof (cuars::Vec2d));
+    pnebiMode = cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT;
 
     double *coefficientsArs2 = new double[coeffsVectorMaxSz](); //() initialize to 0
     double *d_coefficientsArs2; //d_ stands for device
@@ -357,7 +363,7 @@ int main(void) {
     cudaMalloc(&d_coefficientsArs2, coeffsVectorMaxSz * sizeof (double)); //maybe directly use cudaMemset?
     cudaMemcpy(d_coefficientsArs2, coefficientsArs2, coeffsVectorMaxSz * sizeof (double), cudaMemcpyHostToDevice);
 
-    ars::PnebiLUT pnebiLUT2; //LUT setup
+    cuars::PnebiLUT pnebiLUT2; //LUT setup
     //    double lutPrecision = 0.001; //already initialized for pnebiLUT1
     pnebiLUT2.init(fourierOrder, lutPrecision); //LUT setup
     if (pnebiLUT2.getOrderMax() < fourierOrder) { //LUT setup
@@ -365,20 +371,26 @@ int main(void) {
         pnebiLUT2.init(fourierOrder, 0.0001); //LUT setup
     }
 
-    //    iigKernel << < numBlocks, blockSize >> >(thrust::raw_pointer_cast<ars::Vec2d*>(kernelInput2.data()), sigma, sigma, paddedPtVecSz, fourierOrder, pnebiMode, pnebiLUT2, d_coefficientsArs2);
+    //    iigKernel << < numBlocks, blockSize >> >(thrust::raw_pointer_cast<ars::Vec2d*>(kernelInput2.data()), sigma, sigma, numPts, paddedPtVecSz, fourierOrder, pnebiMode, pnebiLUT2, d_coefficientsArs2);
     cudaMemcpy(coefficientsArs2, d_coefficientsArs2, coeffsVectorMaxSz * sizeof (double), cudaMemcpyDeviceToHost);
     //end of kernel call for ARS2
 
 
+
     timeStop = std::chrono::system_clock::now();
     double timeArs2 = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count();
+    cudaDeviceSynchronize();
     std::cout << "insertIsotropicGaussians() " << timeArs2 << " ms" << std::endl;
+
 
 
 
     std::cout << "\nARS Coefficients:\n";
     std::cout << "\ti \tDownward \tLUT\n";
     ars1.setCoefficients(coefficientsArs1, coeffsVectorMaxSz);
+    //    for (size_t i = 0; i < coeffsVectorMaxSz; i++) {
+    //        std::cout << "ars1coeff_d[" << i << "] " << d_coefficientsArs1[i] << std::endl;
+    //    }
     ars2.setCoefficients(coefficientsArs2, coeffsVectorMaxSz);
     for (int i = 0; i < ars1.coefficients().size() && i < ars2.coefficients().size(); ++i) {
         std::cout << "\t" << i << " \t" << ars1.coefficients().at(i) << " \t" << ars2.coefficients().at(i) << "\n";
@@ -402,12 +414,12 @@ int main(void) {
     for (int i = 0; i < bbnum; ++i) {
         bbbs[i].x0 = M_PI * i / bbnum;
         bbbs[i].x1 = M_PI * (i + 1) / bbnum;
-        ars::findLUFourier(ars1.coefficients(), bbbs[i].x0, bbbs[i].x1, bbbs[i].y0, bbbs[i].y1);
+        cuars::findLUFourier(ars1.coefficients(), bbbs[i].x0, bbbs[i].x1, bbbs[i].y0, bbbs[i].y1);
         std::cout << i << ": x0 " << RAD2DEG(bbbs[i].x0) << " x1 " << RAD2DEG(bbbs[i].x1) << ", y0 " << bbbs[i].y0 << " y1 " << bbbs[i].y1 << std::endl;
     }
 
 
-    ars::FourierOptimizerBB1D optim(ars1.coefficients());
+    cuars::FourierOptimizerBB1D optim(ars1.coefficients());
     double xopt, ymin, ymax;
     optim.enableXTolerance(true);
     optim.enableYTolerance(true);
@@ -417,22 +429,24 @@ int main(void) {
     std::cout << "\n****\nMaximum in x = " << xopt << " (" << RAD2DEG(xopt) << " deg), maximum between [" << ymin << "," << ymax << "]" << std::endl;
 
     double xopt2, ymax2;
-    ars::findGlobalMaxBBFourier(ars1.coefficients(), 0, M_PI, M_PI / 180.0 * 0.5, 1.0, xopt2, ymax2);
+    cuars::findGlobalMaxBBFourier(ars1.coefficients(), 0, M_PI, M_PI / 180.0 * 0.5, 1.0, xopt2, ymax2);
     std::cout << "  repeated evaluation with findGlobalMaxBBFourier(): maximum in x " << xopt2 << " (" << RAD2DEG(xopt2) << " deg), maximum value " << ymax2 << std::endl;
 
 
 
     //Free GPU and CPU memory
     cudaFree(d_coefficientsArs2);
+    cudaFree(kernelInput2);
     //    free(coefficientsArs2); //array
-    cudaFree(d_coefficientsArs1);
+    cudaFree(coefficientsArs1);
+    cudaFree(kernelInput1);
     //    free(coefficientsArs1);
 
     return 0;
 }
 
-void rangeToPoint(double* ranges, int num, int numPadded, double angleMin, double angleRes, thrust::device_vector<ars::Vec2d>& points) {
-    ars::Vec2d p;
+void rangeToPoint(double* ranges, int num, int numPadded, double angleMin, double angleRes, std::vector<cuars::Vec2d>& points) {
+    cuars::Vec2d p;
     for (int i = 0; i < numPadded; ++i) {
         if (i < num) {
             double a = angleMin + angleRes * i;
@@ -445,9 +459,21 @@ void rangeToPoint(double* ranges, int num, int numPadded, double angleMin, doubl
             p.y = 0.0;
             points.push_back(p);
         }
+        //        std::cout << p.x << " " << p.y << std::endl;
     }
-    std::cout << p.x << " " << p.y << std::endl;
 }
 
+int ceilPow2(int n) {
+    ARS_ASSERT(n > 0);
+
+    int exponent = ceil(log2(n));
+
+    int nPadded = std::pow<int>(2, exponent);
+    std::cout << "Number of points: " << n << " -> afeer padding = " << nPadded << std::endl;
+
+
+
+    return nPadded;
+}
 
 

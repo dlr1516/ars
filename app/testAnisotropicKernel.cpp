@@ -11,10 +11,10 @@
 const double PLOT_EPS = 1e-4;
 
 int main(int argc, char** argv) {
-    ars::ArsKernelAnisotropic2d ak;
-    ars::ArsKernelIsotropic2d ik;
-    ars::Vector2 mean1, mean2, mean12, v;
-    ars::Matrix2 covar1, covar2, covar12;
+    cuars::ArsKernelAnisotropic2d ak;
+    cuars::ArsKernelIsotropic2d ik;
+    cuars::Vector2 mean1, mean2, mean12, v;
+    cuars::Matrix2 covar1, covar2, covar12;
     std::vector<double> kernelValRaw;
     std::vector<double> kernelValPolar;
     std::vector<double> kernelValFourier;
@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
     std::vector<double> fourierCoeffsAnisot, fourierCoeffsIsotRaw, fourierCoeffsIsot;
     double t, fmuDirect, fvarDirect, sigmaVal, sigmaValSq, lambdaSqNorm, phi, normalizer, plotEps;
     int plotStep, arsOrder, arsStep;
-    ars::ParamMap params;
+    cuars::ParamMap params;
     std::string filenameCfg;
 
     // Reads params from command line
@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
         kernelValPolar[it] = ak.value(t);
 
         // Computes the Fourier value
-        kernelValFourier[it] = ars::evaluateFourier(fourierCoeffsAnisot, 2.0 * t);
+        kernelValFourier[it] = cuars::evaluateFourier(fourierCoeffsAnisot, 2.0 * t);
 
         // Debug partial
         meanSqValRaw[it] = fmuDirect * fmuDirect;
@@ -156,7 +156,7 @@ int main(int argc, char** argv) {
             << "\n");
 
     fourierCoeffsIsotRaw.resize(2 * arsOrder + 2, 0.0);
-    ars::updateARSF2CoeffRecursDown(lambdaSqNorm, phi, 1.0, arsOrder, fourierCoeffsIsotRaw);
+    cuars::updateARSF2CoeffRecursDown(lambdaSqNorm, phi, 1.0, arsOrder, fourierCoeffsIsotRaw);
     ARS_PRINT("Isotropic kernel raw computed parameters:\n"
             << " 2 * sigmaVal^2 " << (2.0 * sigmaVal * sigmaVal)
             << ", lambda " << sqrt(mean12.dot(mean12))
@@ -166,7 +166,7 @@ int main(int argc, char** argv) {
             << "\n");
 
     ik.init(mean1, mean2, sigmaVal);
-    ik.setComputeMode(ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD);
+    ik.setComputeMode(cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD);
     ik.computeFourier(arsOrder, fourierCoeffsIsot);
     ARS_PRINT("IsotropicKernel class parameters:\n"
             << " variance " << ik.getVariance()
@@ -217,12 +217,12 @@ int main(int argc, char** argv) {
     gp << "e\n";
     for (int it = 0; it <= plotStep; ++it) {
         t = M_PI * it / plotStep;
-        gp << (180.0 / M_PI * t) << " " << normalizer * ars::evaluateFourier(fourierCoeffsIsotRaw, 2.0 * t) + 2.0 * plotEps << "\n";
+        gp << (180.0 / M_PI * t) << " " << normalizer * cuars::evaluateFourier(fourierCoeffsIsotRaw, 2.0 * t) + 2.0 * plotEps << "\n";
     }
     gp << "e\n";
     for (int it = 0; it <= plotStep; ++it) {
         t = M_PI * it / plotStep;
-        gp << (180.0 / M_PI * t) << " " << ars::evaluateFourier(fourierCoeffsAnisot, 2.0 * t) + 3.0 * plotEps << "\n";
+        gp << (180.0 / M_PI * t) << " " << cuars::evaluateFourier(fourierCoeffsAnisot, 2.0 * t) + 3.0 * plotEps << "\n";
     }
     gp << "e\n";
 

@@ -8,7 +8,7 @@
 
 #include "definitions.h"
 
-namespace ars {
+namespace cuars {
 
     // ---------------------------------------------------------------
     // NUMBER OF LEADING ZEROS

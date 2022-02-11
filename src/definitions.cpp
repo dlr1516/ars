@@ -18,7 +18,7 @@
 
 #include <ars/definitions.h>
 
-namespace ars {
+namespace cuars {
     //Vec2d
 
     Vec2d::Vec2d() {

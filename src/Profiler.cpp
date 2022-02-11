@@ -17,7 +17,7 @@
  */
 #include <ars/Profiler.h>
 
-namespace ars {
+namespace cuars {
 
     // ----------------------------------------------------
     // PROFILER

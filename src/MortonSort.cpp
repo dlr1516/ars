@@ -1,6 +1,6 @@
 #include <ars/MortonSort.h>
 
-namespace ars {
+namespace cuars {
 
     // ---------------------------------------------------------------
     // NUMBER OF LEADING ZEROS

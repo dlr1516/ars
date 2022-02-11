@@ -18,7 +18,7 @@
 #include <ars/utils.h>
 #include <ars/definitions.h>
 
-namespace ars {
+namespace cuars {
 
     void diagonalize(const Mat2d& m, double& lmin, double& lmax, double& theta) {
         double a, b, c, s;

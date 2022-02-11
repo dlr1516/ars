@@ -30,7 +30,7 @@
 
 #include "utils.h"
 
-namespace ars {
+namespace cuars {
 
     //-----------------------------------------------------
     // GaussianMixtureEstimator

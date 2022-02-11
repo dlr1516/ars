@@ -23,7 +23,7 @@
 #include <ars/definitions.h>
 
 
-namespace ars {
+namespace cuars {
 
     // --------------------------------------------------------
     // COS-SIN FAST

@@ -22,7 +22,7 @@
 
 #include <cmath>
 
-namespace ars {
+namespace cuars {
 
     /**
      * Computes the diagonalization of the given positive definite matrix m. 

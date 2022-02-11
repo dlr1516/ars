@@ -20,7 +20,7 @@
 
 #include <ars/functions.h>
 
-namespace ars {
+namespace cuars {
 
     // --------------------------------------------------------
     // BRANCH AND BOUND OPTIMIZER

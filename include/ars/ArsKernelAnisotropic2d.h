@@ -24,7 +24,7 @@
 #include <ars/definitions.h>
 
 
-namespace ars {
+namespace cuars {
 
     /**
      * Class AnisotropicKernel computes and handles the kernel of Angular Radon Spectrum (ARS)

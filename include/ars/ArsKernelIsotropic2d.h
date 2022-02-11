@@ -26,7 +26,7 @@
 #include <ars/functions.h>
 
 
-namespace ars {
+namespace cuars {
 
     // --------------------------------------------------------
     // ARS-2D FUNCTIONS FOR ISOTROPIC KERNEL

@@ -18,7 +18,7 @@
  */
 #include <ars/DisjointSet.h>
 
-namespace ars {
+namespace cuars {
 
     DisjointSet::DisjointSet() : setNum_(0) {
     }

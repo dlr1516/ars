@@ -20,7 +20,7 @@
 
 using namespace std;
 
-namespace ars {
+namespace cuars {
 
     HoughSpectrum::HoughSpectrum()
     : thetaNum_(360),

@@ -1,6 +1,6 @@
 #include <ars/HistogramCircularCorrelation.h>
 
-namespace ars {
+namespace cuars {
 
     HistogramCircularCorrelation::HistogramCircularCorrelation() {
     }

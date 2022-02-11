@@ -17,7 +17,7 @@
  */
 #include <ars/ArsKernelIsotropic2d.h>
 
-namespace ars {
+namespace cuars {
 
     ArsKernelIsotropic2d::ArsKernelIsotropic2d() : lambdaSqNorm_(0.0), sigmaValSq_(1.0), phi_(0.0), pnebiLut_(40, 0.001), mode_(ComputeMode::PNEBI_LUT) {
     }
