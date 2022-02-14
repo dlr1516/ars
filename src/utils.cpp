@@ -22,6 +22,16 @@ namespace ars {
 
     void diagonalize(const Matrix2& m, double& lmin, double& lmax, double& theta) {
         double a, b, c, s;
+        
+        //   [ ct  st] * [m00 m01] * [ ct -st] = [ ct  st] * [m00*ct+m01*st, -m00*st+m01*ct]
+        //   [-st  ct]   [m10 m11]   [ st  ct]   [-st  ct]   [m10*ct+m11*st, -m10*st+m11*ct]
+        // = [ m00*ct*ct + m01*ct*st + m10*ct*st + m11*st*st, -m00*ct*st + m01*ct*ct - m10*st*st + m11*ct*st ]
+        //   [ -m00*ct*st + m01*ct*ct -m10*st*st + m11*ct*st,  m00*st*st - m01*ct*st - m10*st*ct + m11*ct*ct ]
+        // non_diag = -m00*ct*st + m01*ct*ct - m10*st*st + m11*ct*st
+        //          = ct * st * (m11 - m00) + ct^2 * m01 - st^2 * m10 
+        //          = ct * st * (m11 - m00) + (1 + cos(2*t)) / 2 * m01 - (1 - cos(2*t)) / 2 * m10
+        //          = ct * st * (m11 - m00) + (m01 - m10) / 2 + cos(2*t) * (m01 + m10) / 2
+        //          = sin(2*t) * a + cos(2*t) * b + (m01 - m10) / 2
 
         // Diagonalizes sigma12
         a = 0.5 * (m(1, 1) - m(0, 0));

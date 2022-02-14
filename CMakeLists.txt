@@ -23,6 +23,13 @@ list(APPEND ars_LINK_LIBS boost_iostreams boost_system boost_filesystem)
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
+# rofl
+find_package(rofl REQUIRED)
+include_directories(${rofl_INCLUDE_DIR})
+if (${rofl_FOUND})
+  list(APPEND ${rofl_LIBRARIES})
+endif()
+
 # Library files
 add_library(ars
   src/ars2d.cpp
@@ -31,6 +38,7 @@ add_library(ars
   src/ArsKernelAnisotropic2d.cpp
   src/ArsKernelIsotropic2d.cpp
   src/BBOptimizer1d.cpp
+  src/ConsensusTranslationEstimator.cpp
   src/DisjointSet.cpp
   src/GaussianMixtureEstimator.cpp
   src/HistogramCircularCorrelation.cpp
@@ -58,6 +66,9 @@ target_link_libraries(testAnisotropicKernel ${ars_LINK_LIBS} ars)
 
 add_executable(testGaussianMixtureEstimator app/testGaussianMixtureEstimator.cpp)
 target_link_libraries(testGaussianMixtureEstimator ${ars_LINK_LIBS} ars)
+
+add_executable(testConsensusTranslationEstimator app/testConsensusTranslationEstimator.cpp)
+target_link_libraries(testConsensusTranslationEstimator ${ars_LINK_LIBS} ars)
 
 #add_executable(testMortonOrderedPoints app/testMortonOrderedPoints.cpp)
 #target_link_libraries(testMortonOrderedPoints ${ars_LINK_LIBS} ars)

@@ -19,9 +19,9 @@
 
 namespace ars {
     
-    using ConsensusTranslationEstimator2f = ConsensusTranslationEstimator<2, float>;
-    using ConsensusTranslationEstimator2d = ConsensusTranslationEstimator<2, double>;
-    using ConsensusTranslationEstimator3f = ConsensusTranslationEstimator<3, float>;
-    using ConsensusTranslationEstimator3d = ConsensusTranslationEstimator<3, double>;
+    template <> class ConsensusTranslationEstimator<2, float>;
+    template <> class ConsensusTranslationEstimator<2, double>;
+    template <> class ConsensusTranslationEstimator<3, float>;
+    template <> class ConsensusTranslationEstimator<3, double>;
     
 } // end of namespace
