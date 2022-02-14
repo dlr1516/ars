@@ -1,5 +1,6 @@
 # ARS - Angular Radon Spectrum
 #### Copyright (C) 2017-2020 Dario Lodi Rizzini.
+#### Copyright (C) 2021-2022 Dario Lodi Rizzini, Ernesto Fontana.
 
 
 OVERVIEW
