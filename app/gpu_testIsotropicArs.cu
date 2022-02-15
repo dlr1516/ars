@@ -45,7 +45,8 @@ void rangeToPoint(double* ranges, int num, int numPadded, double angleMin, doubl
 
 int ceilPow2(int n);
 
-__device__
+//__device__
+
 double evaluatePnebi0Polynom(double x) {
     double t, t2, tinv, val;
 
@@ -66,7 +67,8 @@ double evaluatePnebi0Polynom(double x) {
     return val;
 }
 
-__device__
+//__device__
+
 void evaluatePnebiVectorGPU(int n, double x, double* pnebis, int pnebisSz) {
     double factor, seqPrev, seqCurr, seqNext;
     //    if (pnebis.size() < n + 1) { //questa condizione dovrebbe essere già garantita prima della chiamata di evaluatePnebiVectorGPU
@@ -78,11 +80,12 @@ void evaluatePnebiVectorGPU(int n, double x, double* pnebis, int pnebisSz) {
     // If x~=0, then BesselI(0,x) = 1.0 and BesselI(k,x) = 0.0 for k > 0.
     // Thus, PNEBI(0,x) = 2.0 and PNEBI(k,x) = 0.0 for k > 0.
     //TODO 9): this if should be done in iigKernel before calling present function
-    //    if (x < 1e-6) {
-    //        std::fill(pnebis.begin(), pnebis.end(), 0.0);
-    //        pnebis[0] = 2.0;
-    //        return;
-    //    }
+    if (x < 1e-6) {
+        pnebis[0] = 2.0;
+        for (int i = 1; i < pnebisSz; ++i)
+            pnebis[i] = 0.0;
+        return;
+    }
 
     // Computes bessel function using back recursion
     factor = 2.0 / x;
@@ -113,8 +116,9 @@ void evaluatePnebiVectorGPU(int n, double x, double* pnebis, int pnebisSz) {
     }
 }
 
-__global__
-void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, size_t numPts, size_t numPtsAfterPadding, int fourierOrder, cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode, cuars::PnebiLUT& pnebiLUT, double* coefficients) {
+//__global__
+
+void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int numPtsAfterPadding, int fourierOrder, int numColsPadded, cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode, cuars::PnebiLUT& pnebiLUT, double* coeffsMat) {
     //    a.insertIsotropicGaussians(points, sigma);
 
     //TODO 1): 4 righe sotto: DA FARE NEL MAIN PRIMA DI CHIAMARE LA FUNZIONE; vengono fatte una tantum prima del for
@@ -123,15 +127,17 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, size_t numPts,
     //    }
     //    std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
 
-    size_t index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block
-    size_t stride = blockDim.x * gridDim.x; //total number of threads in the grid
+    //    int index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block
+    //    int stride = blockDim.x * gridDim.x; //total number of threads in the grid
 
-    size_t totalNumComparisons = numPtsAfterPadding * numPtsAfterPadding;
+    const int totalNumComparisons = numPtsAfterPadding * numPtsAfterPadding;
 
-    for (size_t tid = index; tid < totalNumComparisons; tid += stride) {
+    for (int tid = 0; tid < totalNumComparisons; ++tid) {
 
-        size_t j = tid % numPtsAfterPadding;
-        size_t i = (tid - j) / numPtsAfterPadding;
+        int j = tid % numPtsAfterPadding;
+        int i = (tid - j) / numPtsAfterPadding;
+        printf("i %d j %d\n", i, j);
+        //        printf("tid %d i %d j %d tidIJ %d --- numPts %d numPtsAfterPadding %d numColsPadded %d totNumComp %d\n", tid, i, j, i * numPtsAfterPadding + j, numPts, numPtsAfterPadding, numColsPadded, totalNumComparisons);
 
         if (i >= numPts || j >= numPts)
             continue;
@@ -144,10 +150,16 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, size_t numPts,
         dx = vecJ.x - vecI.x;
         dy = vecJ.y - vecI.y;
         double phi;
-        if (dx == 0 && dy == 0)
-            //            phi = 0.0;
+
+        if (dx == 0 && dy == 0) {
+            //            phi = 0.0; //mathematically undefined
+            //            for (int k = 0; k <= numColsPadded; ++k) {
+            //                int rowIndex = (i * numPtsAfterPadding) + j; //it's more a block index rather than row 
+            //                coeffsMat[rowIndex * numColsPadded + k] = 0.0;
+            //            }
             continue;
-        else
+
+        } else
             phi = atan2(dy, dx);
 
         double sigmaValSq = sigma1 * sigma1 + sigma2 * sigma2;
@@ -155,7 +167,7 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, size_t numPts,
 
 
         //            isotropicKer_.updateFourier(arsfOrder_, coeffs_, w);
-        double weight = 1.0 / (numPtsAfterPadding * numPtsAfterPadding);
+        double weight = 1.0 / (numPts * numPts);
         double w2 = weight / sqrt(2.0 * M_PI * sigmaValSq);
 
         //TODO 2): TROVARE UNA SOLUZIONE A QUESTO RESIZING (farlo prima di dimensione fissa sufficiente nel main?)
@@ -200,16 +212,21 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, size_t numPts,
 
             //!!!! factor = w2
             double factor = w2;
-            coefficients[0] += 0.5 * factor * pnebis[0];
+            int rowIndex = (i * numPtsAfterPadding) + j; // = tid
+            coeffsMat[rowIndex * numColsPadded + 0] += 0.5 * factor * pnebis[0];
+            std::cout << "coeff0" << 0.5 * factor * pnebis[0] << std::endl;
+
+
             sgn = -1.0;
             cth = cth2;
             sth = sth2;
             //!!!! n in the for below is fourierOrder
             //                for (int k = 1; k <= n; ++k) {
             for (int k = 1; k <= fourierOrder; ++k) {
-
-                coefficients[2 * k] += factor * pnebis[k] * sgn * cth;
-                coefficients[2 * k + 1] += factor * pnebis[k] * sgn * sth;
+                std::cout << "coeff" << 2 * k << " " << factor * pnebis[k] * sgn * cth << std::endl;
+                std::cout << "coeff" << 2 * k + 1 << " " << factor * pnebis[k] * sgn * cth << std::endl;
+                coeffsMat[(rowIndex * numColsPadded) + (2 * k)] += factor * pnebis[k] * sgn * cth;
+                coeffsMat[(rowIndex * numColsPadded) + ((2 * k) + 1)] += factor * pnebis[k] * sgn * sth;
                 sgn = -sgn;
                 ctmp = cth2 * cth - sth2 * sth;
                 stmp = sth2 * cth + cth2 * sth;
@@ -245,13 +262,15 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, size_t numPts,
             //                //ARS_PRINT(pnebis[0]);
 
 
-            coefficients[0] += 0.5 * w2 * pnebis[0]; //factor = w2
+            coeffsMat[0] = 0.5 * w2 * pnebis[0]; //factor = w2
+
             sgn = -1.0;
             cth = cth2;
             sth = sth2;
             for (int k = 1; k <= fourierOrder; ++k) {
-                coefficients[2 * k] += pnebis[k] * w2 * sgn * cth;
-                coefficients[2 * k + 1] += pnebis[k] * w2 * sgn * sth;
+
+                coeffsMat[2 * k] = pnebis[k] * w2 * sgn * cth;
+                coeffsMat[2 * k + 1] = pnebis[k] * w2 * sgn * sth;
                 sgn = -sgn;
                 ctmp = cth2 * cth - sth2 * sth;
                 stmp = sth2 * cth + cth2 * sth;
@@ -266,9 +285,7 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, size_t numPts,
 }
 
 int main(void) {
-    double acesRanges[] = {50.00, 50.00, 50.00, 5.26, 5.21, 5.06, 5.01, 3.01, 2.94, 2.89, 2.84, 2.74, 2.69, 2.64, 2.59, 2.54, 2.49, 2.49, 2.44, 2.39, 2.34, 2.29, 2.29, 2.29, 2.39, 2.39, 2.49, 2.51, 2.61, 2.66, 2.76, 2.81, 2.96, 3.01, 3.11, 3.26, 3.01, 3.01, 3.01, 3.06, 3.21, 6.86, 6.86, 6.81, 6.76, 6.71, 6.71, 6.66, 6.61, 6.66, 6.56, 6.56, 6.56, 6.46, 6.46, 6.41, 6.46, 6.46, 4.11, 3.96, 3.96, 4.96, 4.86, 5.21, 7.41, 4.61, 5.16, 6.26, 6.26, 6.31, 4.86, 5.01, 5.86, 5.81, 4.21, 4.26, 4.31, 4.41, 4.39, 4.46, 5.31, 5.06, 5.26, 4.96, 6.01, 5.76, 5.61, 5.36, 5.26, 5.01, 4.21, 4.16, 4.01, 3.91, 3.61, 3.21, 3.26, 3.16, 3.06, 3.01, 3.31, 3.21, 3.16, 2.16, 2.19, 2.16, 2.21, 2.11, 2.01, 2.01, 2.06, 2.84, 2.91, 2.91, 3.01, 3.11, 3.21, 3.81, 4.06, 7.11, 7.06, 7.01, 6.96, 6.86, 4.31, 6.76, 6.71, 6.66, 6.61, 5.46, 5.41, 6.46, 6.21, 6.31, 6.51, 7.26, 7.46, 50.00, 2.01, 1.94, 1.94, 1.94, 2.31, 1.86, 1.84, 1.84, 1.81, 1.96, 26.46, 20.76, 2.11, 2.12, 2.17, 2.14, 2.09, 2.09, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.19, 2.19, 2.24, 2.24, 2.24, 2.24, 2.29, 2.29, 2.29, 2.29, 2.29, 2.39, 2.39, 2.39, 2.44};
-
-
+    double acesRanges[] =  {4.32, 1.13, 3.51, 2.54, 4.25, 2.17, 4.85, 1.27, 7.24, 9.43, 1.36, 6.30, 8.36, 7.61, 0.31, 7.49, 0.38, 7.23, 3.97, 0.54, 1.38, 9.44, 5.93, 7.57, 3.96, 8.19, 1.44, 1.73, 8.01, 3.85, 4.58, 3.71, 2.28, 3.79, 5.43, 3.57, 9.24, 8.47, 4.52, 0.60, 1.07, 0.56, 3.26, 8.90, 0.95, 4.48, 8.78, 1.41, 4.63, 0.64, 4.19, 6.31, 9.86, 1.68, 9.03, 6.51, 8.70, 7.58, 0.10, 1.35, 3.06, 1.72, 5.98, 3.66, 1.18, 5.54, 8.98, 3.52, 6.17, 7.10, 6.26, 4.23, 6.18, 2.06, 4.27, 2.21, 7.52, 6.30, 8.71, 3.17, 8.56, 4.65, 0.16, 2.02, 7.05, 6.34, 6.37, 0.66, 4.33, 1.10, 9.50, 4.68, 4.72, 4.55, 0.69, 7.38, 3.77, 3.22, 1.43, 9.43, 6.41, 5.53, 7.00, 4.61, 5.42, 3.80, 1.73, 5.78, 0.45, 6.42, 4.99, 9.01, 8.86, 1.86, 4.33, 4.29, 3.00, 3.60, 4.66, 7.72, 5.54, 0.75, 2.48, 2.14, 7.02, 2.14, 1.10, 4.36, 4.06, 6.81, 1.24, 7.58, 9.29, 9.41, 0.83, 9.31, 0.24, 1.57, 6.17, 9.61, 3.38, 9.74, 6.89, 2.30, 5.51, 9.17, 5.11, 8.25, 0.72, 0.17, 8.61, 7.46, 6.39, 1.24, 7.01, 3.94, 0.08, 4.82, 3.86, 1.05, 3.05, 5.37, 6.21, 2.88, 6.86, 6.00, 1.17, 8.85, 0.23, 2.72, 7.51, 8.84, 6.77, 7.18, 1.79, 8.43, 3.02, 5.86, 5.36, 9.83};
     cuars::AngularRadonSpectrum2d ars1;
     cuars::AngularRadonSpectrum2d ars2;
     std::chrono::system_clock::time_point timeStart, timeStop;
@@ -279,15 +296,15 @@ int main(void) {
     ars2.setARSFOrder(fourierOrder);
 
     //parallelization parameters
-    size_t numPts = 180; // = acesRanges.size()
-    const size_t paddedPtVecSz = ceilPow2(numPts);
-    const size_t blockSize = 256; //num threads per block
-    const size_t numBlocks = (paddedPtVecSz * paddedPtVecSz) / blockSize; //number of blocks in grid (each block contains blockSize threads)
-    const size_t gridTotalSize = blockSize*numBlocks; //total number of threads in grid
+    int numPts = 180; // = acesRanges.size()
+    const int numPtsAfterPadding = ceilPow2(numPts);
+    const int blockSize = 256; //num threads per block
+    const int numBlocks = (numPtsAfterPadding * numPtsAfterPadding) / blockSize; //number of blocks in grid (each block contains blockSize threads)
+    const int gridTotalSize = blockSize*numBlocks; //total number of threads in grid
 
     //conversion
     std::vector<cuars::Vec2d> acesPointsSTL;
-    rangeToPoint(acesRanges, numPts, paddedPtVecSz, -0.5 * M_PI, M_PI / 180.0 * 1.0, acesPointsSTL);
+    rangeToPoint(acesRanges, numPts, numPtsAfterPadding, -0.5 * M_PI, M_PI / 180.0 * 1.0, acesPointsSTL);
 
     thrust::host_vector<cuars::Vec2d> acesPointsHost(acesPointsSTL.begin(), acesPointsSTL.end());
 
@@ -299,28 +316,36 @@ int main(void) {
     timeStart = std::chrono::system_clock::now();
     //ars1 kernel call
     //    ars1.insertIsotropicGaussians(acesPoints1, sigma);
-    cuars::Vec2d* kernelInput1;
-    cudaMallocManaged((void**) &kernelInput1, paddedPtVecSz * sizeof (cuars::Vec2d));
-    cudaMemcpy(kernelInput1, acesPointsHost.data(), paddedPtVecSz * sizeof (cuars::Vec2d), cudaMemcpyDefault);
+    cuars::Vec2d * kernelInput1 = new cuars::Vec2d [numPtsAfterPadding];
+    //    cudaMallocManaged((void**) &kernelInput1, numPtsAfterPadding * sizeof (cuars::Vec2d));
+    //    cudaMemcpy(kernelInput1, acesPointsHost.data(), numPtsAfterPadding * sizeof (cuars::Vec2d), cudaMemcpyDefault);
+    for (int i = 0; i < numPtsAfterPadding; ++i) {
+        kernelInput1[i] = acesPointsSTL[i];
+    }
 
     //    cudaDeviceSynchronize();
     //    std::cout << "acesPointsHost.size() " << acesPointsHost.size() << std::endl;
-    //    for (size_t s = 0; s < acesPointsHost.size(); s++) {
+    //    for (int s = 0; s < acesPointsHost.size(); s++) {
     //        std::cout << "s " << s << std::endl;
     //        std::cout << kernelInput1[s].x << " " << kernelInput1[s].y << std::endl;
     //    }
 
 
-    ars1.initLUT(0.0001);
-    ars1.setComputeMode(cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD);
+    //    ars1.initLUT(0.0001);
     cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode = cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD;
+    ars1.setComputeMode(pnebiMode);
 
 
 
-    const size_t coeffsVectorMaxSz = 2 * fourierOrder + 2;
-    double *coefficientsArs1;
-    cudaMallocManaged((void**) &coefficientsArs1, coeffsVectorMaxSz * sizeof (double));
-    cudaMemset(coefficientsArs1, 0.0, coeffsVectorMaxSz * sizeof (double));
+    const int coeffsMatNumCols = 2 * fourierOrder + 2;
+    const int coeffsMatNumColsPadded = ceilPow2(coeffsMatNumCols);
+    const int coeffsMatTotalSz = numPtsAfterPadding * numPtsAfterPadding * coeffsMatNumColsPadded;
+    double *coeffsMat1 = new double [coeffsMatTotalSz];
+    //    cudaMallocManaged((void**) &coeffsMat1, coeffsMatTotalSz * sizeof (double));
+    //    cudaMemset(coeffsMat1, 0.0, coeffsMatTotalSz * sizeof (double));
+    for (int i = 0; i < coeffsMatTotalSz; ++i) {
+        coeffsMat1[i] = 0.0;
+    }
 
 
     cuars::PnebiLUT pnebiLUT1; //LUT setup
@@ -332,16 +357,31 @@ int main(void) {
     }
 
 
-    iigKernel << < numBlocks, blockSize >> >(kernelInput1, sigma, sigma, numPts, paddedPtVecSz, fourierOrder, pnebiMode, pnebiLUT1, coefficientsArs1);
-    //    cudaMemcpy(coefficientsArs1, d_coefficientsArs1, coeffsVectorMaxSz * sizeof (double), cudaMemcpyDefault);
+    //    iigKernel << < 1, 1 >> >(kernelInput1, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, pnebiLUT1, coeffsMat1);
+    iigKernel(kernelInput1, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, pnebiLUT1, coeffsMat1);
+
+    //    cudaMemcpy(coeffsMat1, d_coeffsMat1, coeffsVectorMaxSz * sizeof (double), cudaMemcpyDefault);
     //end of kernel call
+
+
+    double* coeffsArs1 = new double [coeffsMatNumColsPadded];
+    for (int k = 0; k < coeffsMatNumColsPadded; ++k)
+        coeffsArs1[k] = 0.0; //init coeffsArs vector to 0    
+    for (int i = 0; i < numPtsAfterPadding; ++i)
+        for (int j = 0; j < numPtsAfterPadding; ++j)
+            for (int k = 0; k < coeffsMatNumColsPadded; ++k) {
+                int totalIndex = (((i * numPtsAfterPadding) + j) * coeffsMatNumColsPadded) + k;
+                coeffsArs1[k] += coeffsMat1[totalIndex];
+            }
+    for (int i = 0; i < coeffsMatNumColsPadded; ++i) {
+        std::cout << "coeffsArs1[" << i << "] " << coeffsArs1[i] << std::endl;
+    }
 
     timeStop = std::chrono::system_clock::now();
     double timeArs1 = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count();
     cudaDeviceSynchronize();
     std::cout << "insertIsotropicGaussians() " << timeArs1 << " ms" << std::endl;
     //END OF ARS1
-
 
     std::cout << "\n------\n" << std::endl;
 
@@ -354,14 +394,14 @@ int main(void) {
     //kernel call
     //    ars2.insertIsotropicGaussians(acesPoints1, sigma);
     cuars::Vec2d* kernelInput2;
-    cudaMalloc((void **) &kernelInput2, paddedPtVecSz * sizeof (cuars::Vec2d));
+    cudaMalloc((void **) &kernelInput2, numPtsAfterPadding * sizeof (cuars::Vec2d));
     pnebiMode = cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT;
 
-    double *coefficientsArs2 = new double[coeffsVectorMaxSz](); //() initialize to 0
+    double *coefficientsArs2 = new double[coeffsMatTotalSz](); //() initialize to 0
     double *d_coefficientsArs2; //d_ stands for device
-    //    const size_t coeffsVectorMaxSz = 2 * fourierOrder + 2; //already initialized in ars1
-    cudaMalloc(&d_coefficientsArs2, coeffsVectorMaxSz * sizeof (double)); //maybe directly use cudaMemset?
-    cudaMemcpy(d_coefficientsArs2, coefficientsArs2, coeffsVectorMaxSz * sizeof (double), cudaMemcpyHostToDevice);
+    //    const int coeffsVectorMaxSz = 2 * fourierOrder + 2; //already initialized in ars1
+    cudaMalloc(&d_coefficientsArs2, coeffsMatTotalSz * sizeof (double)); //maybe directly use cudaMemset?
+    cudaMemcpy(d_coefficientsArs2, coefficientsArs2, coeffsMatTotalSz * sizeof (double), cudaMemcpyHostToDevice);
 
     cuars::PnebiLUT pnebiLUT2; //LUT setup
     //    double lutPrecision = 0.001; //already initialized for pnebiLUT1
@@ -372,7 +412,7 @@ int main(void) {
     }
 
     //    iigKernel << < numBlocks, blockSize >> >(thrust::raw_pointer_cast<ars::Vec2d*>(kernelInput2.data()), sigma, sigma, numPts, paddedPtVecSz, fourierOrder, pnebiMode, pnebiLUT2, d_coefficientsArs2);
-    cudaMemcpy(coefficientsArs2, d_coefficientsArs2, coeffsVectorMaxSz * sizeof (double), cudaMemcpyDeviceToHost);
+    cudaMemcpy(coefficientsArs2, d_coefficientsArs2, coeffsMatTotalSz * sizeof (double), cudaMemcpyDeviceToHost);
     //end of kernel call for ARS2
 
 
@@ -381,17 +421,18 @@ int main(void) {
     double timeArs2 = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count();
     cudaDeviceSynchronize();
     std::cout << "insertIsotropicGaussians() " << timeArs2 << " ms" << std::endl;
+    //END OF ARS1
 
 
 
 
     std::cout << "\nARS Coefficients:\n";
     std::cout << "\ti \tDownward \tLUT\n";
-    ars1.setCoefficients(coefficientsArs1, coeffsVectorMaxSz);
-    //    for (size_t i = 0; i < coeffsVectorMaxSz; i++) {
-    //        std::cout << "ars1coeff_d[" << i << "] " << d_coefficientsArs1[i] << std::endl;
+    ars1.setCoefficients(coeffsArs1, coeffsMatNumCols);
+    //    for (int i = 0; i < coeffsVectorMaxSz; i++) {
+    //        std::cout << "ars1coeff_d[" << i << "] " << d_coeffsMat1[i] << std::endl;
     //    }
-    ars2.setCoefficients(coefficientsArs2, coeffsVectorMaxSz);
+    ars2.setCoefficients(coefficientsArs2, coeffsMatNumCols);
     for (int i = 0; i < ars1.coefficients().size() && i < ars2.coefficients().size(); ++i) {
         std::cout << "\t" << i << " \t" << ars1.coefficients().at(i) << " \t" << ars2.coefficients().at(i) << "\n";
     }
@@ -434,13 +475,13 @@ int main(void) {
 
 
 
-    //Free GPU and CPU memory
-    cudaFree(d_coefficientsArs2);
-    cudaFree(kernelInput2);
-    //    free(coefficientsArs2); //array
-    cudaFree(coefficientsArs1);
-    cudaFree(kernelInput1);
-    //    free(coefficientsArs1);
+    //    //Free GPU and CPU memory
+    //    cudaFree(d_coefficientsArs2);
+    //    cudaFree(kernelInput2);
+    //    //    free(coefficientsArs2); //array
+    //    cudaFree(coeffsMat1);
+    //    cudaFree(kernelInput1);
+    //    //    free(coeffsArs1);
 
     return 0;
 }
@@ -455,6 +496,7 @@ void rangeToPoint(double* ranges, int num, int numPadded, double angleMin, doubl
             points.push_back(p);
         } else {
             //padding with zeros
+
             p.x = 0.0;
             p.y = 0.0;
             points.push_back(p);
