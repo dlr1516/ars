@@ -81,7 +81,7 @@ namespace ars {
             grid_.initBounds(gridSize);
             translMin_ = translMin;
             translRes_ = translRes;
-            peakFinder_.setDomain(gridSize);
+            peakFinder_.setDomain(gridSize); 
         }
 
         void reset() {
