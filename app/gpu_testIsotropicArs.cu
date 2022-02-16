@@ -358,7 +358,7 @@ int main(void) {
 
     double* coeffsArs1;
     cudaMallocManaged((void**) &coeffsArs1, coeffsMatNumColsPadded * sizeof (double));
-    cudaMemset(coeffsMat1, 0.0, coeffsMatNumColsPadded * sizeof (double));
+    cudaMemset(coeffsArs1, 0.0, coeffsMatNumColsPadded * sizeof (double));
 
     const int sum1BlockSz = 64;
     const int sum1GridSz = 256;
