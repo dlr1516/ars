@@ -310,8 +310,8 @@ int main(void) {
     //ars1 kernel call
     //    ars1.insertIsotropicGaussians(acesPoints1, sigma);
     cuars::Vec2d * kernelInput1;
-    cudaMallocManaged((void**) &kernelInput1, numPtsAfterPadding * sizeof (cuars::Vec2d));
-    cudaMemcpy(kernelInput1, acesPointsHost.data(), numPtsAfterPadding * sizeof (cuars::Vec2d), cudaMemcpyDefault);
+    cudaMalloc((void**) &kernelInput1, numPtsAfterPadding * sizeof (cuars::Vec2d));
+    cudaMemcpy(kernelInput1, acesPointsHost.data(), numPtsAfterPadding * sizeof (cuars::Vec2d), cudaMemcpyHostToDevice);
     //    for (int i = 0; i < numPtsAfterPadding; ++i) {
     //        kernelInput1[i] = acesPointsSTL[i];
     //    }
@@ -334,7 +334,7 @@ int main(void) {
     const int coeffsMatNumColsPadded = ceilPow2(coeffsMatNumCols);
     const int coeffsMatTotalSz = numPtsAfterPadding * numPtsAfterPadding * coeffsMatNumColsPadded;
     double *coeffsMat1;
-    cudaMallocManaged((void**) &coeffsMat1, coeffsMatTotalSz * sizeof (double));
+    cudaMalloc((void**) &coeffsMat1, coeffsMatTotalSz * sizeof (double));
     cudaMemset(coeffsMat1, 0.0, coeffsMatTotalSz * sizeof (double));
     //    for (int i = 0; i < coeffsMatTotalSz; ++i) {
     //        coeffsMat1[i] = 0.0;
@@ -353,16 +353,17 @@ int main(void) {
     //    iigKernel << < 1, 1 >> >(kernelInput1, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, pnebiLUT1, coeffsMat1);
     iigKernel << <numBlocks, blockSize >> >(kernelInput1, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, pnebiLUT1, coeffsMat1);
 
-    //    cudaMemcpy(coeffsMat1, d_coeffsMat1, coeffsVectorMaxSz * sizeof (double), cudaMemcpyDefault);
 
 
-    double* coeffsArs1;
-    cudaMallocManaged((void**) &coeffsArs1, coeffsMatNumColsPadded * sizeof (double));
-    cudaMemset(coeffsArs1, 0.0, coeffsMatNumColsPadded * sizeof (double));
+    double* d_coeffsArs1;
+    cudaMalloc((void**) &d_coeffsArs1, coeffsMatNumColsPadded * sizeof (double));
+    cudaMemset(d_coeffsArs1, 0.0, coeffsMatNumColsPadded * sizeof (double));
 
     const int sum1BlockSz = 64;
     const int sum1GridSz = 256;
-    sumColumns << <1, sum1BlockSz>> >(coeffsMat1, numPtsAfterPadding, coeffsMatNumColsPadded, coeffsArs1);
+    sumColumns << <1, sum1BlockSz>> >(coeffsMat1, numPtsAfterPadding, coeffsMatNumColsPadded, d_coeffsArs1);
+
+   
 
 
     timeStop = std::chrono::system_clock::now();
@@ -415,7 +416,8 @@ int main(void) {
     //END OF ARS1
 
 
-
+    double* coeffsArs1 = new double [coeffsMatNumColsPadded];
+    cudaMemcpy(coeffsArs1, d_coeffsArs1, coeffsMatNumColsPadded * sizeof (double), cudaMemcpyDeviceToHost);
 
     std::cout << "\nARS Coefficients:\n";
     std::cout << "\ti \tDownward \tLUT\n";
@@ -472,7 +474,7 @@ int main(void) {
     //    free(coefficientsArs2); //cpu array
     cudaFree(coeffsMat1);
     cudaFree(kernelInput1);
-    cudaFree(coeffsArs1);
+    cudaFree(d_coeffsArs1);
 
     return 0;
 }
