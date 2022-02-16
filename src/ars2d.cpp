@@ -43,10 +43,13 @@ namespace cuars {
         evaluatePnebiVector(n, lambda, pnebis);
         //ARS_PRINT(pnebis[0]);
         coeffs[0] += 0.5 * factor * pnebis[0];
+        std::cout << "coeff0" << 0.5 * factor * pnebis[0] << std::endl;
         sgn = -1.0;
         cth = cth2;
         sth = sth2;
         for (int k = 1; k <= n; ++k) {
+            std::cout << "coeff" << 2 * k << " " << factor * pnebis[k] * sgn * cth << std::endl;
+            std::cout << "coeff" << 2 * k + 1 << " " << factor * pnebis[k] * sgn * cth << std::endl;
             coeffs[2 * k] += factor * pnebis[k] * sgn * cth;
             coeffs[2 * k + 1] += factor * pnebis[k] * sgn * sth;
             sgn = -sgn;
@@ -168,7 +171,7 @@ namespace cuars {
         coeffs_.clear();
         for (size_t i = 0; i < coeffsSz; i++) {
             double c = coeffs[i];
-//            std::cout << "coeff[" << i << "] " << coeffs[i] << std::endl;
+            //            std::cout << "coeff[" << i << "] " << coeffs[i] << std::endl;
             coeffs_.push_back(c);
         }
     }

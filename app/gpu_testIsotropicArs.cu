@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+
 #include <iostream>
 
 #include <ars/definitions.h>
@@ -121,12 +123,6 @@ void evaluatePnebiVectorGPU(int n, double x, double* pnebis, int pnebisSz) {
 void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int numPtsAfterPadding, int fourierOrder, int numColsPadded, cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode, cuars::PnebiLUT& pnebiLUT, double* coeffsMat) {
     //    a.insertIsotropicGaussians(points, sigma);
 
-    //TODO 1): 4 righe sotto: DA FARE NEL MAIN PRIMA DI CHIAMARE LA FUNZIONE; vengono fatte una tantum prima del for
-    //    if (coeffs_.size() != 2 * arsfOrder_ + 2) {
-    //        coeffs_.resize(2 * arsfOrder_ + 2);
-    //    }
-    //    std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
-
     //    int index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block
     //    int stride = blockDim.x * gridDim.x; //total number of threads in the grid
 
@@ -139,7 +135,7 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, in
         printf("i %d j %d\n", i, j);
         //        printf("tid %d i %d j %d tidIJ %d --- numPts %d numPtsAfterPadding %d numColsPadded %d totNumComp %d\n", tid, i, j, i * numPtsAfterPadding + j, numPts, numPtsAfterPadding, numColsPadded, totalNumComparisons);
 
-        if (i >= numPts || j >= numPts)
+        if (i >= numPts || j >= numPts || j <= i)
             continue;
 
         cuars::Vec2d vecI = means[i];
@@ -151,35 +147,26 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, in
         dy = vecJ.y - vecI.y;
         double phi;
 
-        if (dx == 0 && dy == 0) {
-            //            phi = 0.0; //mathematically undefined
-            //            for (int k = 0; k <= numColsPadded; ++k) {
-            //                int rowIndex = (i * numPtsAfterPadding) + j; //it's more a block index rather than row 
-            //                coeffsMat[rowIndex * numColsPadded + k] = 0.0;
-            //            }
-            continue;
-
-        } else
-            phi = atan2(dy, dx);
+        //        if (dx == 0 && dy == 0) {
+        //                        phi = 0.0; //mathematically undefined
+        //            //            for (int k = 0; k <= numColsPadded; ++k) {
+        //            //                int rowIndex = (i * numPtsAfterPadding) + j; //it's more a block index rather than row 
+        //            //                coeffsMat[rowIndex * numColsPadded + k] = 0.0;
+        //            //            }
+        ////            continue;
+        //
+        //        } else
+        phi = atan2(dy, dx);
 
         double sigmaValSq = sigma1 * sigma1 + sigma2 * sigma2;
         double lambdaSqNorm = 0.25 * (dx * dx + dy * dy) / sigmaValSq;
 
 
         //            isotropicKer_.updateFourier(arsfOrder_, coeffs_, w);
-        double weight = 1.0 / (numPts * numPts);
-        double w2 = weight / sqrt(2.0 * M_PI * sigmaValSq);
+        double wNorm = 1.0 / (numPts * numPts);
+        double weight = wNorm / sqrt(2.0 * M_PI * sigmaValSq);
 
-        //TODO 2): TROVARE UNA SOLUZIONE A QUESTO RESIZING (farlo prima di dimensione fissa sufficiente nel main?)
-        //            if (coeffs.size() != 2 * nFourier + 2) {
-        //                coeffs.resize(2 * nFourier + 2);
-        //            }
 
-        //TODO 3): fare questa inizializzazione della LUT nel main
-        //            if (pnebiLut_.getOrderMax() < nFourier) {
-        //                ARS_ERROR("LUT not initialized to right order. Initialized now.");
-        //                pnebiLut_.init(nFourier, 0.0001);
-        //            }
 
         //updating Fourier coefficients (2 modes)
         if (pnebiMode == cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD) {
@@ -191,12 +178,12 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, in
             //                updateARSF2CoeffRecursDown(lambda, cth2, sth2, factor, n, coeffs);
 
 
-            //TODO 4): make pnebis a double*
-            //can solve it with cuda/gpu malloc here? otherwise just pass the needed pointer to the function?
-            //for now I just declare it here
-            //                std::vector<double> pnebis(n + 1);
+
+
             int pnebisSz = fourierOrder + 1;
             double *pnebis = new double[pnebisSz];
+            for (int pn = 0; pn < pnebisSz; ++pn)
+                pnebis[pn] = 0.0;
 
             double sgn, cth, sth, ctmp, stmp;
 
@@ -206,22 +193,20 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, in
             //                    return;
             //                }
 
-            //                                TODO 5): expand evaluatePnebiVector() below
             evaluatePnebiVectorGPU(fourierOrder, lambdaSqNorm, pnebis, pnebisSz);
             //                ARS_PRINT(pnebis[0]);
 
             //!!!! factor = w2
-            double factor = w2;
+            double factor = weight;
             int rowIndex = (i * numPtsAfterPadding) + j; // = tid
             coeffsMat[rowIndex * numColsPadded + 0] += 0.5 * factor * pnebis[0];
-            std::cout << "coeff0" << 0.5 * factor * pnebis[0] << std::endl;
+            std::cout << "coeff0 " << 0.5 * factor * pnebis[0] << std::endl;
 
 
             sgn = -1.0;
             cth = cth2;
             sth = sth2;
             //!!!! n in the for below is fourierOrder
-            //                for (int k = 1; k <= n; ++k) {
             for (int k = 1; k <= fourierOrder; ++k) {
                 std::cout << "coeff" << 2 * k << " " << factor * pnebis[k] * sgn * cth << std::endl;
                 std::cout << "coeff" << 2 * k + 1 << " " << factor * pnebis[k] * sgn * cth << std::endl;
@@ -240,37 +225,21 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, in
             cth2 = cos(2.0 * phi);
             sth2 = sin(2.0 * phi);
 
-            //TODO 6): find a workaround for this pnebis vector; for now I just initialize here a double* pnebis;
-            //                std::vector<double> pnebis(fourierOrder + 1); //prima riga della funzione omonima chiamata da dentro l'inline
+
             int pnebisSz = fourierOrder + 1;
             double *pnebis = new double[pnebisSz];
             double sgn, cth, sth, ctmp, stmp;
 
-            //TODO 7): minor problem... seems just to be a check of standing conditions. Still... might be useful to understand it in order to fix dimensions of pointers passed to iigKernel
-            // Fourier Coefficients 
-            //                if (coeffs.size() != 2 * fourierOrder + 2 || pnebiLUT.getOrderMax() < fourierOrder) {
-            //                    std::cerr << __FILE__ << "," << __LINE__ << ": one of these conditions failed:"
-            //                            << "\n  size of Fourier coefficients vector " << coeffs.size() << " should be " << (2 * n + 2)
-            //                            << "\n  LUT max order is " << pnebiLUT.getOrderMax() << " >= " << n
-            //                            << std::endl;
-            //                    return;
-            //                }
 
-            // TODO 8): SOLVE PROBLEM OF FUNCTION COMMENTED BELOW (NOTE THAT ITS CODE HAS ALREADY BEEN COPIED IN THE SCOPE BELOW THE COMMENTED CALLING OF THE FUNCTION)
-            //                pnebiLUT.eval(lambdaSqNorm, pnebis);
-            //                evalPnebiLUT2();
-            //                //ARS_PRINT(pnebis[0]);
-
-
-            coeffsMat[0] = 0.5 * w2 * pnebis[0]; //factor = w2
+            coeffsMat[0] = 0.5 * weight * pnebis[0]; //factor = w2
 
             sgn = -1.0;
             cth = cth2;
             sth = sth2;
             for (int k = 1; k <= fourierOrder; ++k) {
 
-                coeffsMat[2 * k] = pnebis[k] * w2 * sgn * cth;
-                coeffsMat[2 * k + 1] = pnebis[k] * w2 * sgn * sth;
+                coeffsMat[2 * k] = pnebis[k] * weight * sgn * cth;
+                coeffsMat[2 * k + 1] = pnebis[k] * weight * sgn * sth;
                 sgn = -sgn;
                 ctmp = cth2 * cth - sth2 * sth;
                 stmp = sth2 * cth + cth2 * sth;
@@ -285,7 +254,7 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, in
 }
 
 int main(void) {
-    double acesRanges[] =  {4.32, 1.13, 3.51, 2.54, 4.25, 2.17, 4.85, 1.27, 7.24, 9.43, 1.36, 6.30, 8.36, 7.61, 0.31, 7.49, 0.38, 7.23, 3.97, 0.54, 1.38, 9.44, 5.93, 7.57, 3.96, 8.19, 1.44, 1.73, 8.01, 3.85, 4.58, 3.71, 2.28, 3.79, 5.43, 3.57, 9.24, 8.47, 4.52, 0.60, 1.07, 0.56, 3.26, 8.90, 0.95, 4.48, 8.78, 1.41, 4.63, 0.64, 4.19, 6.31, 9.86, 1.68, 9.03, 6.51, 8.70, 7.58, 0.10, 1.35, 3.06, 1.72, 5.98, 3.66, 1.18, 5.54, 8.98, 3.52, 6.17, 7.10, 6.26, 4.23, 6.18, 2.06, 4.27, 2.21, 7.52, 6.30, 8.71, 3.17, 8.56, 4.65, 0.16, 2.02, 7.05, 6.34, 6.37, 0.66, 4.33, 1.10, 9.50, 4.68, 4.72, 4.55, 0.69, 7.38, 3.77, 3.22, 1.43, 9.43, 6.41, 5.53, 7.00, 4.61, 5.42, 3.80, 1.73, 5.78, 0.45, 6.42, 4.99, 9.01, 8.86, 1.86, 4.33, 4.29, 3.00, 3.60, 4.66, 7.72, 5.54, 0.75, 2.48, 2.14, 7.02, 2.14, 1.10, 4.36, 4.06, 6.81, 1.24, 7.58, 9.29, 9.41, 0.83, 9.31, 0.24, 1.57, 6.17, 9.61, 3.38, 9.74, 6.89, 2.30, 5.51, 9.17, 5.11, 8.25, 0.72, 0.17, 8.61, 7.46, 6.39, 1.24, 7.01, 3.94, 0.08, 4.82, 3.86, 1.05, 3.05, 5.37, 6.21, 2.88, 6.86, 6.00, 1.17, 8.85, 0.23, 2.72, 7.51, 8.84, 6.77, 7.18, 1.79, 8.43, 3.02, 5.86, 5.36, 9.83};
+    double acesRanges[] = {50.00, 50.00, 50.00, 5.26, 5.21, 5.06, 5.01, 3.01, 2.94, 2.89, 2.84, 2.74, 2.69, 2.64, 2.59, 2.54, 2.49, 2.49, 2.44, 2.39, 2.34, 2.29, 2.29, 2.29, 2.39, 2.39, 2.49, 2.51, 2.61, 2.66, 2.76, 2.81, 2.96, 3.01, 3.11, 3.26, 3.01, 3.01, 3.01, 3.06, 3.21, 6.86, 6.86, 6.81, 6.76, 6.71, 6.71, 6.66, 6.61, 6.66, 6.56, 6.56, 6.56, 6.46, 6.46, 6.41, 6.46, 6.46, 4.11, 3.96, 3.96, 4.96, 4.86, 5.21, 7.41, 4.61, 5.16, 6.26, 6.26, 6.31, 4.86, 5.01, 5.86, 5.81, 4.21, 4.26, 4.31, 4.41, 4.39, 4.46, 5.31, 5.06, 5.26, 4.96, 6.01, 5.76, 5.61, 5.36, 5.26, 5.01, 4.21, 4.16, 4.01, 3.91, 3.61, 3.21, 3.26, 3.16, 3.06, 3.01, 3.31, 3.21, 3.16, 2.16, 2.19, 2.16, 2.21, 2.11, 2.01, 2.01, 2.06, 2.84, 2.91, 2.91, 3.01, 3.11, 3.21, 3.81, 4.06, 7.11, 7.06, 7.01, 6.96, 6.86, 4.31, 6.76, 6.71, 6.66, 6.61, 5.46, 5.41, 6.46, 6.21, 6.31, 6.51, 7.26, 7.46, 50.00, 2.01, 1.94, 1.94, 1.94, 2.31, 1.86, 1.84, 1.84, 1.81, 1.96, 26.46, 20.76, 2.11, 2.12, 2.17, 2.14, 2.09, 2.09, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.19, 2.19, 2.24, 2.24, 2.24, 2.24, 2.29, 2.29, 2.29, 2.29, 2.29, 2.39, 2.39, 2.39, 2.44};
     cuars::AngularRadonSpectrum2d ars1;
     cuars::AngularRadonSpectrum2d ars2;
     std::chrono::system_clock::time_point timeStart, timeStop;
@@ -304,6 +273,14 @@ int main(void) {
 
     //conversion
     std::vector<cuars::Vec2d> acesPointsSTL;
+    //    cuars::Vec2d p0, p1;
+    //    p0.x = 0.0;
+    //    p0.y = 0.0;
+    //    p1.x = cos(M_PI * 30 / 180.0);
+    //    p1.y = sin(M_PI * 30 / 180.0);
+    //    acesPointsSTL.push_back(p0);
+    //    acesPointsSTL.push_back(p1);
+
     rangeToPoint(acesRanges, numPts, numPtsAfterPadding, -0.5 * M_PI, M_PI / 180.0 * 1.0, acesPointsSTL);
 
     thrust::host_vector<cuars::Vec2d> acesPointsHost(acesPointsSTL.begin(), acesPointsSTL.end());
@@ -511,7 +488,7 @@ int ceilPow2(int n) {
     int exponent = ceil(log2(n));
 
     int nPadded = std::pow<int>(2, exponent);
-    std::cout << "Number of points: " << n << " -> afeer padding = " << nPadded << std::endl;
+    std::cout << "Number of points: " << n << " -> after padding = " << nPadded << std::endl;
 
 
 
