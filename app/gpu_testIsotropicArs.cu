@@ -119,12 +119,12 @@ __global__
 void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int numPtsAfterPadding, int fourierOrder, int numColsPadded, cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode, cuars::PnebiLUT& pnebiLUT, double* coeffsMat) {
     //    a.insertIsotropicGaussians(points, sigma);
 
-    //    int index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block
-    //    int stride = blockDim.x * gridDim.x; //total number of threads in the grid
+    int index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block
+    int stride = blockDim.x * gridDim.x; //total number of threads in the grid
 
     const int totalNumComparisons = numPtsAfterPadding * numPtsAfterPadding;
 
-    for (int tid = 0; tid < totalNumComparisons; ++tid) {
+    for (int tid = index; tid < totalNumComparisons; tid += stride) {
 
         int j = tid % numPtsAfterPadding;
         int i = (tid - j) / numPtsAfterPadding;
@@ -251,13 +251,21 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, in
 
 __global__
 void sumColumns(double* mat, int nrows, int ncols, double* sums) {
-    //!! matrix is considered of size (nrows*nrows)*ncols
-    for (int i = 0; i < nrows; ++i)
-        for (int j = 0; j < nrows; ++j)
-            for (int k = 0; k < ncols; ++k) {
-                int totalIndex = (((i * nrows) + j) * ncols) + k;
-                sums[k] += mat[totalIndex];
-            }
+    int index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block
+    int stride = blockDim.x * gridDim.x; //total number of threads in the grids
+
+    int totalSz = nrows * nrows*ncols; //!! matrix is considered of size (nrows*nrows)*ncols
+
+
+    for (int idx = index; idx < totalSz; idx += stride) {
+        //        int totalIndex = (((i * nrows) + j) * ncols) + k;
+        int k = idx % ncols;
+        //        int rowIdx = (idx - k) / ncols;
+        //        int j = rowIdx % nrows;
+        //        int i = (rowIdx - j) / nrows;
+        //        printf("i %d j %d k %d rowIdx %d; accessing mat[%d]\n", i, j, k, rowIdx, idx);
+        sums[k] += mat[idx];
+    }
 }
 
 int main(void) {
@@ -295,7 +303,8 @@ int main(void) {
 
     //    cuars::Vec2d firstElement; //??
 
-
+    std::cout << "\n------\n" << std::endl;
+    std::cout << "\n\nCalling kernel functions on GPU\n" << std::endl;
 
     timeStart = std::chrono::system_clock::now();
     //ars1 kernel call
@@ -342,25 +351,26 @@ int main(void) {
 
 
     //    iigKernel << < 1, 1 >> >(kernelInput1, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, pnebiLUT1, coeffsMat1);
-    iigKernel << <1, 1 >> >(kernelInput1, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, pnebiLUT1, coeffsMat1);
+    iigKernel << <numBlocks, blockSize >> >(kernelInput1, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, pnebiLUT1, coeffsMat1);
 
     //    cudaMemcpy(coeffsMat1, d_coeffsMat1, coeffsVectorMaxSz * sizeof (double), cudaMemcpyDefault);
-    //end of kernel call
 
 
     double* coeffsArs1;
     cudaMallocManaged((void**) &coeffsArs1, coeffsMatNumColsPadded * sizeof (double));
     cudaMemset(coeffsMat1, 0.0, coeffsMatNumColsPadded * sizeof (double));
-    //        for (int k = 0; k < coeffsMatNumColsPadded; ++k)
-    //        coeffsArs1[k] = 0.0; //init coeffsArs vector to 0    
-    sumColumns << <1, 1 >> >(coeffsMat1, numPtsAfterPadding, coeffsMatNumColsPadded, coeffsArs1);
-    //    for (int i = 0; i < coeffsMatNumColsPadded; ++i) {
-    //        std::cout << "coeffsArs1[" << i << "] " << coeffsArs1[i] << std::endl;
-    //    }
+
+    const int sum1BlockSz = 64;
+    const int sum1GridSz = 256;
+    sumColumns << <1, sum1BlockSz>> >(coeffsMat1, numPtsAfterPadding, coeffsMatNumColsPadded, coeffsArs1);
+
 
     timeStop = std::chrono::system_clock::now();
     double timeArs1 = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count();
     cudaDeviceSynchronize();
+    //    for (int i = 0; i < coeffsMatNumColsPadded; ++i) {
+    //        std::cout << "coeffsArs1[" << i << "] " << coeffsArs1[i] << std::endl;
+    //    }
     std::cout << "insertIsotropicGaussians() " << timeArs1 << " ms" << std::endl;
     //END OF ARS1
 
@@ -492,7 +502,7 @@ int ceilPow2(int n) {
     int exponent = ceil(log2(n));
 
     int nPadded = std::pow<int>(2, exponent);
-    std::cout << "Number of points: " << n << " -> after padding = " << nPadded << std::endl;
+    std::cout << "ceilPow2(" << n << ") = " << nPadded << std::endl;
 
 
 
