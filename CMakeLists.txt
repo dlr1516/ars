@@ -6,7 +6,7 @@ set(CMAKE_BUILD_TYPE Debug)
 
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -gencode arch=compute_75,code=sm_75)
 
-
+add_definitions(-lineinfo)
 
 
 include_directories(include)

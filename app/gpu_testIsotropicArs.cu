@@ -127,9 +127,9 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, in
     for (int tid = index; tid < totalNumComparisons; tid += stride) {
 
         int j = tid % numPtsAfterPadding;
-        int i = (tid - j) / numPtsAfterPadding;
+        int i = (tid-j) / numPtsAfterPadding;
         //        printf("i %d j %d\n", i, j);
-        //        printf("tid %d i %d j %d tidIJ %d --- numPts %d numPtsAfterPadding %d numColsPadded %d totNumComp %d\n", tid, i, j, i * numPtsAfterPadding + j, numPts, numPtsAfterPadding, numColsPadded, totalNumComparisons);
+        //        printf("tid %d i %d j %d tidIJ %d --- numPts %d numPtsAfterPadding %d numColsPadded %d totNumComp %d index %d\n", tid, i, j, i * numPtsAfterPadding + j, numPts, numPtsAfterPadding, numColsPadded, totalNumComparisons, index);
 
         if (i >= numPts || j >= numPts || j <= i)
             continue;
@@ -177,7 +177,9 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, in
 
 
             int pnebisSz = fourierOrder + 1;
-            double *pnebis = new double[pnebisSz];
+            double* pnebis = new double[pnebisSz];
+            if (pnebis == nullptr)
+                printf("ERROR ALLOCATING WITH NEW[]!\n");
             for (int pn = 0; pn < pnebisSz; ++pn)
                 pnebis[pn] = 0.0;
 
@@ -214,6 +216,8 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, in
                 cth = ctmp;
                 sth = stmp;
             }
+            
+            delete pnebis;
         } else if (pnebiMode == cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT) {
             //                updateARSF2CoeffRecursDownLUT(lambdaSqNorm_, phi_, w2, nFourier, pnebiLut_, coeffs);
             double cth2, sth2;
@@ -269,7 +273,7 @@ void sumColumns(double* mat, int nrows, int ncols, double* sums) {
 }
 
 int main(void) {
-    double acesRanges[] = {50.00, 50.00, 50.00, 5.26, 5.21, 5.06, 5.01, 3.01, 2.94, 2.89, 2.84, 2.74, 2.69, 2.64, 2.59, 2.54, 2.49, 2.49, 2.44, 2.39, 2.34, 2.29, 2.29, 2.29, 2.39, 2.39, 2.49, 2.51, 2.61, 2.66, 2.76, 2.81, 2.96, 3.01, 3.11, 3.26, 3.01, 3.01, 3.01, 3.06, 3.21, 6.86, 6.86, 6.81, 6.76, 6.71, 6.71, 6.66, 6.61, 6.66, 6.56, 6.56, 6.56, 6.46, 6.46, 6.41, 6.46, 6.46, 4.11, 3.96, 3.96, 4.96, 4.86, 5.21, 7.41, 4.61, 5.16, 6.26, 6.26, 6.31, 4.86, 5.01, 5.86, 5.81, 4.21, 4.26, 4.31, 4.41, 4.39, 4.46, 5.31, 5.06, 5.26, 4.96, 6.01, 5.76, 5.61, 5.36, 5.26, 5.01, 4.21, 4.16, 4.01, 3.91, 3.61, 3.21, 3.26, 3.16, 3.06, 3.01, 3.31, 3.21, 3.16, 2.16, 2.19, 2.16, 2.21, 2.11, 2.01, 2.01, 2.06, 2.84, 2.91, 2.91, 3.01, 3.11, 3.21, 3.81, 4.06, 7.11, 7.06, 7.01, 6.96, 6.86, 4.31, 6.76, 6.71, 6.66, 6.61, 5.46, 5.41, 6.46, 6.21, 6.31, 6.51, 7.26, 7.46, 50.00, 2.01, 1.94, 1.94, 1.94, 2.31, 1.86, 1.84, 1.84, 1.81, 1.96, 26.46, 20.76, 2.11, 2.12, 2.17, 2.14, 2.09, 2.09, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.14, 2.19, 2.19, 2.24, 2.24, 2.24, 2.24, 2.29, 2.29, 2.29, 2.29, 2.29, 2.39, 2.39, 2.39, 2.44};
+    double acesRanges[] = {87.83, 106.60, 50.53, 134.81, 144.65, 28.46, 0.38, 103.77, 120.12, 60.01, 132.29, 34.18, 106.20, 109.35, 67.20, 46.02, 36.84, 128.53, 15.86, 96.38, 55.97, 44.91, 131.62, 148.96, 149.34, 38.17, 6.73, 127.16, 110.72, 24.34, 69.08, 136.11, 89.91, 81.82, 25.76, 109.52, 87.85, 58.57, 44.14, 5.95, 78.26, 76.11, 67.23, 126.36, 109.05, 63.45, 5.80, 19.40, 61.01, 72.94, 108.43, 90.71, 139.38, 31.08, 139.06, 134.44, 133.46, 36.40, 7.42, 25.78, 11.73, 90.76, 39.19, 49.87, 129.34, 108.61, 118.27, 87.09, 66.19, 111.29, 10.08, 84.32, 134.74, 59.17, 127.78, 144.42, 142.45, 7.34, 107.62, 82.26, 76.33, 85.96, 124.13, 32.74, 42.04, 49.02, 64.63, 52.31, 60.50, 101.57, 144.84, 120.32, 117.88, 82.39, 31.98, 98.91, 122.75, 104.27, 67.19, 104.31, 114.23, 40.98, 62.20, 27.52, 6.24, 23.24, 34.77, 73.25, 4.02, 33.57, 46.72, 92.28, 137.15, 76.64, 63.50, 4.16, 40.21, 42.24, 81.12, 48.64, 112.85, 70.02, 110.17, 136.14, 44.37, 87.14, 138.34, 53.25, 27.82, 69.67, 42.34, 126.72, 144.45, 75.24, 68.22, 143.37, 104.64, 121.06, 33.35, 8.07, 57.72, 37.93, 55.31, 11.90, 67.77, 86.45, 141.07, 98.37, 45.12, 133.37, 119.37, 115.85, 1.01, 104.17, 117.87, 143.37, 100.20, 56.04, 103.59, 47.26, 133.15, 19.03, 31.31, 76.44, 10.53, 57.16, 22.83, 145.44, 138.38, 26.51, 36.65, 63.24, 56.53, 106.42, 34.27, 49.22, 97.39, 10.65, 65.99, 97.02, 10.49, 77.21, 92.96, 31.46, 146.38, 63.84, 146.26, 118.81, 84.71, 52.43, 62.38, 89.78, 66.46, 130.09, 137.29, 18.16, 32.69, 106.54, 11.48, 73.58, 71.05, 75.33, 16.98, 33.47, 51.32, 122.59, 50.70, 3.07, 126.72, 49.32, 59.35, 107.53, 35.79, 102.97, 33.87, 133.45, 67.74, 120.98, 43.78, 45.09, 122.16, 78.61, 74.42, 60.84, 128.93, 33.50, 12.52, 31.67, 77.84, 30.34, 111.05, 130.89, 82.30, 17.15, 12.17, 33.50, 148.16, 37.00, 6.66, 30.98, 100.25, 45.31, 106.33, 76.03, 129.17, 52.87, 97.57, 47.03, 77.67, 128.12, 38.10, 49.04, 44.65, 116.03, 109.58, 56.78, 108.03, 59.10, 124.46, 120.32, 94.36, 105.61, 112.66, 28.27, 24.32, 53.23, 86.76, 133.16, 109.26, 134.55, 87.80, 111.89, 16.13, 76.42, 3.57, 127.64, 35.56, 62.67, 146.72, 62.78, 121.13, 106.51, 41.26, 18.71, 15.88, 25.59, 44.27, 132.50, 41.80, 12.78, 46.77, 117.52, 58.55, 89.64, 4.24, 18.58, 118.31, 102.97, 93.23, 35.24};
     cuars::AngularRadonSpectrum2d ars1;
     cuars::AngularRadonSpectrum2d ars2;
     std::chrono::system_clock::time_point timeStart, timeStop;
@@ -280,11 +284,13 @@ int main(void) {
     ars2.setARSFOrder(fourierOrder);
 
     //parallelization parameters
-    int numPts = 180; // = acesRanges.size()
+    int numPts = 300; // = acesRanges.size()
     const int numPtsAfterPadding = ceilPow2(numPts);
     const int blockSize = 256; //num threads per block
     const int numBlocks = (numPtsAfterPadding * numPtsAfterPadding) / blockSize; //number of blocks in grid (each block contains blockSize threads)
     const int gridTotalSize = blockSize*numBlocks; //total number of threads in grid
+
+    std::cout << "numPtsAfterPadding " << numPtsAfterPadding << " blockSize " << blockSize << " numBlocks " << numBlocks << " gridTotalSize " << gridTotalSize << std::endl;
 
     //conversion
     std::vector<cuars::Vec2d> acesPointsSTL;
@@ -359,11 +365,16 @@ int main(void) {
     cudaMalloc((void**) &d_coeffsArs1, coeffsMatNumColsPadded * sizeof (double));
     cudaMemset(d_coeffsArs1, 0.0, coeffsMatNumColsPadded * sizeof (double));
 
+    cudaError_t cudaerr = cudaDeviceSynchronize();
+    if (cudaerr != cudaSuccess)
+        printf("kernel launch failed with error \"%s\".\n",
+            cudaGetErrorString(cudaerr));
+
     const int sum1BlockSz = 64;
     const int sum1GridSz = 256;
     sumColumns << <1, sum1BlockSz>> >(coeffsMat1, numPtsAfterPadding, coeffsMatNumColsPadded, d_coeffsArs1);
 
-   
+
 
 
     timeStop = std::chrono::system_clock::now();
