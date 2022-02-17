@@ -34,8 +34,6 @@
 #include "ars/cuArsIso.cuh"
 
 
-
-
 #define PRINT_DIM(X) std::cout << #X << " rows " << X.rows() << " cols " << X.cols() << std::endl;
 #define RAD2DEG(X) (180.0/M_PI*(X))
 
@@ -47,6 +45,7 @@ struct BoundInterval {
 };
 
 void rangeToPoint(double* ranges, int num, int numPadded, double angleMin, double angleRes, std::vector<cuars::Vec2d>& points);
+
 
 
 int main(void) {
@@ -285,5 +284,6 @@ void rangeToPoint(double* ranges, int num, int numPadded, double angleMin, doubl
         //        std::cout << p.x << " " << p.y << std::endl;
     }
 }
+
 
 
