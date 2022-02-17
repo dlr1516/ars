@@ -93,6 +93,13 @@ namespace cuars {
         resultMtx.data_[2] = aMtx.data_[2] * bMtx.data_[2];
         resultMtx.data_[3] = aMtx.data_[3] * bMtx.data_[3];
     }
+    
+    void mat2dPlusEq(Mat2d& resultMtx, const Mat2d& aMtx) {
+        resultMtx.data_[0] += aMtx.data_[0];
+        resultMtx.data_[1] += aMtx.data_[1];
+        resultMtx.data_[2] += aMtx.data_[2];
+        resultMtx.data_[3] += aMtx.data_[3];
+    }
 
     void mat2dProd(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx) {
         resultMtx.data_[0] = aMtx.data_[0] * bMtx.data_[0] + aMtx.data_[1] * bMtx.data_[2];
@@ -105,6 +112,10 @@ namespace cuars {
         Mat2d tmp;
         mat2dProd(tmp, aMtx, bMtx);
         mat2dProd(resultMtx, tmp, cMtx);
+    }
+
+    double vec2norm(const Vec2d& v) {
+        return sqrt(v.x * v.x + v.y * v.y);
     }
 
     void vec2sum(Vec2d& result, const Vec2d& a, const Vec2d& b) {
@@ -135,14 +146,14 @@ namespace cuars {
         return a.data_[0] * b.data_[0] + a.data_[1] * b.data_[1];
     }
 
-    void vec2outerProduct(Mat2d& result, Vec2d& a, Vec2d& b) {
+    void vec2outerProduct(Mat2d& result, const Vec2d& a, const Vec2d& b) {
         result.data_[0 * Two + 0] = a.data_[0] * b.data_[0];
         result.data_[0 * Two + 1] = a.data_[1] * b.data_[0];
         result.data_[1 * Two + 0] = a.data_[0] * b.data_[1];
         result.data_[1 * Two + 1] = a.data_[1] * b.data_[1];
     }
 
-    Mat2d vec2outerProductWRV(Vec2d& a, Vec2d& b) {
+    Mat2d vec2outerProductWRV(const Vec2d& a, const Vec2d& b) {
         Mat2d result;
 
         result.data_[0 * Two + 0] = a.data_[0] * b.data_[0];
@@ -155,14 +166,144 @@ namespace cuars {
 
     Vec2d row2VecTimesMat2WRV(const Vec2d& v, const Mat2d& m) {
         Vec2d result;
-        result.data_[0] = v.data_[0] * m.data_[0] + v.data_[1] * m.data_[2];
-        result.data_[1] = v.data_[0] * m.data_[1] + v.data_[1] * m.data_[3];
+        result.data_[0] = (v.data_[0] * m.data_[0]) + (v.data_[1] * m.data_[2]);
+        result.data_[1] = (v.data_[0] * m.data_[1]) + (v.data_[1] * m.data_[3]);
 
         result.isCol_ = false;
 
         return result;
     }
 
+    //affine matrices related
+
+    void preTransfVec2(Vec2d& p, const Affine2d& t) {
+        if (t.data_[2 * Three + 2] == 1) {
+            p.x = (p.x * t.data_[0 * Three + 0]) + (p.y * t.data_[0 * Three + 1]) + (t.data_[0 * Three + 2]);
+            p.y = (p.x * t.data_[1 * Three + 0]) + (p.y * t.data_[1 * Three + 1]) + (t.data_[1 * Three + 2]);
+            //p.z = 1.0;
+        } else {
+            printf("ERROR: Transf Matrix affine scale != 1\n");
+        }
+    }
+
+    void preRotateAff2(Affine2d& t, double angle) {
+        if (t.data_[2 * Three + 2] == 1) {
+            double cth = cos(angle);
+            double sth = sin(theta);
+            //first row
+            t.data_[0 * cuars::Three + 0] = (t.data_[0 * cuars::Three + 0] * cth) - (t.data_[1 * cuars::Three + 0] * sth);
+            t.data_[0 * cuars::Three + 1] = (t.data_[0 * cuars::Three + 1] * cth) - (t.data_[1 * cuars::Three + 1] * sth);
+            t.data_[0 * cuars::Three + 2] = (t.data_[0 * cuars::Three + 2] * cth) - (t.data_[1 * cuars::Three + 2] * sth);
+            //second row
+            t.data_[1 * cuars::Three + 0] = (t.data_[0 * cuars::Three + 0] * sth) + (t.data_[1 * cuars::Three + 0] * cth);
+            t.data_[1 * cuars::Three + 1] = (t.data_[0 * cuars::Three + 1] * sth) + (t.data_[1 * cuars::Three + 1] * cth);
+            t.data_[1 * cuars::Three + 2] = (t.data_[0 * cuars::Three + 2] * sth) + (t.data_[1 * cuars::Three + 2] * cth);
+
+            // third (last) row should already be ok
+            //            t.data_[2 * cuars::Three + 0] = 0.0;
+            //            t.data_[2 * cuars::Three + 1] = 0.0;
+            //            t.data_[2 * cuars::Three + 2] = 1.0;
+        } else {
+            printf("ERROR: Transf Matrix affine scale != 1\n");
+        }
+    }
+
+    void preTranslateAff2(Affine2d& t, double x, double y) {
+        if (t.data_[2 * Three + 2] == 1) {
+            //just last column: the other two remain untouched
+            t.data_[0 * cuars::Three + 2] = t.data_[0 * cuars::Three + 2] + x; // += x
+            t.data_[1 * cuars::Three + 2] = t.data_[1 * cuars::Three + 2] + y; // += y
+            //            t.data_[2 * cuars::Three + 2] = 1.0;
+        } else {
+            printf("ERROR: Transf Matrix affine scale != 1\n");
+        }
+    }
+
+    void aff2Prod(Affine2d& out, const Affine2d& a, const Affine2d& b) {
+        if (a.isLastRowOK() && b.isLastRowOK()) {
+            //elements not mentioned are implicitly ok (or invariant if they are sum terms, because last rows are [0  0  1])
+
+            //first column
+            out.data_[0 * cuars::Three + 0] = (a.at(0, 0) * b.at(0, 0)) + (a.at(0, 1) * b.at(1, 0)); // + a.at(0,2) * b.at(2,0)
+            out.data_[1 * cuars::Three + 0] = (a.at(1, 0) * b.at(0, 0)) + (a.at(1, 1) * b.at(1, 0)); // + a.at(1,2) * b.at(2,0)
+            //            out.data_[2 * cuars::Three + 0] = (a.at(2, 0) * b.at(0, 0)) + (a.at(2, 1) * b.at(1, 0)) + (a.at(2,2) * b.at(2,0));
+            out.data_[2 * cuars::Three + 0] = 0.0;
+
+            //second column
+            out.data_[0 * cuars::Three + 1] = (a.at(0, 0) * b.at(0, 1)) + (a.at(0, 1) * b.at(1, 1)); // + a.at(0,2) * b.at(2,1) 
+            out.data_[1 * cuars::Three + 1] = (a.at(1, 0) * b.at(0, 1)) + (a.at(1, 1) * b.at(1, 1)); // + a.at(1,2) * b.at(2,1)
+            //            out.data_[2 * cuars::Three + 1] = (a.at(2, 0) * b.at(0, 1)) + (a.at(2, 1) * b.at(1, 1)) + (a.at(2,2) * b.at(2,1));
+            out.data_[2 * cuars::Three + 1] = 0.0;
+
+
+            //third column
+            out.data_[0 * cuars::Three + 2] = (a.at(0, 0) * b.at(0, 2)) + (a.at(0, 1) * b.at(1, 2)); // + a.at(0,2) * b.at(2,2)
+            out.data_[1 * cuars::Three + 2] = (a.at(1, 0) * b.at(0, 2)) + (a.at(1, 1) * b.at(1, 2)); // + a.at(1,2) * b.at(2,2)
+            //            out.data_[2 * cuars::Three + 2] = (a.at(2, 0) * b.at(0, 2)) + (a.at(2, 1) * b.at(1, 2)) + (a.at(2, 2) + b.at(2, 2));
+            out.data_[2 * cuars::Three + 2] = 1.0;
+
+        } else {
+            printf("ERROR: Transf Matrix last row != 0  0  1\n");
+        }
+    }
+    
+    void aff2Prod(Affine2d& out, const Affine2d& a, const Affine2d& b) {
+        if (a.isLastRowOK() && b.isLastRowOK()) {
+            //elements not mentioned are implicitly ok (or invariant if they are sum terms, because last rows are [0  0  1])
+
+            //first column
+            out.data_[0 * cuars::Three + 0] = (a.at(0, 0) * b.at(0, 0)) + (a.at(0, 1) * b.at(1, 0)); // + a.at(0,2) * b.at(2,0)
+            out.data_[1 * cuars::Three + 0] = (a.at(1, 0) * b.at(0, 0)) + (a.at(1, 1) * b.at(1, 0)); // + a.at(1,2) * b.at(2,0)
+            //            out.data_[2 * cuars::Three + 0] = (a.at(2, 0) * b.at(0, 0)) + (a.at(2, 1) * b.at(1, 0)) + (a.at(2,2) * b.at(2,0));
+            out.data_[2 * cuars::Three + 0] = 0.0;
+
+            //second column
+            out.data_[0 * cuars::Three + 1] = (a.at(0, 0) * b.at(0, 1)) + (a.at(0, 1) * b.at(1, 1)); // + a.at(0,2) * b.at(2,1) 
+            out.data_[1 * cuars::Three + 1] = (a.at(1, 0) * b.at(0, 1)) + (a.at(1, 1) * b.at(1, 1)); // + a.at(1,2) * b.at(2,1)
+            //            out.data_[2 * cuars::Three + 1] = (a.at(2, 0) * b.at(0, 1)) + (a.at(2, 1) * b.at(1, 1)) + (a.at(2,2) * b.at(2,1));
+            out.data_[2 * cuars::Three + 1] = 0.0;
+
+
+            //third column
+            out.data_[0 * cuars::Three + 2] = (a.at(0, 0) * b.at(0, 2)) + (a.at(0, 1) * b.at(1, 2)); // + a.at(0,2) * b.at(2,2)
+            out.data_[1 * cuars::Three + 2] = (a.at(1, 0) * b.at(0, 2)) + (a.at(1, 1) * b.at(1, 2)); // + a.at(1,2) * b.at(2,2)
+            //            out.data_[2 * cuars::Three + 2] = (a.at(2, 0) * b.at(0, 2)) + (a.at(2, 1) * b.at(1, 2)) + (a.at(2, 2) + b.at(2, 2));
+            out.data_[2 * cuars::Three + 2] = 1.0;
+
+        } else {
+            printf("ERROR: Transf Matrix last row != 0  0  1\n");
+        }
+    }
+    
+    Affine2d aff2ProdWRV(const Affine2d& a, const Affine2d& b) {
+        Affine2d out;
+        if (a.isLastRowOK() && b.isLastRowOK()) {
+            //elements not mentioned are implicitly ok (or invariant if they are sum terms, because last rows are [0  0  1])
+
+            //first column
+            out.data_[0 * cuars::Three + 0] = (a.at(0, 0) * b.at(0, 0)) + (a.at(0, 1) * b.at(1, 0)); // + a.at(0,2) * b.at(2,0)
+            out.data_[1 * cuars::Three + 0] = (a.at(1, 0) * b.at(0, 0)) + (a.at(1, 1) * b.at(1, 0)); // + a.at(1,2) * b.at(2,0)
+            //            out.data_[2 * cuars::Three + 0] = (a.at(2, 0) * b.at(0, 0)) + (a.at(2, 1) * b.at(1, 0)) + (a.at(2,2) * b.at(2,0));
+            out.data_[2 * cuars::Three + 0] = 0.0;
+
+            //second column
+            out.data_[0 * cuars::Three + 1] = (a.at(0, 0) * b.at(0, 1)) + (a.at(0, 1) * b.at(1, 1)); // + a.at(0,2) * b.at(2,1) 
+            out.data_[1 * cuars::Three + 1] = (a.at(1, 0) * b.at(0, 1)) + (a.at(1, 1) * b.at(1, 1)); // + a.at(1,2) * b.at(2,1)
+            //            out.data_[2 * cuars::Three + 1] = (a.at(2, 0) * b.at(0, 1)) + (a.at(2, 1) * b.at(1, 1)) + (a.at(2,2) * b.at(2,1));
+            out.data_[2 * cuars::Three + 1] = 0.0;
+
+
+            //third column
+            out.data_[0 * cuars::Three + 2] = (a.at(0, 0) * b.at(0, 2)) + (a.at(0, 1) * b.at(1, 2)); // + a.at(0,2) * b.at(2,2)
+            out.data_[1 * cuars::Three + 2] = (a.at(1, 0) * b.at(0, 2)) + (a.at(1, 1) * b.at(1, 2)); // + a.at(1,2) * b.at(2,2)
+            //            out.data_[2 * cuars::Three + 2] = (a.at(2, 0) * b.at(0, 2)) + (a.at(2, 1) * b.at(1, 2)) + (a.at(2, 2) + b.at(2, 2));
+            out.data_[2 * cuars::Three + 2] = 1.0;
+
+        } else {
+            printf("ERROR: Transf Matrix last row != 0  0  1\n");
+        }
+        return out;
+    }
 
 
 

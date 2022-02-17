@@ -78,7 +78,10 @@ namespace ArsImgTests {
 
         for (auto& p : points_) {
             //    std::cout << "  " << p.transpose() << " --> ";
-            p = transf * p;
+
+            //            p = transf * p;
+            cuars::preTransfVec2(p, transf);
+
             //    std::cout << p.transpose() << std::endl;
         }
 
@@ -383,7 +386,9 @@ namespace ArsImgTests {
         max_.y = -1e+6;
 
         for (auto& p : points_) {
-            p = transf * p;
+            //            p = transf * p;
+            cuars::preTransfVec2(p, transf);
+
             if (p.x < min_.x) min_.x = p.x;
             if (p.x > max_.x) max_.x = p.x;
             if (p.y < min_.y) min_.y = p.y;
@@ -414,7 +419,8 @@ namespace ArsImgTests {
         double radius = radiusMean;
         cuars::VecVec2d pointsTmp;
         for (auto& p : points_) {
-            if ((p - center).norm() > radius) {
+            //            if ((p - center).norm() > radius) {
+            if (cuars::vec2norm(cuars::vec2diffWRV(p, center)) > radius) {
                 pointsTmp.push_back(p);
             }
         }
@@ -539,8 +545,14 @@ namespace ArsImgTests {
         cov.z = 0.0;
 
         int count = 0;
-        for (auto& p : points_) {
-            cov += (p - mean) * (p - mean).transpose();
+        //        for (auto& p : points_)
+        for (int i = 0; i < points_.size(); ++i) {
+            //            cov += (p - mean) * (p - mean).transpose();
+            const cuars::Vec2d p = points_[i];
+            cuars::Mat2d tmp;
+            cuars::vec2outerProduct(tmp, p, mean);
+            cuars::mat2dPlusEq(cov, tmp);
+
             count++;
         }
         if (count > 0) {
@@ -565,9 +577,11 @@ namespace ArsImgTests {
         //        cuars::Affine2d transform = cuars::Affine2d::Identity();
         cuars::Affine2d transform(0.0, 0.0, 0.0);
 
+        //        transform.prerotate(theta);
+        cuars::preRotateAff2(transform, theta);
+        //        transform.pretranslate(cuars::Vec2d(x, y));
+        cuars::preTranslateAff2(transform, x, y);
 
-        transform.prerotate(theta);
-        transform.pretranslate(cuars::Vec2d(x, y));
         return transform;
     }
 
@@ -588,7 +602,7 @@ namespace ArsImgTests {
 
     void PointReaderWriter::updateTransformInfo(const cuars::Affine2d& transform) {
         cuars::Affine2d prevTorig = coordToTransform(transl_x, transl_y, rot_theta);
-        cuars::Affine2d currTorig = transform * prevTorig;
+        cuars::Affine2d currTorig = cuars::aff2ProdWRV(transform, prevTorig);
         transformToCoodinates(currTorig, transl_x, transl_y, rot_theta);
     }
 

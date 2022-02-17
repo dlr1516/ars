@@ -254,7 +254,37 @@ namespace cuars {
 
             data_[2 * Three + 0] = 0.0;
             data_[2 * Three + 1] = 0.0;
+        }
 
+        bool isLastRowOK() {
+            double a20 = data_[2 * Three + 0];
+            double a21 = data_[2 * Three + 1];
+            double a22 = data_[2 * Three + 2];
+
+            if (a20 == 0 && a21 == 0 && a22 == 1)
+                return true;
+
+            printf("BAD LAST ROW\n");
+            return false;
+        }
+
+        bool isScale1() {
+            double a22 = data_[2 * Three + 2];
+
+            if (a22 == 1)
+                return true;
+
+            printf("BAD SCALE\n");
+            return false;
+        }
+
+        double at(int r, int c) {
+            if (r >= 0 && r < Three && c >= 0 && c < Three)
+                return data_[r * Three + c];
+            else {
+                printf("ERROR accessing matrix with .at() method!\n");
+                return 1000000;
+            }
 
         }
 

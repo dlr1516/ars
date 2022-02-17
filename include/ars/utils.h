@@ -63,25 +63,43 @@ namespace cuars {
 
     void mat2dSum(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx);
 
-    void mat2dProd(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx);
+    void mat2dPlusEq(Mat2d& resultMtx, const Mat2d& aMtx);
 
-    void threeMats2dProd(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx, const Mat2d& cMtx);
+    void mat2dProd(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d & bMtx);
+
+    void threeMats2dProd(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx, const Mat2d & cMtx);
+
+    double vec2norm(const Vec2d & v);
 
     void vec2sum(Vec2d& result, const Vec2d& a, const Vec2d & b);
 
-    Vec2d vec2sumWRV(Vec2d& a, Vec2d& b);
+    Vec2d vec2sumWRV(Vec2d& a, Vec2d & b);
 
     void vec2diff(Vec2d& result, const Vec2d& a, const Vec2d & b);
 
-    Vec2d vec2diffWRV(Vec2d& a, Vec2d& b);
+    Vec2d vec2diffWRV(Vec2d& a, Vec2d & b);
 
-    double vec2dotProduct(Vec2d& a, Vec2d& b);
+    double vec2dotProduct(Vec2d& a, Vec2d & b);
 
-    void vec2outerProduct(Mat2d& result, Vec2d& a, Vec2d& b); //"anti-dot" product: terms are switched
+    void vec2outerProduct(Mat2d& result, const Vec2d& a, const Vec2d & b); //"anti-dot" product: terms are switched
 
-    Mat2d vec2outerProductWRV(Vec2d& a, Vec2d& b); //"anti-dot" product: terms are switched
+    Mat2d vec2outerProductWRV(Vec2d& a, Vec2d & b); //"anti-dot" product: terms are switched
 
-    Vec2d row2VecTimesMat2WRV(Vec2d& v, Mat2d& m);
+    Vec2d row2VecTimesMat2WRV(Vec2d& v, Mat2d & m);
+
+    //affine matrices related
+
+    void preTransfVec2(Vec2d& p, const Affine2d & t);
+
+    void preRotateAff2(Affine2d& t, double angle);
+
+    void preTranslateAff2(Affine2d& t, double x, double y);
+
+    void aff2Prod(Affine2d& out, const Affine2d& a, const Affine2d & b);
+
+    Affine2d aff2ProdWRV(const Affine2d& a, const Affine2d & b);
+
+
 
 
 

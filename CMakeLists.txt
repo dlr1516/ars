@@ -58,6 +58,7 @@ add_library(cuars_mpeg7 STATIC
     src/ars2d.cpp
 #    src/definitions.cpp #since using double2 and double4, those definitions are sorta obsolete
     src/functions.cpp
+    
 
     src/ArsKernelIsotropic2d.cpp
     src/BBOptimizer1d.cpp
