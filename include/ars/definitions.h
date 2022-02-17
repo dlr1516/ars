@@ -56,6 +56,10 @@
 namespace cuars {
 
     static const size_t Two = 2; //useful for expanding (i,j) indexing into  i*Two+j
+    static const size_t Three = 3; //useful for expanding (i,j) indexing into  i*Two+j
+    static const size_t Nine = 9; //useful for expanding (i,j) indexing into  i*Two+j
+
+
 
     //    using Vector2 = Eigen::Vector2d;
 
@@ -218,8 +222,43 @@ namespace cuars {
     //        }
     //    };
 
+    struct Affine2d {
+        double data_[Nine];
+
+        double rot_;
+        double translX_;
+        double translY_;
+
+        Affine2d() {
+        }
+
+        Affine2d(double rot, double tx, double ty) {
+            rot_ = rot;
+            translX_ = tx;
+            translY_ = ty;
+
+            initdata(rot, tx, ty);
+
+        }
+
+        void initdata(double r, double tx, double ty) {
+            data_[0 * Three + 0] = cos(r);
+            data_[0 * Three + 1] = -sin(r);
+            data_[1 * Three + 0] = -data_[0 * Three + 1];
+            data_[1 * Three + 1] = data_[0 * Three + 0];
+
+            data_[0 * Three + 2] = tx;
+            data_[1 * Three + 2] = ty;
+
+            data_[2 * Three + 2] = 1.0;
+
+            data_[2 * Three + 0] = 0.0;
+            data_[2 * Three + 1] = 0.0;
 
 
+        }
+
+    };
 
 } // end of namespace
 
