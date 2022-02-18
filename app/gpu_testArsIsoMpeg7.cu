@@ -19,20 +19,9 @@
 
 
 #include <iostream>
-
-#include <ars/definitions.h>
-#include <ars/ars2d.h>
-#include <ars/BBOptimizer1d.h>
-
-#include <thrust/host_vector.h>
-#include <thrust/device_malloc.h>
-
 #include <chrono>
 
-#include <device_launch_parameters.h>
-
 #include "ars/mpeg7RW.h"
-
 #include "ars/cuArsIso.cuh"
 
 

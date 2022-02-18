@@ -1,4 +1,9 @@
+#include <ars/definitions.h>
+#include <ars/ars2d.h>
+#include <ars/BBOptimizer1d.h>
 
+#include <thrust/host_vector.h>
+#include <thrust/device_malloc.h>
 
 
 int ceilPow2(int n) {

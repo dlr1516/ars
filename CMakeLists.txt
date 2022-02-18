@@ -6,7 +6,6 @@ set(CMAKE_BUILD_TYPE Debug)
 
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -gencode arch=compute_75,code=sm_75)
 
-add_definitions(-lineinfo)
 
 
 include_directories(include)
@@ -26,12 +25,11 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 
 # PCL library 
 #message(STATUS "pcl dir: ${PCL_DIR}")
-find_package(PCL 1.8 REQUIRED)
+find_package(PCL 1.8 REQUIRED COMPONENTS search KdTree)
 if(${PCL_FOUND})
   include_directories(${PCL_INCLUDE_DIRS})
   link_directories(${PCL_LIBRARY_DIRS})
   add_definitions(${PCL_DEFINITIONS})
-  add_definitions(-DENABLE_PCL_REGISTRATION)
 endif()
 
 
@@ -59,8 +57,7 @@ add_library(cuars_mpeg7 STATIC
 
     src/functions.cpp
     src/utils.cpp
-#    src/definitions.cpp #since using double2 and double4, those definitions are not used anymore
-    
+#    src/definitions.cpp #since using double2 and double4, those definitions are not used anymore -> the used ones were moved to utils.cpp
 
     src/ArsKernelIsotropic2d.cpp
     src/BBOptimizer1d.cpp
