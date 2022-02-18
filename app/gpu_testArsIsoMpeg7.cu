@@ -20,6 +20,7 @@
 
 #include <iostream>
 #include <chrono>
+#include <cuda_runtime.h>
 
 #include "ars/mpeg7RW.h"
 #include "ars/cuArsIso.cuh"
@@ -55,7 +56,6 @@ int main(void) {
 
     cuars::AngularRadonSpectrum2d arsSrc;
     cuars::AngularRadonSpectrum2d arsDst;
-    std::chrono::system_clock::time_point timeStart, timeStop;
     double sigma = 0.05;
     int fourierOrder = 20;
 
@@ -90,8 +90,9 @@ int main(void) {
 
 
     //ARS SRC -> preparation for kernel calls and kernel calls
-    timeStart = std::chrono::system_clock::now();
-
+    cudaEvent_t startSrc, stopSrc; //timing using CUDA events
+    cudaEventCreate(&startSrc);
+    cudaEventCreate(&stopSrc);
     cuars::Vec2d * kernelInputSrc;
     cudaMalloc((void**) &kernelInputSrc, numPtsAfterPadding * sizeof (cuars::Vec2d));
     cudaMemcpy(kernelInputSrc, pointsSrc.points().data(), numPtsAfterPadding * sizeof (cuars::Vec2d), cudaMemcpyHostToDevice);
@@ -102,33 +103,36 @@ int main(void) {
     //    for (int i = 0; i < coeffsMatTotalSz; ++i) {
     //        coeffsMaSrc1[i] = 0.0;
     //    }
-
-    //    arsSrc.insertIsotropicGaussians();
-    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputSrc, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatSrc);
-
     double* d_coeffsArsSrc;
     cudaMalloc((void**) &d_coeffsArsSrc, coeffsMatNumColsPadded * sizeof (double));
     cudaMemset(d_coeffsArsSrc, 0.0, coeffsMatNumColsPadded * sizeof (double));
 
+    cudaEventRecord(startSrc);
+    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputSrc, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatSrc);
     sumColumns << <1, sumBlockSz>> >(coeffsMatSrc, numPtsAfterPadding, coeffsMatNumColsPadded, d_coeffsArsSrc);
-
-    cudaError_t cudaerr = cudaDeviceSynchronize();
-    if (cudaerr != cudaSuccess)
-        printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
+    cudaEventRecord(stopSrc);
 
     double* coeffsArsSrc = new double [coeffsMatNumColsPadded];
     cudaMemcpy(coeffsArsSrc, d_coeffsArsSrc, coeffsMatNumColsPadded * sizeof (double), cudaMemcpyDeviceToHost);
 
-    timeStop = std::chrono::system_clock::now();
-    double timeArsSrc = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count();
+    cudaEventSynchronize(stopSrc);
+    float millisecondsSrc = 0.0f;
+    cudaEventElapsedTime(&millisecondsSrc, startSrc, stopSrc);
+    std::cout << "SRC -> insertIsotropicGaussians() " << millisecondsSrc << " ms" << std::endl;
+
+    cudaError_t cudaerr = cudaDeviceSynchronize();
+    if (cudaerr != cudaSuccess)
+        printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
+    
     //    for (int i = 0; i < coeffsMatNumColsPadded; ++i) {
     //        std::cout << "coeffsArsSrc[" << i << "] " << coeffsArsSrc[i] << std::endl;
     //    }
-    std::cout << "SRC -> insertIsotropicGaussians() " << timeArsSrc << " ms" << std::endl;
 
     cudaFree(coeffsMatSrc);
     cudaFree(kernelInputSrc);
     cudaFree(d_coeffsArsSrc);
+    cudaEventDestroy(startSrc);
+    cudaEventDestroy(stopSrc);
     //END OF ARS SRC
 
 
@@ -138,8 +142,9 @@ int main(void) {
 
 
     //ARS DST -> preparation for kernel calls and kernel calls
-    timeStart = std::chrono::system_clock::now();
-
+    cudaEvent_t startDst, stopDst; //timing using CUDA events
+    cudaEventCreate(&startDst);
+    cudaEventCreate(&stopDst);
     cuars::Vec2d *kernelInputDst;
     cudaMalloc((void**) &kernelInputDst, numPtsAfterPadding * sizeof (cuars::Vec2d));
     cudaMemcpy(kernelInputDst, pointsDst.points().data(), numPtsAfterPadding * sizeof (cuars::Vec2d), cudaMemcpyHostToDevice);
@@ -150,32 +155,38 @@ int main(void) {
     //    for (int i = 0; i < coeffsMatTotalSz; ++i) {
     //        coeffsMatDst[i] = 0.0;
     //    }
-
-    //    arsDst.insertIsotropicGaussians();
-    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputDst, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatDst);
-
     double* d_coeffsArsDst;
     cudaMalloc((void**) &d_coeffsArsDst, coeffsMatNumColsPadded * sizeof (double));
     cudaMemset(d_coeffsArsDst, 0.0, coeffsMatNumColsPadded * sizeof (double));
 
+    cudaEventRecord(startDst);
+    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputDst, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatDst);
     sumColumns << <1, sumBlockSz>> >(coeffsMatDst, numPtsAfterPadding, coeffsMatNumColsPadded, d_coeffsArsDst);
+    cudaEventRecord(stopDst);
 
-    cudaerr = cudaDeviceSynchronize();
-    if (cudaerr != cudaSuccess)
-        printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
+
 
     double* coeffsArsDst = new double [coeffsMatNumColsPadded];
     cudaMemcpy(coeffsArsDst, d_coeffsArsDst, coeffsMatNumColsPadded * sizeof (double), cudaMemcpyDeviceToHost);
 
-    timeStop = std::chrono::system_clock::now();
-    double timeArsDst = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count();
+    cudaEventSynchronize(stopDst);
+    float millisecondsDst = 0.0f;
+    cudaEventElapsedTime(&millisecondsDst, startDst, stopDst);
+    std::cout << "DST -> insertIsotropicGaussiansDst() " << millisecondsDst << " ms" << std::endl;
+
+    cudaerr = cudaDeviceSynchronize();
+    if (cudaerr != cudaSuccess)
+        printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
+    
     //    for (int i = 0; i < coeffsMatNumColsPadded; ++i) {
     //        std::cout << "coeffsArsDst[" << i << "] " << coeffsArsDst[i] << std::endl;
     //    }
-    std::cout << "DST -> insertIsotropicGaussiansDst() " << timeArsDst << " ms" << std::endl;
+
     cudaFree(coeffsMatDst);
     cudaFree(kernelInputDst);
     cudaFree(d_coeffsArsDst);
+    cudaEventDestroy(startDst);
+    cudaEventDestroy(stopDst);
     //END OF ARS DST
 
 
