@@ -87,7 +87,7 @@ void evaluatePnebiVectorGPU(int n, double x, double* pnebis, int pnebisSz) {
 }
 
 __global__
-void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int numPtsAfterPadding, int fourierOrder, int numColsPadded, cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode, cuars::PnebiLUT& pnebiLUT, double* coeffsMat) {
+void iigKernelDownward(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int numPtsAfterPadding, int fourierOrder, int numColsPadded, cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode, double* coeffsMat) {
     //    a.insertIsotropicGaussians(points, sigma);
 
     int index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block
@@ -148,6 +148,7 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, in
 
 
             int pnebisSz = fourierOrder + 1;
+            //TODO: find a better solution instead of hard-coding 21
             double pnebis[21]; //Fourier Order + 1
             if (pnebis == nullptr)
                 printf("ERROR ALLOCATING WITH NEW[]!\n");
@@ -189,7 +190,69 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, in
             }
 
             delete pnebis;
-        } else if (pnebiMode == cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT) {
+        } else
+            printf("ERROR: pnebi mode is NOT Downward!\n");
+
+
+
+    }
+}
+
+__global__
+void iigKernelLut(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int numPtsAfterPadding, int fourierOrder, int numColsPadded, cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode, cuars::PnebiLUT& pnebiLUT, double* coeffsMat) {
+    //    a.insertIsotropicGaussians(points, sigma);
+
+    int index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block
+    int stride = blockDim.x * gridDim.x; //total number of threads in the grid
+
+    const int totalNumComparisons = numPtsAfterPadding * numPtsAfterPadding;
+
+    for (int tid = index; tid < totalNumComparisons; tid += stride) {
+
+        int j = tid % numPtsAfterPadding;
+        int i = (tid - j) / numPtsAfterPadding;
+        //        printf("i %d j %d\n", i, j);
+        //        printf("tid %d i %d j %d tidIJ %d --- numPts %d numPtsAfterPadding %d numColsPadded %d totNumComp %d index %d\n", tid, i, j, i * numPtsAfterPadding + j, numPts, numPtsAfterPadding, numColsPadded, totalNumComparisons, index);
+
+        if (i >= numPts || j >= numPts || j <= i)
+            continue;
+
+        cuars::Vec2d vecI = means[i];
+        cuars::Vec2d vecJ = means[j];
+
+        //            isotropicKer_.init(means[i], means[j], sigma);
+        double dx, dy;
+        dx = vecJ.x - vecI.x;
+        dy = vecJ.y - vecI.y;
+        double phi;
+
+        //        if (dx == 0 && dy == 0) {
+        //                        phi = 0.0; //mathematically undefined
+        //            //            for (int k = 0; k <= numColsPadded; ++k) {
+        //            //                int rowIndex = (i * numPtsAfterPadding) + j; //it's more a block index rather than row 
+        //            //                coeffsMat[rowIndex * numColsPadded + k] = 0.0;
+        //            //            }
+        ////            continue;
+        //
+        //        } else
+        phi = atan2(dy, dx);
+
+        double sigmaValSq = sigma1 * sigma1 + sigma2 * sigma2;
+        double lambdaSqNorm = 0.25 * (dx * dx + dy * dy) / sigmaValSq;
+        printf("lambdaSqNorm %f\n", lambdaSqNorm); //just to avoid seeing warning of unused variable when compiling
+
+
+        //            isotropicKer_.updateFourier(arsfOrder_, coeffs_, w);
+        double wNorm = 1.0 / (numPts * numPts);
+        double weight = wNorm / sqrt(2.0 * M_PI * sigmaValSq);
+
+
+
+        //updating Fourier coefficients (2 modes)
+        if (pnebiMode == cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT) {
+            printf("Method not fully implemented!\n");
+            continue;
+
             //                updateARSF2CoeffRecursDownLUT(lambdaSqNorm_, phi_, w2, nFourier, pnebiLut_, coeffs);
             double cth2, sth2;
             //fastCosSin(2.0 * phi, cth2, sth2); //già commentata nell'originale
@@ -217,9 +280,10 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, in
                 cth = ctmp;
                 sth = stmp;
             }
-        }
 
-
+            delete pnebis;
+        } else
+            printf("ERROR: pnebi mode is not LUT!\n");
 
     }
 }

@@ -55,6 +55,11 @@ int main(void) {
     const int numBlocks = (numPtsAfterPadding * numPtsAfterPadding) / blockSize; //number of blocks in grid (each block contains blockSize threads)
     const int gridTotalSize = blockSize*numBlocks; //total number of threads in grid
 
+    const int sumBlockSz = 64;
+    const int sumGridSz = 256;
+    std::cout << "Parallelization params:" << std::endl;
+    std::cout << "numPtsAfterPadding " << numPtsAfterPadding << " blockSize " << blockSize << " numBlocks " << numBlocks << " gridTotalSize " << gridTotalSize << std::endl;
+    std::cout << "sumSrcBlockSz " << sumBlockSz << " sumGridSz " << sumGridSz << std::endl;
     std::cout << "numPtsAfterPadding " << numPtsAfterPadding << " blockSize " << blockSize << " numBlocks " << numBlocks << " gridTotalSize " << gridTotalSize << std::endl;
 
     //conversion
@@ -121,8 +126,7 @@ int main(void) {
     }
 
 
-    //    iigKernel << < 1, 1 >> >(kernelInput1, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, pnebiLUT1, coeffsMat1);
-    iigKernel << <numBlocks, blockSize >> >(kernelInput1, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, pnebiLUT1, coeffsMat1);
+    iigKernelDownward << <numBlocks, blockSize >> >(kernelInput1, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMat1);
 
 
 
@@ -135,9 +139,9 @@ int main(void) {
         printf("kernel launch failed with error \"%s\".\n",
             cudaGetErrorString(cudaerr));
 
-    const int sum1BlockSz = 64;
-    const int sum1GridSz = 256;
-    sumColumns << <1, sum1BlockSz>> >(coeffsMat1, numPtsAfterPadding, coeffsMatNumColsPadded, d_coeffsArs1);
+
+    sumColumns << <1, sumBlockSz>> >(coeffsMat1, numPtsAfterPadding, coeffsMatNumColsPadded, d_coeffsArs1);
+
 
 
 
@@ -247,10 +251,12 @@ int main(void) {
     //    //Free GPU and CPU memory
     cudaFree(d_coefficientsArs2);
     cudaFree(kernelInput2);
+    delete coefficientsArs2;
     //    free(coefficientsArs2); //cpu array
     cudaFree(coeffsMat1);
     cudaFree(kernelInput1);
     cudaFree(d_coeffsArs1);
+    delete coeffsArs1;
 
     return 0;
 }

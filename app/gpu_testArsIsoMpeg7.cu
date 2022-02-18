@@ -41,7 +41,8 @@ int main(void) {
     ArsImgTests::PointReaderWriter pointsSrc;
     ArsImgTests::PointReaderWriter pointsDst;
 
-    std::string filenameSrc, filenameDst;
+    std::string filenameSrc = "/home/rimlab/Downloads/mpeg7_point_tests/noise000_occl00_rand000/apple-1_xp0686_yp0967_t059_sigma0001_occl000.txt";
+    std::string filenameDst = "/home/rimlab/Downloads/mpeg7_point_tests/noise000_occl00_rand000/apple-1_xp0749_yn0521_t090_sigma0001_occl000.txt";
 
     // Loads files and computes the rotation
     std::cout << "\n*****\nLoading file \"" << filenameSrc << "\"" << std::endl;
@@ -52,208 +53,155 @@ int main(void) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    cuars::AngularRadonSpectrum2d ars1;
-    cuars::AngularRadonSpectrum2d ars2;
+    cuars::AngularRadonSpectrum2d arsSrc;
+    cuars::AngularRadonSpectrum2d arsDst;
     std::chrono::system_clock::time_point timeStart, timeStop;
     double sigma = 0.05;
     int fourierOrder = 20;
 
-    ars1.setARSFOrder(fourierOrder);
-    ars2.setARSFOrder(fourierOrder);
+    //ARS parameters setting
+    arsSrc.setARSFOrder(fourierOrder);
+    arsDst.setARSFOrder(fourierOrder);
+    cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode = cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD;
+    arsSrc.setComputeMode(pnebiMode);
+    arsDst.setComputeMode(pnebiMode);
 
-    //parallelization parameters
-    int numPts = 180; // = acesRanges.size()
-    const int numPtsAfterPadding = ceilPow2(numPts);
+
+    //Fourier coefficients mega-matrix computation -> parallelization parameters
+    int numPts = std::min<int>(pointsSrc.points().size(), pointsDst.points().size()); //the two should normally be equal
+    const int numPtsAfterPadding = ceilPow2(numPts); //for apple1 -> numPts 661; padded 1024
     const int blockSize = 256; //num threads per block
     const int numBlocks = (numPtsAfterPadding * numPtsAfterPadding) / blockSize; //number of blocks in grid (each block contains blockSize threads)
     const int gridTotalSize = blockSize*numBlocks; //total number of threads in grid
-
-    std::cout << "numPtsAfterPadding " << numPtsAfterPadding << " blockSize " << blockSize << " numBlocks " << numBlocks << " gridTotalSize " << gridTotalSize << std::endl;
-
-
-
-
-
-
-    //conversion
-    std::vector<cuars::Vec2d> acesPointsSTL;
-    //    cuars::Vec2d p0, p1;
-    //    p0.x = 0.0;
-    //    p0.y = 0.0;
-    //    p1.x = cos(M_PI * 30 / 180.0);
-    //    p1.y = sin(M_PI * 30 / 180.0);
-    //    acesPointsSTL.push_back(p0);
-    //    acesPointsSTL.push_back(p1);
-
-
-
-
-    thrust::host_vector<cuars::Vec2d> acesPointsHost(acesPointsSTL.begin(), acesPointsSTL.end());
-
-
-    //    cuars::Vec2d firstElement; //??
-
-    std::cout << "\n------\n" << std::endl;
-    std::cout << "\n\nCalling kernel functions on GPU\n" << std::endl;
-
-    timeStart = std::chrono::system_clock::now();
-    //ars1 kernel call
-    //    ars1.insertIsotropicGaussians(acesPoints1, sigma);
-    cuars::Vec2d * kernelInput1;
-    cudaMalloc((void**) &kernelInput1, numPtsAfterPadding * sizeof (cuars::Vec2d));
-    cudaMemcpy(kernelInput1, acesPointsHost.data(), numPtsAfterPadding * sizeof (cuars::Vec2d), cudaMemcpyHostToDevice);
-    //    for (int i = 0; i < numPtsAfterPadding; ++i) {
-    //        kernelInput1[i] = acesPointsSTL[i];
-    //    }
-
-    //    cudaDeviceSynchronize();
-    //    std::cout << "acesPointsHost.size() " << acesPointsHost.size() << std::endl;
-    //    for (int s = 0; s < acesPointsHost.size(); s++) {
-    //        std::cout << "s " << s << std::endl;
-    //        std::cout << kernelInput1[s].x << " " << kernelInput1[s].y << std::endl;
-    //    }
-
-
-    //    ars1.initLUT(0.0001);
-    cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode = cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD;
-    ars1.setComputeMode(pnebiMode);
-
-
-
+    //depth of mega-matrix
     const int coeffsMatNumCols = 2 * fourierOrder + 2;
     const int coeffsMatNumColsPadded = ceilPow2(coeffsMatNumCols);
     const int coeffsMatTotalSz = numPtsAfterPadding * numPtsAfterPadding * coeffsMatNumColsPadded;
-    double *coeffsMat1;
-    cudaMalloc((void**) &coeffsMat1, coeffsMatTotalSz * sizeof (double));
-    cudaMemset(coeffsMat1, 0.0, coeffsMatTotalSz * sizeof (double));
-    //    for (int i = 0; i < coeffsMatTotalSz; ++i) {
-    //        coeffsMat1[i] = 0.0;
-    //    }
-
-
-    cuars::PnebiLUT pnebiLUT1; //LUT setup
-    double lutPrecision = 0.001; //LUT setup
-    pnebiLUT1.init(fourierOrder, lutPrecision); //LUT setup
-    if (pnebiLUT1.getOrderMax() < fourierOrder) { //LUT setup
-        ARS_ERROR("LUT not initialized to right order. Initialized now."); //LUT setup
-        pnebiLUT1.init(fourierOrder, 0.0001); //LUT setup
-    }
-
-
-    //    iigKernel << < 1, 1 >> >(kernelInput1, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, pnebiLUT1, coeffsMat1);
-    iigKernel << <numBlocks, blockSize >> >(kernelInput1, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, pnebiLUT1, coeffsMat1);
-
-
-
-    double* d_coeffsArs1;
-    cudaMalloc((void**) &d_coeffsArs1, coeffsMatNumColsPadded * sizeof (double));
-    cudaMemset(d_coeffsArs1, 0.0, coeffsMatNumColsPadded * sizeof (double));
-
-    cudaError_t cudaerr = cudaDeviceSynchronize();
-    if (cudaerr != cudaSuccess)
-        printf("kernel launch failed with error \"%s\".\n",
-            cudaGetErrorString(cudaerr));
-
-    const int sum1BlockSz = 64;
-    const int sum1GridSz = 256;
-    sumColumns << <1, sum1BlockSz>> >(coeffsMat1, numPtsAfterPadding, coeffsMatNumColsPadded, d_coeffsArs1);
-
-
-
-
-    timeStop = std::chrono::system_clock::now();
-    double timeArs1 = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count();
-    cudaDeviceSynchronize();
-    //    for (int i = 0; i < coeffsMatNumColsPadded; ++i) {
-    //        std::cout << "coeffsArs1[" << i << "] " << coeffsArs1[i] << std::endl;
-    //    }
-    std::cout << "insertIsotropicGaussians() " << timeArs1 << " ms" << std::endl;
-    //END OF ARS1
+    //Fourier matrix sum -> parallelization parameters
+    const int sumBlockSz = 64;
+    const int sumGridSz = 256; //can be used to futher parallelize sum of mega-matrix (for now in sum kernel it is actually set to 1)
+    std::cout << "Parallelization params:" << std::endl;
+    std::cout << "numPtsAfterPadding " << numPtsAfterPadding << " blockSize " << blockSize << " numBlocks " << numBlocks << " gridTotalSize " << gridTotalSize << std::endl;
+    std::cout << "sumBlockSz " << sumBlockSz << " sumGridSz " << sumGridSz << std::endl;
 
     std::cout << "\n------\n" << std::endl;
 
+    std::cout << "\n\nCalling kernel functions on GPU\n" << std::endl;
 
-    //ARS2    
-    ars2.setComputeMode(cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT);
 
+    //ARS SRC -> preparation for kernel calls and kernel calls
     timeStart = std::chrono::system_clock::now();
 
-    //kernel call
-    //    ars2.insertIsotropicGaussians(acesPoints1, sigma);
-    cuars::Vec2d* kernelInput2;
-    cudaMalloc((void **) &kernelInput2, numPtsAfterPadding * sizeof (cuars::Vec2d));
-    pnebiMode = cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT;
+    cuars::Vec2d * kernelInputSrc;
+    cudaMalloc((void**) &kernelInputSrc, numPtsAfterPadding * sizeof (cuars::Vec2d));
+    cudaMemcpy(kernelInputSrc, pointsSrc.points().data(), numPtsAfterPadding * sizeof (cuars::Vec2d), cudaMemcpyHostToDevice);
 
-    double *coefficientsArs2 = new double[coeffsMatTotalSz](); //() initialize to 0
-    double *d_coefficientsArs2; //d_ stands for device
-    //    const int coeffsVectorMaxSz = 2 * fourierOrder + 2; //already initialized in ars1
-    cudaMalloc(&d_coefficientsArs2, coeffsMatTotalSz * sizeof (double)); //maybe directly use cudaMemset?
-    cudaMemcpy(d_coefficientsArs2, coefficientsArs2, coeffsMatTotalSz * sizeof (double), cudaMemcpyHostToDevice);
+    double *coeffsMatSrc;
+    cudaMalloc((void**) &coeffsMatSrc, coeffsMatTotalSz * sizeof (double));
+    cudaMemset(coeffsMatSrc, 0.0, coeffsMatTotalSz * sizeof (double));
+    //    for (int i = 0; i < coeffsMatTotalSz; ++i) {
+    //        coeffsMaSrc1[i] = 0.0;
+    //    }
 
-    cuars::PnebiLUT pnebiLUT2; //LUT setup
-    //    double lutPrecision = 0.001; //already initialized for pnebiLUT1
-    pnebiLUT2.init(fourierOrder, lutPrecision); //LUT setup
-    if (pnebiLUT2.getOrderMax() < fourierOrder) { //LUT setup
-        ARS_ERROR("LUT not initialized to right order. Initialized now."); //LUT setup
-        pnebiLUT2.init(fourierOrder, 0.0001); //LUT setup
-    }
+    //    arsSrc.insertIsotropicGaussians();
+    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputSrc, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatSrc);
 
-    //    iigKernel << < numBlocks, blockSize >> >(thrust::raw_pointer_cast<ars::Vec2d*>(kernelInput2.data()), sigma, sigma, numPts, paddedPtVecSz, fourierOrder, pnebiMode, pnebiLUT2, d_coefficientsArs2);
-    cudaMemcpy(coefficientsArs2, d_coefficientsArs2, coeffsMatTotalSz * sizeof (double), cudaMemcpyDeviceToHost);
-    //end of kernel call for ARS2
+    double* d_coeffsArsSrc;
+    cudaMalloc((void**) &d_coeffsArsSrc, coeffsMatNumColsPadded * sizeof (double));
+    cudaMemset(d_coeffsArsSrc, 0.0, coeffsMatNumColsPadded * sizeof (double));
 
+    sumColumns << <1, sumBlockSz>> >(coeffsMatSrc, numPtsAfterPadding, coeffsMatNumColsPadded, d_coeffsArsSrc);
 
+    cudaError_t cudaerr = cudaDeviceSynchronize();
+    if (cudaerr != cudaSuccess)
+        printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
+
+    double* coeffsArsSrc = new double [coeffsMatNumColsPadded];
+    cudaMemcpy(coeffsArsSrc, d_coeffsArsSrc, coeffsMatNumColsPadded * sizeof (double), cudaMemcpyDeviceToHost);
 
     timeStop = std::chrono::system_clock::now();
-    double timeArs2 = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count();
-    cudaDeviceSynchronize();
-    std::cout << "insertIsotropicGaussians() " << timeArs2 << " ms" << std::endl;
-    //END OF ARS1
+    double timeArsSrc = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count();
+    //    for (int i = 0; i < coeffsMatNumColsPadded; ++i) {
+    //        std::cout << "coeffsArsSrc[" << i << "] " << coeffsArsSrc[i] << std::endl;
+    //    }
+    std::cout << "SRC -> insertIsotropicGaussians() " << timeArsSrc << " ms" << std::endl;
+
+    cudaFree(coeffsMatSrc);
+    cudaFree(kernelInputSrc);
+    cudaFree(d_coeffsArsSrc);
+    //END OF ARS SRC
 
 
-    double* coeffsArs1 = new double [coeffsMatNumColsPadded];
-    cudaMemcpy(coeffsArs1, d_coeffsArs1, coeffsMatNumColsPadded * sizeof (double), cudaMemcpyDeviceToHost);
 
+    std::cout << "\n------\n" << std::endl; //"pause" between ars src and ars dst
+
+
+
+    //ARS DST -> preparation for kernel calls and kernel calls
+    timeStart = std::chrono::system_clock::now();
+
+    cuars::Vec2d *kernelInputDst;
+    cudaMalloc((void**) &kernelInputDst, numPtsAfterPadding * sizeof (cuars::Vec2d));
+    cudaMemcpy(kernelInputDst, pointsDst.points().data(), numPtsAfterPadding * sizeof (cuars::Vec2d), cudaMemcpyHostToDevice);
+
+    double *coeffsMatDst; //magari evitare di fare il delete e poi riallocarla è più efficiente (anche se comunque ci sarebbe poi da settare tutto a 0)
+    cudaMalloc((void**) &coeffsMatDst, coeffsMatTotalSz * sizeof (double));
+    cudaMemset(coeffsMatDst, 0.0, coeffsMatTotalSz * sizeof (double));
+    //    for (int i = 0; i < coeffsMatTotalSz; ++i) {
+    //        coeffsMatDst[i] = 0.0;
+    //    }
+
+    //    arsDst.insertIsotropicGaussians();
+    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputDst, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatDst);
+
+    double* d_coeffsArsDst;
+    cudaMalloc((void**) &d_coeffsArsDst, coeffsMatNumColsPadded * sizeof (double));
+    cudaMemset(d_coeffsArsDst, 0.0, coeffsMatNumColsPadded * sizeof (double));
+
+    sumColumns << <1, sumBlockSz>> >(coeffsMatDst, numPtsAfterPadding, coeffsMatNumColsPadded, d_coeffsArsDst);
+
+    cudaerr = cudaDeviceSynchronize();
+    if (cudaerr != cudaSuccess)
+        printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
+
+    double* coeffsArsDst = new double [coeffsMatNumColsPadded];
+    cudaMemcpy(coeffsArsDst, d_coeffsArsDst, coeffsMatNumColsPadded * sizeof (double), cudaMemcpyDeviceToHost);
+
+    timeStop = std::chrono::system_clock::now();
+    double timeArsDst = (double) std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart).count();
+    //    for (int i = 0; i < coeffsMatNumColsPadded; ++i) {
+    //        std::cout << "coeffsArsDst[" << i << "] " << coeffsArsDst[i] << std::endl;
+    //    }
+    std::cout << "DST -> insertIsotropicGaussiansDst() " << timeArsDst << " ms" << std::endl;
+    cudaFree(coeffsMatDst);
+    cudaFree(kernelInputDst);
+    cudaFree(d_coeffsArsDst);
+    //END OF ARS DST
+
+
+
+    //Computation final computations (correlation, ...) on CPU
     std::cout << "\nARS Coefficients:\n";
     std::cout << "\ti \tDownward \tLUT\n";
-    ars1.setCoefficients(coeffsArs1, coeffsMatNumCols);
+    arsSrc.setCoefficients(coeffsArsSrc, coeffsMatNumCols);
     //    for (int i = 0; i < coeffsVectorMaxSz; i++) {
-    //        std::cout << "ars1coeff_d[" << i << "] " << d_coeffsMat1[i] << std::endl;
+    //        std::cout << "arsSrc - coeff_d[" << i << "] " << d_coeffsMat1[i] << std::endl;
     //    }
-    ars2.setCoefficients(coefficientsArs2, coeffsMatNumCols);
-    for (int i = 0; i < ars1.coefficients().size() && i < ars2.coefficients().size(); ++i) {
-        std::cout << "\t" << i << " \t" << ars1.coefficients().at(i) << " \t" << ars2.coefficients().at(i) << "\n";
+    arsDst.setCoefficients(coeffsArsDst, coeffsMatNumCols);
+    for (int i = 0; i < arsSrc.coefficients().size() && i < arsDst.coefficients().size(); ++i) {
+        std::cout << "\t" << i << " \t" << arsSrc.coefficients().at(i) << " \t" << arsDst.coefficients().at(i) << "\n";
     }
     std::cout << std::endl;
 
-    std::vector<double> funcFourierRecursDownLUT;
-    std::vector<double> funcFourierRecursDown;
+    std::vector<double> funcFourierRecursDownSrc;
+    std::vector<double> funcFourierRecursDownDst;
     int thnum = 360;
     double dtheta = M_PI / thnum;
     double theta;
     for (int i = 0; i < thnum; ++i) {
         theta = dtheta * i;
-        funcFourierRecursDownLUT.push_back(ars1.eval(theta));
-        funcFourierRecursDown.push_back(ars2.eval(theta));
+        funcFourierRecursDownSrc.push_back(arsSrc.eval(theta));
+        funcFourierRecursDownDst.push_back(arsDst.eval(theta));
     }
 
     std::cout << "\nBranch and Bound limits:\n";
@@ -262,12 +210,12 @@ int main(void) {
     for (int i = 0; i < bbnum; ++i) {
         bbbs[i].x0 = M_PI * i / bbnum;
         bbbs[i].x1 = M_PI * (i + 1) / bbnum;
-        cuars::findLUFourier(ars1.coefficients(), bbbs[i].x0, bbbs[i].x1, bbbs[i].y0, bbbs[i].y1);
+        cuars::findLUFourier(arsSrc.coefficients(), bbbs[i].x0, bbbs[i].x1, bbbs[i].y0, bbbs[i].y1);
         std::cout << i << ": x0 " << RAD2DEG(bbbs[i].x0) << " x1 " << RAD2DEG(bbbs[i].x1) << ", y0 " << bbbs[i].y0 << " y1 " << bbbs[i].y1 << std::endl;
     }
 
 
-    cuars::FourierOptimizerBB1D optim(ars1.coefficients());
+    cuars::FourierOptimizerBB1D optim(arsSrc.coefficients());
     double xopt, ymin, ymax;
     optim.enableXTolerance(true);
     optim.enableYTolerance(true);
@@ -277,18 +225,15 @@ int main(void) {
     std::cout << "\n****\nMaximum in x = " << xopt << " (" << RAD2DEG(xopt) << " deg), maximum between [" << ymin << "," << ymax << "]" << std::endl;
 
     double xopt2, ymax2;
-    cuars::findGlobalMaxBBFourier(ars1.coefficients(), 0, M_PI, M_PI / 180.0 * 0.5, 1.0, xopt2, ymax2);
+    cuars::findGlobalMaxBBFourier(arsSrc.coefficients(), 0, M_PI, M_PI / 180.0 * 0.5, 1.0, xopt2, ymax2);
     std::cout << "  repeated evaluation with findGlobalMaxBBFourier(): maximum in x " << xopt2 << " (" << RAD2DEG(xopt2) << " deg), maximum value " << ymax2 << std::endl;
 
 
 
-    //    //Free GPU and CPU memory
-    cudaFree(d_coefficientsArs2);
-    cudaFree(kernelInput2);
-    //    free(coefficientsArs2); //cpu array
-    cudaFree(coeffsMat1);
-    cudaFree(kernelInput1);
-    cudaFree(d_coeffsArs1);
+    //Free CPU memory
+    free(coeffsArsSrc);
+    free(coeffsArsDst);
+
 
     return 0;
 }
