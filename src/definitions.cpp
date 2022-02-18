@@ -21,31 +21,31 @@
 namespace cuars {
     //Vec2d
 
-    Vec2d::Vec2d() {
-    }
+    //    Vec2d::Vec2d() {
+    //    }
+    //
+    //    Vec2d::Vec2d(double v0, double v1, bool isCol = true) {
+    //        data_[0] = v0;
+    //        data_[1] = v1;
+    //
+    //        isCol_ = isCol;
+    //    }
+    //
+    //    Vec2d::Vec2d(bool isCol = true) {
+    //        data_[0] = 0.0;
+    //        data_[1] = 0.0;
+    //
+    //        isCol_ = isCol;
+    //    }
+    //
+    //    Vec2d::~Vec2d() {
+    //        isCol_ = true;
+    //    }
 
-    Vec2d::Vec2d(double v0, double v1, bool isCol = true) {
-        data_[0] = v0;
-        data_[1] = v1;
-
-        isCol_ = isCol;
-    }
-
-    Vec2d::Vec2d(bool isCol = true) {
-        data_[0] = 0.0;
-        data_[1] = 0.0;
-
-        isCol_ = isCol;
-    }
-
-    Vec2d::~Vec2d() {
-        isCol_ = true;
-    }
-
-    void Vec2d::resetToZero() {
-        data_[0] = 0.0;
-        data_[1] = 0.0;
-    }
+    //    void Vec2d::resetToZero() {
+    //        data_[0] = 0.0;
+    //        data_[1] = 0.0;
+    //    }
 
     void Vec2d::multiplyByScalar(double sc) {
         data_[0] *= sc;
@@ -141,22 +141,22 @@ namespace cuars {
 
     //Mat2d
 
-    Mat2d::Mat2d() {
-        data_[0] = 0.0;
-        data_[1] = 0.0;
-        data_[2] = 0.0;
-        data_[3] = 0.0;
-    }
+    //    Mat2d::Mat2d() {
+    //        data_[0] = 0.0;
+    //        data_[1] = 0.0;
+    //        data_[2] = 0.0;
+    //        data_[3] = 0.0;
+    //    }
 
-    Mat2d::~Mat2d() {
-    }
+    //    Mat2d::~Mat2d() {
+    //    }
 
-    void Mat2d::resetToZero() {
-        data_[0 * Two + 0] = 0.0; // = data[0]
-        data_[0 * Two + 1] = 0.0; // = data[1]
-        data_[1 * Two + 0] = 0.0; // = data[2]
-        data_[1 * Two + 1] = 0.0; // = data[3]
-    }
+    //    void Mat2d::resetToZero() {
+    //        data_[0 * Two + 0] = 0.0; // = data[0]
+    //        data_[0 * Two + 1] = 0.0; // = data[1]
+    //        data_[1 * Two + 0] = 0.0; // = data[2]
+    //        data_[1 * Two + 1] = 0.0; // = data[3]
+    //    }
 
     void Mat2d::setToIdentity() {
         data_[0 * Two + 0] = 1.0; // = data[0]
@@ -179,25 +179,25 @@ namespace cuars {
         data_[3] /= sc;
     }
 
-    void Mat2d::fillRowMajor(double a, double b, double c, double d) {
-        data_[0 * Two + 0] = a;
-        data_[0 * Two + 1] = b;
-        data_[1 * Two + 0] = c;
-        data_[1 * Two + 1] = d;
-    }
+//    void Mat2d::fillRowMajor(double a, double b, double c, double d) {
+//        data_[0 * Two + 0] = a;
+//        data_[0 * Two + 1] = b;
+//        data_[1 * Two + 0] = c;
+//        data_[1 * Two + 1] = d;
+//    }
 
-    void Mat2d::make2dRotMat(double theta) {
-        data_[0 * Two + 0] = cos(theta);
-        data_[0 * Two + 1] = -sin(theta); //avoiding useless function calling
-        data_[1 * Two + 0] = -data_[0 * Two + 1];
-        data_[1 * Two + 1] = data_[0 * Two + 0];
-    }
+    //    void Mat2d::make2dRotMat(double theta) {
+    //        data_[0 * Two + 0] = cos(theta);
+    //        data_[0 * Two + 1] = -sin(theta); //avoiding useless function calling
+    //        data_[1 * Two + 0] = -data_[0 * Two + 1];
+    //        data_[1 * Two + 1] = data_[0 * Two + 0];
+    //    }
 
-    void Mat2d::transpose() {
-        double tmp = data_[0 * Two + 1];
-        data_[0 * Two + 1] = data_[1 * Two + 0];
-        data_[1 * Two + 0] = tmp;
-    }
+//    void Mat2d::transpose() {
+//        double tmp = data_[0 * Two + 1];
+//        data_[0 * Two + 1] = data_[1 * Two + 0];
+//        data_[1 * Two + 0] = tmp;
+//    }
 
     Mat2d Mat2d::transposeReturningValue() {
         Mat2d transposed;
@@ -251,9 +251,9 @@ namespace cuars {
         return m;
     }
 
-    void Mat2d::setDiagonal(double a11, double a22) {
-        data_[0 * Two + 0] = a11;
-        data_[1 * Two + 1] = a22;
-    }
+    //    void Mat2d::setDiagonal(double a11, double a22) {
+    //        data_[0 * Two + 0] = a11;
+    //        data_[1 * Two + 1] = a22;
+    //    }
 
 }

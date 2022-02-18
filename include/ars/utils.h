@@ -57,9 +57,17 @@ namespace cuars {
 
     // Below: Vec2d and Mat2d util functions (simpler reimplementation of basic Eigen functions)
 
-    void zeroResetPointerVals(Vec2d& vec);
+    void resetToZero(Vec2d& vec);
 
-    void zeroResetMatrixVals(Mat2d& mtx);
+    void resetToZero(Mat2d& mtx);
+
+    void setDiagonal(Mat2d& mtx, double a11, double a22);
+
+    void make2dRotMat(Mat2d& mtx, double theta);
+
+    void fillRowMajor(Mat2d& mtx, double a, double b, double c, double d);
+    
+    void transpose(Mat2d& mtx);
 
     void mat2dSum(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx);
 

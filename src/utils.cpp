@@ -24,16 +24,16 @@ namespace cuars {
         double a, b, c, s;
 
         // Diagonalizes sigma12
-        a = 0.5 * (m.data_[1 * Two + 1] - m.data_[0 * Two + 0]);
-        b = 0.5 * (m.data_[0 * Two + 1] + m.data_[1 * Two + 0]);
+        a = 0.5 * (m.z - m.w);
+        b = 0.5 * (m.x + m.y);
         //ARS_VARIABLE2(a, b);
 
         theta = 0.5 * atan2(-b, a);
 
         c = cos(theta);
         s = sin(theta);
-        lmax = m.data_[0 * Two + 0] * c * c + m.data_[1 * Two + 1] * s * s + (m.data_[0 * Two + 1] + m.data_[1 * Two + 0]) * c * s;
-        lmin = m.data_[0 * Two + 0] * s * s + m.data_[1 * Two + 1] * c * c - (m.data_[0 * Two + 1] + m.data_[1 * Two + 0]) * c * s;
+        lmax = m.w * c * c + m.z * s * s + (m.x + m.y) * c * s;
+        lmin = m.w * s * s + m.z * c * c - (m.x + m.y) * c * s;
         //ARS_VARIABLE3(theta, lmax, lmin);
 
         if (lmax < lmin) {
@@ -47,9 +47,9 @@ namespace cuars {
         double lmin, lmax, theta;
 
         diagonalize(m, lmin, lmax, theta);
-        l.resetToZero();
-        l.setDiagonal(lmax, lmin);
-        v.make2dRotMat(theta);
+        cuars::resetToZero(l);
+        cuars::setDiagonal(l, lmax, lmin);
+        cuars::make2dRotMat(v, theta);
     }
 
     void saturateEigenvalues(Mat2d& covar, double sigmaMinSquare) {
@@ -63,49 +63,78 @@ namespace cuars {
         if (lmax < sigmaMinSquare) {
             lmax = sigmaMinSquare;
         }
-        covar.fillRowMajor(lmax, 0.0, 0.0, lmin);
-        v.make2dRotMat(theta);
+        fillRowMajor(covar, lmax, 0.0, 0.0, lmin);
+        make2dRotMat(v, theta);
         //                covar = v * covar * v.transpose();
         Mat2d tmpProdResult;
         mat2dProd(tmpProdResult, v, covar);
-        v.transpose();
+        transpose(v);
         mat2dProd(covar, tmpProdResult, v);
-        v.transpose(); //transpose back after using it for the product
+        transpose(v); //transpose back after using it for the product
     }
 
     //
 
-    //    void zeroResetPointerVals(Vec2d& vec) {
-    //        vec.data_[0] = 0.0;
-    //        vec.data_[1] = 0.0;
-    //    }
-    //
-    //    void zeroResetMatrixVals(Mat2d& mtx) {
-    //        mtx.data_[0] = 0.0;
-    //        mtx.data_[1] = 0.0;
-    //        mtx.data_[2] = 0.0;
-    //        mtx.data_[3] = 0.0;
-    //    }
+    void resetToZero(Vec2d& vec) {
+        vec.x = 0.0;
+        vec.y = 0.0;
+    }
+
+    void resetToZero(Mat2d& mtx) {
+        mtx.w = 0.0;
+        mtx.x = 0.0;
+        mtx.y = 0.0;
+        mtx.z = 0.0;
+    }
+
+    void setDiagonal(Mat2d& mtx, double a11, double a22) {
+        mtx.w = a11;
+        mtx.x = 0.0;
+        mtx.y = 0.0;
+        mtx.z = a22;
+    }
+
+    void make2dRotMat(Mat2d& mtx, double theta) {
+        double cth = cos(theta); //avoiding useless function calling
+        double sth = sin(theta);
+        mtx.w = cth;
+        mtx.x = -sth;
+        mtx.y = sth;
+        mtx.z = cth;
+    }
+
+    void fillRowMajor(Mat2d& mtx, double a, double b, double c, double d) {
+        mtx.w = a;
+        mtx.x = b;
+        mtx.y = c;
+        mtx.z = d;
+    }
+
+    void transpose(Mat2d& mtx) {
+        double tmp = mtx.x;
+        mtx.x = mtx.y;
+        mtx.y = tmp;
+    }
 
     void mat2dSum(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx) {
-        resultMtx.data_[0] = aMtx.data_[0] * bMtx.data_[0];
-        resultMtx.data_[1] = aMtx.data_[1] * bMtx.data_[1];
-        resultMtx.data_[2] = aMtx.data_[2] * bMtx.data_[2];
-        resultMtx.data_[3] = aMtx.data_[3] * bMtx.data_[3];
+        resultMtx.w = aMtx.w * bMtx.w;
+        resultMtx.x = aMtx.x * bMtx.x;
+        resultMtx.y = aMtx.y * bMtx.y;
+        resultMtx.z = aMtx.z * bMtx.z;
     }
-    
+
     void mat2dPlusEq(Mat2d& resultMtx, const Mat2d& aMtx) {
-        resultMtx.data_[0] += aMtx.data_[0];
-        resultMtx.data_[1] += aMtx.data_[1];
-        resultMtx.data_[2] += aMtx.data_[2];
-        resultMtx.data_[3] += aMtx.data_[3];
+        resultMtx.w += aMtx.w;
+        resultMtx.x += aMtx.x;
+        resultMtx.y += aMtx.y;
+        resultMtx.z += aMtx.z;
     }
 
     void mat2dProd(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx) {
-        resultMtx.data_[0] = aMtx.data_[0] * bMtx.data_[0] + aMtx.data_[1] * bMtx.data_[2];
-        resultMtx.data_[1] = aMtx.data_[0] * bMtx.data_[1] + aMtx.data_[1] * bMtx.data_[3];
-        resultMtx.data_[2] = aMtx.data_[2] * bMtx.data_[0] + aMtx.data_[3] * bMtx.data_[2];
-        resultMtx.data_[3] = aMtx.data_[1] * bMtx.data_[2] + aMtx.data_[3] * bMtx.data_[3];
+        resultMtx.w = aMtx.w * bMtx.w + aMtx.x * bMtx.y;
+        resultMtx.x = aMtx.w * bMtx.x + aMtx.x * bMtx.z;
+        resultMtx.y = aMtx.y * bMtx.w + aMtx.z * bMtx.y;
+        resultMtx.z = aMtx.x * bMtx.y + aMtx.z * bMtx.z;
     }
 
     void threeMats2dProd(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx, const Mat2d& cMtx) {
@@ -119,57 +148,57 @@ namespace cuars {
     }
 
     void vec2sum(Vec2d& result, const Vec2d& a, const Vec2d& b) {
-        result.data_[0] = a.data_[0] + b.data_[0];
-        result.data_[1] = a.data_[1] + b.data_[1];
+        result.x = a.x + b.x;
+        result.y = a.y + b.y;
     }
 
     Vec2d vec2sumWRV(Vec2d& a, Vec2d& b) {
         Vec2d result;
-        result.data_[0] = a.data_[0] + b.data_[0];
-        result.data_[1] = a.data_[1] + b.data_[1];
+        result.x = a.x + b.x;
+        result.y = a.y + b.y;
         return result;
     }
 
     void vec2diff(Vec2d& result, const Vec2d& a, const Vec2d& b) {
-        result.data_[0] = a.data_[0] - b.data_[0];
-        result.data_[1] = a.data_[1] - b.data_[1];
+        result.x = a.x - b.x;
+        result.y = a.y - b.y;
     }
 
     Vec2d vec2diffWRV(Vec2d& a, Vec2d& b) {
         Vec2d result;
-        result.data_[0] = a.data_[0] - b.data_[0];
-        result.data_[1] = a.data_[1] - b.data_[1];
+        result.x = a.x - b.x;
+        result.y = a.y - b.y;
         return result;
     }
 
     double vec2dotProduct(Vec2d& a, Vec2d& b) {
-        return a.data_[0] * b.data_[0] + a.data_[1] * b.data_[1];
+        return a.x * b.x + a.y * b.y;
     }
 
     void vec2outerProduct(Mat2d& result, const Vec2d& a, const Vec2d& b) {
-        result.data_[0 * Two + 0] = a.data_[0] * b.data_[0];
-        result.data_[0 * Two + 1] = a.data_[1] * b.data_[0];
-        result.data_[1 * Two + 0] = a.data_[0] * b.data_[1];
-        result.data_[1 * Two + 1] = a.data_[1] * b.data_[1];
+        result.w = a.x * b.x;
+        result.x = a.y * b.x;
+        result.y = a.x * b.y;
+        result.z = a.y * b.y;
     }
 
     Mat2d vec2outerProductWRV(const Vec2d& a, const Vec2d& b) {
         Mat2d result;
 
-        result.data_[0 * Two + 0] = a.data_[0] * b.data_[0];
-        result.data_[0 * Two + 1] = a.data_[1] * b.data_[0];
-        result.data_[1 * Two + 0] = a.data_[0] * b.data_[1];
-        result.data_[1 * Two + 1] = a.data_[1] * b.data_[1];
+        result.w = a.x * b.x;
+        result.x = a.y * b.x;
+        result.y = a.x * b.y;
+        result.z = a.y * b.y;
 
         return result;
     }
 
     Vec2d row2VecTimesMat2WRV(const Vec2d& v, const Mat2d& m) {
         Vec2d result;
-        result.data_[0] = (v.data_[0] * m.data_[0]) + (v.data_[1] * m.data_[2]);
-        result.data_[1] = (v.data_[0] * m.data_[1]) + (v.data_[1] * m.data_[3]);
+        result.x = (v.x * m.w) + (v.y * m.y);
+        result.y = (v.x * m.x) + (v.y * m.z);
 
-        result.isCol_ = false;
+        //        result.isCol_ = false;
 
         return result;
     }
@@ -189,7 +218,7 @@ namespace cuars {
     void preRotateAff2(Affine2d& t, double angle) {
         if (t.data_[2 * Three + 2] == 1) {
             double cth = cos(angle);
-            double sth = sin(theta);
+            double sth = sin(angle);
             //first row
             t.data_[0 * cuars::Three + 0] = (t.data_[0 * cuars::Three + 0] * cth) - (t.data_[1 * cuars::Three + 0] * sth);
             t.data_[0 * cuars::Three + 1] = (t.data_[0 * cuars::Three + 1] * cth) - (t.data_[1 * cuars::Three + 1] * sth);
@@ -246,35 +275,7 @@ namespace cuars {
             printf("ERROR: Transf Matrix last row != 0  0  1\n");
         }
     }
-    
-    void aff2Prod(Affine2d& out, const Affine2d& a, const Affine2d& b) {
-        if (a.isLastRowOK() && b.isLastRowOK()) {
-            //elements not mentioned are implicitly ok (or invariant if they are sum terms, because last rows are [0  0  1])
 
-            //first column
-            out.data_[0 * cuars::Three + 0] = (a.at(0, 0) * b.at(0, 0)) + (a.at(0, 1) * b.at(1, 0)); // + a.at(0,2) * b.at(2,0)
-            out.data_[1 * cuars::Three + 0] = (a.at(1, 0) * b.at(0, 0)) + (a.at(1, 1) * b.at(1, 0)); // + a.at(1,2) * b.at(2,0)
-            //            out.data_[2 * cuars::Three + 0] = (a.at(2, 0) * b.at(0, 0)) + (a.at(2, 1) * b.at(1, 0)) + (a.at(2,2) * b.at(2,0));
-            out.data_[2 * cuars::Three + 0] = 0.0;
-
-            //second column
-            out.data_[0 * cuars::Three + 1] = (a.at(0, 0) * b.at(0, 1)) + (a.at(0, 1) * b.at(1, 1)); // + a.at(0,2) * b.at(2,1) 
-            out.data_[1 * cuars::Three + 1] = (a.at(1, 0) * b.at(0, 1)) + (a.at(1, 1) * b.at(1, 1)); // + a.at(1,2) * b.at(2,1)
-            //            out.data_[2 * cuars::Three + 1] = (a.at(2, 0) * b.at(0, 1)) + (a.at(2, 1) * b.at(1, 1)) + (a.at(2,2) * b.at(2,1));
-            out.data_[2 * cuars::Three + 1] = 0.0;
-
-
-            //third column
-            out.data_[0 * cuars::Three + 2] = (a.at(0, 0) * b.at(0, 2)) + (a.at(0, 1) * b.at(1, 2)); // + a.at(0,2) * b.at(2,2)
-            out.data_[1 * cuars::Three + 2] = (a.at(1, 0) * b.at(0, 2)) + (a.at(1, 1) * b.at(1, 2)); // + a.at(1,2) * b.at(2,2)
-            //            out.data_[2 * cuars::Three + 2] = (a.at(2, 0) * b.at(0, 2)) + (a.at(2, 1) * b.at(1, 2)) + (a.at(2, 2) + b.at(2, 2));
-            out.data_[2 * cuars::Three + 2] = 1.0;
-
-        } else {
-            printf("ERROR: Transf Matrix last row != 0  0  1\n");
-        }
-    }
-    
     Affine2d aff2ProdWRV(const Affine2d& a, const Affine2d& b) {
         Affine2d out;
         if (a.isLastRowOK() && b.isLastRowOK()) {

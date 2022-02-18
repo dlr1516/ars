@@ -256,7 +256,7 @@ namespace cuars {
             data_[2 * Three + 1] = 0.0;
         }
 
-        bool isLastRowOK() {
+        bool isLastRowOK() const {
             double a20 = data_[2 * Three + 0];
             double a21 = data_[2 * Three + 1];
             double a22 = data_[2 * Three + 2];
@@ -278,7 +278,7 @@ namespace cuars {
             return false;
         }
 
-        double at(int r, int c) {
+        double at(int r, int c) const {
             if (r >= 0 && r < Three && c >= 0 && c < Three)
                 return data_[r * Three + c];
             else {
