@@ -66,7 +66,7 @@ namespace cuars {
     void make2dRotMat(Mat2d& mtx, double theta);
 
     void fillRowMajor(Mat2d& mtx, double a, double b, double c, double d);
-    
+
     void transpose(Mat2d& mtx);
 
     void mat2dSum(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx);

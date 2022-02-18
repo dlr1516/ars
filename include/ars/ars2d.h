@@ -118,7 +118,7 @@ namespace cuars {
          * @param coeffs the coefficients
          */
         void setCoefficients(const std::vector<double>& coeffs);
-        
+
         /**
          * Alternative to std::vector method; the only difference is the type of the parameter
          */

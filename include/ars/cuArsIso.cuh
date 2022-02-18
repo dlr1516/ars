@@ -5,7 +5,6 @@
 #include <thrust/host_vector.h>
 #include <thrust/device_malloc.h>
 
-
 int ceilPow2(int n) {
     ARS_ASSERT(n > 0);
 
@@ -18,7 +17,6 @@ int ceilPow2(int n) {
 
     return nPadded;
 }
-
 
 __device__
 double evaluatePnebi0Polynom(double x) {
@@ -100,7 +98,7 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, in
     for (int tid = index; tid < totalNumComparisons; tid += stride) {
 
         int j = tid % numPtsAfterPadding;
-        int i = (tid-j) / numPtsAfterPadding;
+        int i = (tid - j) / numPtsAfterPadding;
         //        printf("i %d j %d\n", i, j);
         //        printf("tid %d i %d j %d tidIJ %d --- numPts %d numPtsAfterPadding %d numColsPadded %d totNumComp %d index %d\n", tid, i, j, i * numPtsAfterPadding + j, numPts, numPtsAfterPadding, numColsPadded, totalNumComparisons, index);
 
@@ -149,7 +147,7 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, in
 
 
 
-            int pnebisSz = fourierOrder+1;
+            int pnebisSz = fourierOrder + 1;
             double pnebis[21]; //Fourier Order + 1
             if (pnebis == nullptr)
                 printf("ERROR ALLOCATING WITH NEW[]!\n");
@@ -189,7 +187,7 @@ void iigKernel(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, in
                 cth = ctmp;
                 sth = stmp;
             }
-            
+
             delete pnebis;
         } else if (pnebiMode == cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT) {
             //                updateARSF2CoeffRecursDownLUT(lambdaSqNorm_, phi_, w2, nFourier, pnebiLut_, coeffs);

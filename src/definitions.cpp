@@ -179,12 +179,12 @@ namespace cuars {
         data_[3] /= sc;
     }
 
-//    void Mat2d::fillRowMajor(double a, double b, double c, double d) {
-//        data_[0 * Two + 0] = a;
-//        data_[0 * Two + 1] = b;
-//        data_[1 * Two + 0] = c;
-//        data_[1 * Two + 1] = d;
-//    }
+    //    void Mat2d::fillRowMajor(double a, double b, double c, double d) {
+    //        data_[0 * Two + 0] = a;
+    //        data_[0 * Two + 1] = b;
+    //        data_[1 * Two + 0] = c;
+    //        data_[1 * Two + 1] = d;
+    //    }
 
     //    void Mat2d::make2dRotMat(double theta) {
     //        data_[0 * Two + 0] = cos(theta);
@@ -193,11 +193,11 @@ namespace cuars {
     //        data_[1 * Two + 1] = data_[0 * Two + 0];
     //    }
 
-//    void Mat2d::transpose() {
-//        double tmp = data_[0 * Two + 1];
-//        data_[0 * Two + 1] = data_[1 * Two + 0];
-//        data_[1 * Two + 0] = tmp;
-//    }
+    //    void Mat2d::transpose() {
+    //        double tmp = data_[0 * Two + 1];
+    //        data_[0 * Two + 1] = data_[1 * Two + 0];
+    //        data_[1 * Two + 0] = tmp;
+    //    }
 
     Mat2d Mat2d::transposeReturningValue() {
         Mat2d transposed;
