@@ -215,43 +215,19 @@ namespace cuars {
         }
     }
 
-    //    void preRotateAff2(Affine2d& t, double angle) {
-    //        if (t.isLastRowOK()) {
-    //            double cth = cos(angle);
-    //            double sth = sin(angle);
-    //            //first row
-    //            t.data_[0 * cuars::Three + 0] = (t.data_[0 * cuars::Three + 0] * cth) - (t.data_[1 * cuars::Three + 0] * sth);
-    //            t.data_[0 * cuars::Three + 1] = (t.data_[0 * cuars::Three + 1] * cth) - (t.data_[1 * cuars::Three + 1] * sth);
-    //            t.data_[0 * cuars::Three + 2] = (t.data_[0 * cuars::Three + 2] * cth) - (t.data_[1 * cuars::Three + 2] * sth);
-    //            //second row
-    //            t.data_[1 * cuars::Three + 0] = (t.data_[0 * cuars::Three + 0] * sth) + (t.data_[1 * cuars::Three + 0] * cth);
-    //            t.data_[1 * cuars::Three + 1] = (t.data_[0 * cuars::Three + 1] * sth) + (t.data_[1 * cuars::Three + 1] * cth);
-    //            t.data_[1 * cuars::Three + 2] = (t.data_[0 * cuars::Three + 2] * sth) + (t.data_[1 * cuars::Three + 2] * cth);
-    //
-    //            std::cout << "t after prerotation" << std::endl;
-    //            std::cout << t;
-    //            // third (last) row should already be ok
-    //            //            t.data_[2 * cuars::Three + 0] = 0.0;
-    //            //            t.data_[2 * cuars::Three + 1] = 0.0;
-    //            //            t.data_[2 * cuars::Three + 2] = 1.0;
-    //        } else {
-    //            printf("ERROR: Transf Matrix affine scale != 1\n");
-    //        }
-    //    }
-
     void preRotateAff2(Affine2d& t, double angle) {
         if (t.isLastRowOK()) {
             double cth = cos(angle);
             double sth = sin(angle);
-            Affine2d tmpCopy = t;
+            Affine2d tTmpCopy = t;
             //first row
-            t.data_[0 * cuars::Three + 0] = (tmpCopy.data_[0 * cuars::Three + 0] * cth) - (tmpCopy.data_[1 * cuars::Three + 0] * sth);
-            t.data_[0 * cuars::Three + 1] = (tmpCopy.data_[0 * cuars::Three + 1] * cth) - (tmpCopy.data_[1 * cuars::Three + 1] * sth);
-            t.data_[0 * cuars::Three + 2] = (tmpCopy.data_[0 * cuars::Three + 2] * cth) - (tmpCopy.data_[1 * cuars::Three + 2] * sth);
+            t.data_[0 * cuars::Three + 0] = (tTmpCopy.data_[0 * cuars::Three + 0] * cth) - (tTmpCopy.data_[1 * cuars::Three + 0] * sth);
+            t.data_[0 * cuars::Three + 1] = (tTmpCopy.data_[0 * cuars::Three + 1] * cth) - (tTmpCopy.data_[1 * cuars::Three + 1] * sth);
+            t.data_[0 * cuars::Three + 2] = (tTmpCopy.data_[0 * cuars::Three + 2] * cth) - (tTmpCopy.data_[1 * cuars::Three + 2] * sth);
             //second row
-            t.data_[1 * cuars::Three + 0] = (tmpCopy.data_[0 * cuars::Three + 0] * sth) + (tmpCopy.data_[1 * cuars::Three + 0] * cth);
-            t.data_[1 * cuars::Three + 1] = (tmpCopy.data_[0 * cuars::Three + 1] * sth) + (tmpCopy.data_[1 * cuars::Three + 1] * cth);
-            t.data_[1 * cuars::Three + 2] = (tmpCopy.data_[0 * cuars::Three + 2] * sth) + (tmpCopy.data_[1 * cuars::Three + 2] * cth);
+            t.data_[1 * cuars::Three + 0] = (tTmpCopy.data_[0 * cuars::Three + 0] * sth) + (tTmpCopy.data_[1 * cuars::Three + 0] * cth);
+            t.data_[1 * cuars::Three + 1] = (tTmpCopy.data_[0 * cuars::Three + 1] * sth) + (tTmpCopy.data_[1 * cuars::Three + 1] * cth);
+            t.data_[1 * cuars::Three + 2] = (tTmpCopy.data_[0 * cuars::Three + 2] * sth) + (tTmpCopy.data_[1 * cuars::Three + 2] * cth);
 
             // third (last) row should already be ok
             //            t.data_[2 * cuars::Three + 0] = 0.0;
