@@ -152,7 +152,7 @@ namespace cuars {
         result.y = a.y + b.y;
     }
 
-    Vec2d vec2sumWRV(Vec2d& a, Vec2d& b) {
+    Vec2d vec2sumWRV(const Vec2d& a, const Vec2d& b) {
         Vec2d result;
         result.x = a.x + b.x;
         result.y = a.y + b.y;
@@ -164,7 +164,7 @@ namespace cuars {
         result.y = a.y - b.y;
     }
 
-    Vec2d vec2diffWRV(Vec2d& a, Vec2d& b) {
+    Vec2d vec2diffWRV(const Vec2d& a, const Vec2d& b) {
         Vec2d result;
         result.x = a.x - b.x;
         result.y = a.y - b.y;
@@ -206,7 +206,7 @@ namespace cuars {
     //affine matrices related
 
     void preTransfVec2(Vec2d& p, const Affine2d& t) {
-        if (t.data_[2 * Three + 2] == 1) {
+        if (t.isLastRowOK()) {
             p.x = (p.x * t.data_[0 * Three + 0]) + (p.y * t.data_[0 * Three + 1]) + (t.data_[0 * Three + 2]);
             p.y = (p.x * t.data_[1 * Three + 0]) + (p.y * t.data_[1 * Three + 1]) + (t.data_[1 * Three + 2]);
             //p.z = 1.0;
@@ -215,33 +215,72 @@ namespace cuars {
         }
     }
 
+    //    void preRotateAff2(Affine2d& t, double angle) {
+    //        if (t.isLastRowOK()) {
+    //            double cth = cos(angle);
+    //            double sth = sin(angle);
+    //            //first row
+    //            t.data_[0 * cuars::Three + 0] = (t.data_[0 * cuars::Three + 0] * cth) - (t.data_[1 * cuars::Three + 0] * sth);
+    //            t.data_[0 * cuars::Three + 1] = (t.data_[0 * cuars::Three + 1] * cth) - (t.data_[1 * cuars::Three + 1] * sth);
+    //            t.data_[0 * cuars::Three + 2] = (t.data_[0 * cuars::Three + 2] * cth) - (t.data_[1 * cuars::Three + 2] * sth);
+    //            //second row
+    //            t.data_[1 * cuars::Three + 0] = (t.data_[0 * cuars::Three + 0] * sth) + (t.data_[1 * cuars::Three + 0] * cth);
+    //            t.data_[1 * cuars::Three + 1] = (t.data_[0 * cuars::Three + 1] * sth) + (t.data_[1 * cuars::Three + 1] * cth);
+    //            t.data_[1 * cuars::Three + 2] = (t.data_[0 * cuars::Three + 2] * sth) + (t.data_[1 * cuars::Three + 2] * cth);
+    //
+    //            std::cout << "t after prerotation" << std::endl;
+    //            std::cout << t;
+    //            // third (last) row should already be ok
+    //            //            t.data_[2 * cuars::Three + 0] = 0.0;
+    //            //            t.data_[2 * cuars::Three + 1] = 0.0;
+    //            //            t.data_[2 * cuars::Three + 2] = 1.0;
+    //        } else {
+    //            printf("ERROR: Transf Matrix affine scale != 1\n");
+    //        }
+    //    }
+
     void preRotateAff2(Affine2d& t, double angle) {
-        if (t.data_[2 * Three + 2] == 1) {
+        if (t.isLastRowOK()) {
             double cth = cos(angle);
             double sth = sin(angle);
+            Affine2d tmpCopy = t;
             //first row
-            t.data_[0 * cuars::Three + 0] = (t.data_[0 * cuars::Three + 0] * cth) - (t.data_[1 * cuars::Three + 0] * sth);
-            t.data_[0 * cuars::Three + 1] = (t.data_[0 * cuars::Three + 1] * cth) - (t.data_[1 * cuars::Three + 1] * sth);
-            t.data_[0 * cuars::Three + 2] = (t.data_[0 * cuars::Three + 2] * cth) - (t.data_[1 * cuars::Three + 2] * sth);
+            t.data_[0 * cuars::Three + 0] = (tmpCopy.data_[0 * cuars::Three + 0] * cth) - (tmpCopy.data_[1 * cuars::Three + 0] * sth);
+            t.data_[0 * cuars::Three + 1] = (tmpCopy.data_[0 * cuars::Three + 1] * cth) - (tmpCopy.data_[1 * cuars::Three + 1] * sth);
+            t.data_[0 * cuars::Three + 2] = (tmpCopy.data_[0 * cuars::Three + 2] * cth) - (tmpCopy.data_[1 * cuars::Three + 2] * sth);
             //second row
-            t.data_[1 * cuars::Three + 0] = (t.data_[0 * cuars::Three + 0] * sth) + (t.data_[1 * cuars::Three + 0] * cth);
-            t.data_[1 * cuars::Three + 1] = (t.data_[0 * cuars::Three + 1] * sth) + (t.data_[1 * cuars::Three + 1] * cth);
-            t.data_[1 * cuars::Three + 2] = (t.data_[0 * cuars::Three + 2] * sth) + (t.data_[1 * cuars::Three + 2] * cth);
+            t.data_[1 * cuars::Three + 0] = (tmpCopy.data_[0 * cuars::Three + 0] * sth) + (tmpCopy.data_[1 * cuars::Three + 0] * cth);
+            t.data_[1 * cuars::Three + 1] = (tmpCopy.data_[0 * cuars::Three + 1] * sth) + (tmpCopy.data_[1 * cuars::Three + 1] * cth);
+            t.data_[1 * cuars::Three + 2] = (tmpCopy.data_[0 * cuars::Three + 2] * sth) + (tmpCopy.data_[1 * cuars::Three + 2] * cth);
 
             // third (last) row should already be ok
             //            t.data_[2 * cuars::Three + 0] = 0.0;
             //            t.data_[2 * cuars::Three + 1] = 0.0;
             //            t.data_[2 * cuars::Three + 2] = 1.0;
+
+            //            std::cout << "t after prerotation" << std::endl;
+            //            std::cout << t;
         } else {
             printf("ERROR: Transf Matrix affine scale != 1\n");
         }
     }
 
     void preTranslateAff2(Affine2d& t, double x, double y) {
-        if (t.data_[2 * Three + 2] == 1) {
+        if (t.isLastRowOK()) {
             //just last column: the other two remain untouched
             t.data_[0 * cuars::Three + 2] = t.data_[0 * cuars::Three + 2] + x; // += x
             t.data_[1 * cuars::Three + 2] = t.data_[1 * cuars::Three + 2] + y; // += y
+            //            t.data_[2 * cuars::Three + 2] = 1.0;
+        } else {
+            printf("ERROR: Transf Matrix affine scale != 1\n");
+        }
+    }
+
+    void preTranslateAff2(Affine2d& t, const Vec2d& p) {
+        if (t.isLastRowOK()) {
+            //just last column: the other two remain untouched
+            t.data_[0 * cuars::Three + 2] = t.data_[0 * cuars::Three + 2] + p.x; // += x
+            t.data_[1 * cuars::Three + 2] = t.data_[1 * cuars::Three + 2] + p.y; // += y
             //            t.data_[2 * cuars::Three + 2] = 1.0;
         } else {
             printf("ERROR: Transf Matrix affine scale != 1\n");
@@ -295,8 +334,8 @@ namespace cuars {
 
 
             //third column
-            out.data_[0 * cuars::Three + 2] = (a.at(0, 0) * b.at(0, 2)) + (a.at(0, 1) * b.at(1, 2)); // + a.at(0,2) * b.at(2,2)
-            out.data_[1 * cuars::Three + 2] = (a.at(1, 0) * b.at(0, 2)) + (a.at(1, 1) * b.at(1, 2)); // + a.at(1,2) * b.at(2,2)
+            out.data_[0 * cuars::Three + 2] = (a.at(0, 0) * b.at(0, 2)) + (a.at(0, 1) * b.at(1, 2)) + a.at(0, 2); // + a.at(0,2) * b.at(2,2) = a.at(0,2) because b.at(2,2) = 1.0
+            out.data_[1 * cuars::Three + 2] = (a.at(1, 0) * b.at(0, 2)) + (a.at(1, 1) * b.at(1, 2)) + a.at(1, 2); // + a.at(1,2) * b.at(2,2) = a.at(1,2) because b.at(2,2) = 1.0
             //            out.data_[2 * cuars::Three + 2] = (a.at(2, 0) * b.at(0, 2)) + (a.at(2, 1) * b.at(1, 2)) + (a.at(2, 2) + b.at(2, 2));
             out.data_[2 * cuars::Three + 2] = 1.0;
 
@@ -306,7 +345,17 @@ namespace cuars {
         return out;
     }
 
-
+    Vec2d aff2TimesVec2WRV(const Affine2d& mAff, const Vec2d& p) {
+        Vec2d result;
+        if (mAff.isLastRowOK()) {
+            result.x = (mAff.at(0, 0) * p.x) + (mAff.at(0, 1) * p.y) + (mAff.at(0, 2));
+            result.y = (mAff.at(1, 0) * p.x) + (mAff.at(1, 1) * p.y) + (mAff.at(1, 2));
+            //result scale factor = 1
+        } else {
+            printf("ERROR: Transf Matrix last row != 0  0  1\n");
+        }
+        return result;
+    }
 
 } // end of namespace
 

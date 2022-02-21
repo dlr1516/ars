@@ -20,15 +20,23 @@
 
 #include <iostream>
 #include <chrono>
-#include <cuda_runtime.h>
+
+#include "ars/Profiler.h"
 
 #include "ars/mpeg7RW.h"
 #include "ars/cuArsIso.cuh"
 
 
 
+
 #define PRINT_DIM(X) std::cout << #X << " rows " << X.rows() << " cols " << X.cols() << std::endl;
 #define RAD2DEG(X) (180.0/M_PI*(X))
+
+
+
+double mod180(double angle) {
+    return (angle - floor(angle / M_PI) * M_PI);
+}
 
 struct BoundInterval {
     double x0;
@@ -37,13 +45,58 @@ struct BoundInterval {
     double y1;
 };
 
-int main(void) {
-
+int main(int argc, char **argv) {
+    cuars::AngularRadonSpectrum2d arsSrc;
+    cuars::AngularRadonSpectrum2d arsDst;
     ArsImgTests::PointReaderWriter pointsSrc;
     ArsImgTests::PointReaderWriter pointsDst;
 
-    std::string filenameSrc = "/home/rimlab/Downloads/mpeg7_point_tests/noise000_occl00_rand000/apple-1_xp0686_yp0967_t059_sigma0001_occl000.txt";
-    std::string filenameDst = "/home/rimlab/Downloads/mpeg7_point_tests/noise000_occl00_rand000/apple-1_xp0749_yn0521_t090_sigma0001_occl000.txt";
+
+    rofl::ParamMap params;
+    std::string filenameCfg;
+    std::string filenameSrc;
+    std::string filenameDst;
+    std::string filenameRot;
+    std::string filenameArsSrc;
+    std::string filenameArsDst;
+    std::string filenameArsRot;
+    std::string filenameArsCor;
+    std::string filenameCovSrc;
+    std::string filenameCovDst;
+    int arsOrder;
+    double arsSigma, arsThetaToll;
+    double rotTrue, rotArs;
+    double sampleRes, sampleAng;
+    int sampleNum;
+    bool saveOn;
+    bool saveCov;
+
+
+    params.read(argc, argv);
+    params.getParam<std::string>("cfg", filenameCfg, "");
+    std::cout << "config filename: " << filenameCfg << std::endl;
+    if (filenameCfg != "") {
+        params.read(filenameCfg);
+    }
+
+    params.read(argc, argv);
+    params.getParam<std::string>("src", filenameSrc, "/home/rimlab/Downloads/mpeg7_point_tests/noise000_occl00_rand000/apple-1_xp0686_yp0967_t059_sigma0001_occl000.txt");
+    params.getParam<std::string>("dst", filenameDst, "/home/rimlab/Downloads/mpeg7_point_tests/noise000_occl00_rand000/apple-1_xp0749_yn0521_t090_sigma0001_occl000.txt");
+    params.getParam<int>("arsOrder", arsOrder, 20);
+    params.getParam<double>("arsSigma", arsSigma, 1.0);
+    params.getParam<double>("arsTollDeg", arsThetaToll, 1.0);
+    arsThetaToll *= M_PI / 180.0;
+    params.getParam<double>("sampleResDeg", sampleRes, 0.5);
+    sampleRes *= M_PI / 180.0;
+    params.getParam<bool>("saveOn", saveOn, false);
+    params.getParam<bool>("saveCov", saveCov, false);
+
+    std::cout << "\nParameter values:\n";
+    params.write(std::cout);
+    std::cout << std::endl;
+
+
+
 
     // Loads files and computes the rotation
     std::cout << "\n*****\nLoading file \"" << filenameSrc << "\"" << std::endl;
@@ -54,14 +107,10 @@ int main(void) {
 
 
 
-    cuars::AngularRadonSpectrum2d arsSrc;
-    cuars::AngularRadonSpectrum2d arsDst;
-    double sigma = 0.05;
-    int fourierOrder = 20;
 
     //ARS parameters setting
-    arsSrc.setARSFOrder(fourierOrder);
-    arsDst.setARSFOrder(fourierOrder);
+    arsSrc.setARSFOrder(arsOrder);
+    arsDst.setARSFOrder(arsOrder);
     cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode = cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD;
     arsSrc.setComputeMode(pnebiMode);
     arsDst.setComputeMode(pnebiMode);
@@ -74,7 +123,7 @@ int main(void) {
     const int numBlocks = (numPtsAfterPadding * numPtsAfterPadding) / blockSize; //number of blocks in grid (each block contains blockSize threads)
     const int gridTotalSize = blockSize*numBlocks; //total number of threads in grid
     //depth of mega-matrix
-    const int coeffsMatNumCols = 2 * fourierOrder + 2;
+    const int coeffsMatNumCols = 2 * arsOrder + 2;
     const int coeffsMatNumColsPadded = ceilPow2(coeffsMatNumCols);
     const int coeffsMatTotalSz = numPtsAfterPadding * numPtsAfterPadding * coeffsMatNumColsPadded;
     //Fourier matrix sum -> parallelization parameters
@@ -108,7 +157,7 @@ int main(void) {
     cudaMemset(d_coeffsArsSrc, 0.0, coeffsMatNumColsPadded * sizeof (double));
 
     cudaEventRecord(startSrc);
-    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputSrc, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatSrc);
+    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputSrc, arsSigma, arsSigma, numPts, numPtsAfterPadding, arsOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatSrc);
     sumColumns << <1, sumBlockSz>> >(coeffsMatSrc, numPtsAfterPadding, coeffsMatNumColsPadded, d_coeffsArsSrc);
     cudaEventRecord(stopSrc);
 
@@ -123,7 +172,7 @@ int main(void) {
     cudaError_t cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
         printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
-    
+
     //    for (int i = 0; i < coeffsMatNumColsPadded; ++i) {
     //        std::cout << "coeffsArsSrc[" << i << "] " << coeffsArsSrc[i] << std::endl;
     //    }
@@ -160,7 +209,7 @@ int main(void) {
     cudaMemset(d_coeffsArsDst, 0.0, coeffsMatNumColsPadded * sizeof (double));
 
     cudaEventRecord(startDst);
-    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputDst, sigma, sigma, numPts, numPtsAfterPadding, fourierOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatDst);
+    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputDst, arsSigma, arsSigma, numPts, numPtsAfterPadding, arsOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatDst);
     sumColumns << <1, sumBlockSz>> >(coeffsMatDst, numPtsAfterPadding, coeffsMatNumColsPadded, d_coeffsArsDst);
     cudaEventRecord(stopDst);
 
@@ -177,7 +226,7 @@ int main(void) {
     cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
         printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
-    
+
     //    for (int i = 0; i < coeffsMatNumColsPadded; ++i) {
     //        std::cout << "coeffsArsDst[" << i << "] " << coeffsArsDst[i] << std::endl;
     //    }
@@ -191,55 +240,65 @@ int main(void) {
 
 
 
+
+
     //Computation final computations (correlation, ...) on CPU
     std::cout << "\nARS Coefficients:\n";
-    std::cout << "\ti \tDownward \tLUT\n";
+    std::cout << "Coefficients: Src, Dst, Cor" << std::endl;
+
+    double thetaMax, corrMax, fourierTol;
+    fourierTol = 1.0; // TODO: check for a proper tolerance
+
+    std::vector<double> coeffsCor;
+    {
+        cuars::ScopedTimer("ars.correlation()");
+        std::vector<double> tmpSrc;
+        tmpSrc.assign(coeffsArsSrc, coeffsArsSrc + coeffsMatNumColsPadded);
+        std::vector<double> tmpDst;
+        tmpDst.assign(coeffsArsDst, coeffsArsDst + coeffsMatNumColsPadded);
+        cuars::computeFourierCorr(tmpSrc, tmpDst, coeffsCor);
+        cuars::findGlobalMaxBBFourier(coeffsCor, 0.0, M_PI, arsThetaToll, fourierTol, thetaMax, corrMax);
+        rotArs = thetaMax;
+    }
+
+
+
     arsSrc.setCoefficients(coeffsArsSrc, coeffsMatNumCols);
     //    for (int i = 0; i < coeffsVectorMaxSz; i++) {
     //        std::cout << "arsSrc - coeff_d[" << i << "] " << d_coeffsMat1[i] << std::endl;
     //    }
     arsDst.setCoefficients(coeffsArsDst, coeffsMatNumCols);
     for (int i = 0; i < arsSrc.coefficients().size() && i < arsDst.coefficients().size(); ++i) {
-        std::cout << "\t" << i << " \t" << arsSrc.coefficients().at(i) << " \t" << arsDst.coefficients().at(i) << "\n";
+        std::cout << "\t" << i << " \t" << arsSrc.coefficients().at(i) << " \t" << arsDst.coefficients().at(i) << " \t" << coeffsCor[i] << std::endl;
     }
     std::cout << std::endl;
 
-    std::vector<double> funcFourierRecursDownSrc;
-    std::vector<double> funcFourierRecursDownDst;
-    int thnum = 360;
-    double dtheta = M_PI / thnum;
-    double theta;
-    for (int i = 0; i < thnum; ++i) {
-        theta = dtheta * i;
-        funcFourierRecursDownSrc.push_back(arsSrc.eval(theta));
-        funcFourierRecursDownDst.push_back(arsDst.eval(theta));
-    }
-
-    std::cout << "\nBranch and Bound limits:\n";
-    int bbnum = 32;
-    std::vector<BoundInterval> bbbs(bbnum);
-    for (int i = 0; i < bbnum; ++i) {
-        bbbs[i].x0 = M_PI * i / bbnum;
-        bbbs[i].x1 = M_PI * (i + 1) / bbnum;
-        cuars::findLUFourier(arsSrc.coefficients(), bbbs[i].x0, bbbs[i].x1, bbbs[i].y0, bbbs[i].y1);
-        std::cout << i << ": x0 " << RAD2DEG(bbbs[i].x0) << " x1 " << RAD2DEG(bbbs[i].x1) << ", y0 " << bbbs[i].y0 << " y1 " << bbbs[i].y1 << std::endl;
-    }
 
 
-    cuars::FourierOptimizerBB1D optim(arsSrc.coefficients());
-    double xopt, ymin, ymax;
-    optim.enableXTolerance(true);
-    optim.enableYTolerance(true);
-    optim.setXTolerance(M_PI / 180.0 * 0.5);
-    optim.setYTolerance(1.0);
-    optim.findGlobalMax(0, M_PI, xopt, ymin, ymax);
-    std::cout << "\n****\nMaximum in x = " << xopt << " (" << RAD2DEG(xopt) << " deg), maximum between [" << ymin << "," << ymax << "]" << std::endl;
+    // Computes the rotated points,centroid, affine transf matrix between src and dst
+    ArsImgTests::PointReaderWriter pointsRot(pointsSrc.points());
+    cuars::Vec2d centroidSrc = pointsSrc.computeCentroid();
+    cuars::Vec2d centroidDst = pointsDst.computeCentroid();
+    cuars::Affine2d rotSrcDst = ArsImgTests::PointReaderWriter::coordToTransform(0.0, 0.0, rotArs);
+    //    cuars::Vec2d translSrcDst = centroidDst - rotSrcDst * centroidSrc;
+    cuars::Vec2d translSrcDst;
+    cuars::vec2diff(translSrcDst, centroidDst, cuars::aff2TimesVec2WRV(rotSrcDst, centroidSrc));
+    //    std::cout << "centroidSrc " << centroidSrc.transpose() << "\n"
+    //            << "rotSrcDst\n" << rotSrcDst.matrix() << "\n"
+    //            << "translation: [" << translSrcDst.transpose() << "] rotation[deg] " << (180.0 / M_PI * rotArs) << "\n";
+    std::cout << "centroidSrc " << centroidSrc.x << " \t" << centroidSrc.y << "\n"
+            << "centroidDst " << centroidDst.x << " \t" << centroidDst.y << "\n"
+            << "rotSrcDst\n" << rotSrcDst << "\n"
+            << "translation: [" << translSrcDst.x << " \t" << translSrcDst.y << "] rotation[deg] " << (180.0 / M_PI * rotArs) << "\n";
+    pointsRot.applyTransform(translSrcDst.x, translSrcDst.y, rotArs);
 
-    double xopt2, ymax2;
-    cuars::findGlobalMaxBBFourier(arsSrc.coefficients(), 0, M_PI, M_PI / 180.0 * 0.5, 1.0, xopt2, ymax2);
-    std::cout << "  repeated evaluation with findGlobalMaxBBFourier(): maximum in x " << xopt2 << " (" << RAD2DEG(xopt2) << " deg), maximum value " << ymax2 << std::endl;
 
 
+    rotTrue = pointsDst.getRotTheta() - pointsSrc.getRotTheta();
+    std::cout << "\n***\npointsDst.getrotTheta() [deg]" << (180 / M_PI * pointsDst.getRotTheta())
+            << ", pointsSrc.getrotTheta() [deg] " << (180.0 / M_PI * pointsSrc.getRotTheta()) << "\n";
+    std::cout << "rotTrue[deg] \t" << (180.0 / M_PI * rotTrue) << " \t" << (180.0 / M_PI * mod180(rotTrue)) << std::endl;
+    std::cout << "rotArs[deg] \t" << (180.0 / M_PI * rotArs) << " \t" << (180.0 / M_PI * mod180(rotArs)) << std::endl;
 
     //Free CPU memory
     free(coeffsArsSrc);

@@ -577,6 +577,9 @@ namespace ArsImgTests {
         //        cuars::Affine2d transform = cuars::Affine2d::Identity();
         cuars::Affine2d transform(0.0, 0.0, 0.0);
 
+        //        std::cout << "TRANSFORM IDENTITY" << std::endl;
+        //        std::cout << transform;
+
         //        transform.prerotate(theta);
         cuars::preRotateAff2(transform, theta);
         //        transform.pretranslate(cuars::Vec2d(x, y));

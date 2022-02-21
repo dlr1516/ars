@@ -81,11 +81,11 @@ namespace cuars {
 
     void vec2sum(Vec2d& result, const Vec2d& a, const Vec2d & b);
 
-    Vec2d vec2sumWRV(Vec2d& a, Vec2d & b);
+    Vec2d vec2sumWRV(const Vec2d& a, const Vec2d & b);
 
     void vec2diff(Vec2d& result, const Vec2d& a, const Vec2d & b);
 
-    Vec2d vec2diffWRV(Vec2d& a, Vec2d & b);
+    Vec2d vec2diffWRV(const Vec2d& a, const Vec2d & b);
 
     double vec2dotProduct(Vec2d& a, Vec2d & b);
 
@@ -103,10 +103,13 @@ namespace cuars {
 
     void preTranslateAff2(Affine2d& t, double x, double y);
 
+    void preTranslateAff2(Affine2d& t, const Vec2d& p);
+
     void aff2Prod(Affine2d& out, const Affine2d& a, const Affine2d & b);
 
     Affine2d aff2ProdWRV(const Affine2d& a, const Affine2d & b);
 
+    Vec2d aff2TimesVec2WRV(const Affine2d& mAff, const Vec2d& p);
 
 
 

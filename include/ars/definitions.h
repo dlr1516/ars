@@ -23,6 +23,7 @@
 #include <thrust/host_vector.h>
 #include <cmath>
 
+
 #define ARS_PRINT(MSG) std::cout << __FILE__ << "," << __LINE__ << ": " << MSG << std::endl;
 
 #define ARS_ERROR(MSG) std::cerr << __FILE__ << "," << __LINE__ << ": " << MSG << std::endl;
@@ -288,9 +289,24 @@ namespace cuars {
 
         }
 
+        friend std::ostream &operator<<(std::ostream &os, cuars::Affine2d const &m) {
+            return os <<
+                    m.data_[0 * cuars::Three + 0] << " \t" << m.data_[0 * cuars::Three + 1] << " \t" << m.data_[0 * cuars::Three + 2] << " \n" <<
+                    m.data_[1 * cuars::Three + 0] << " \t" << m.data_[1 * cuars::Three + 1] << " \t" << m.data_[1 * cuars::Three + 2] << " \n" <<
+                    m.data_[2 * cuars::Three + 0] << " \t" << m.data_[2 * cuars::Three + 1] << " \t" << m.data_[2 * cuars::Three + 2] << " \n";
+
+        }
+
     };
 
+
+
+
 } // end of namespace
+
+//std::ostream &operator<<(std::ostream &os, cuars::Vec2d const &v) {
+//    return os << v.x << " \t" << v.y << "\n";
+//}
 
 #endif /* DEFINITIONS_H */
 
