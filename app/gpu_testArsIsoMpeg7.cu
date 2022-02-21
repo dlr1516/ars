@@ -32,8 +32,6 @@
 #define PRINT_DIM(X) std::cout << #X << " rows " << X.rows() << " cols " << X.cols() << std::endl;
 #define RAD2DEG(X) (180.0/M_PI*(X))
 
-
-
 double mod180(double angle) {
     return (angle - floor(angle / M_PI) * M_PI);
 }
@@ -66,10 +64,12 @@ int main(int argc, char **argv) {
     int arsOrder;
     double arsSigma, arsThetaToll;
     double rotTrue, rotArs;
-    double sampleRes, sampleAng;
-    int sampleNum;
-    bool saveOn;
-    bool saveCov;
+    //The variables below are for I/O related functionalities (plot, etc.) that are highly Eigen-based and are present in the CPU-only ArsImgTests...
+    //Maybe implement them later
+    //    double sampleRes, sampleAng; 
+    //    int sampleNum;
+    //    bool saveOn;
+    //    bool saveCov;
 
 
     params.read(argc, argv);
@@ -86,10 +86,10 @@ int main(int argc, char **argv) {
     params.getParam<double>("arsSigma", arsSigma, 1.0);
     params.getParam<double>("arsTollDeg", arsThetaToll, 1.0);
     arsThetaToll *= M_PI / 180.0;
-    params.getParam<double>("sampleResDeg", sampleRes, 0.5);
-    sampleRes *= M_PI / 180.0;
-    params.getParam<bool>("saveOn", saveOn, false);
-    params.getParam<bool>("saveCov", saveCov, false);
+    //    params.getParam<double>("sampleResDeg", sampleRes, 0.5);
+    //    sampleRes *= M_PI / 180.0;
+    //    params.getParam<bool>("saveOn", saveOn, false);
+    //    params.getParam<bool>("saveCov", saveCov, false);
 
     std::cout << "\nParameter values:\n";
     params.write(std::cout);
