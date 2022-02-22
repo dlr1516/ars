@@ -48,6 +48,22 @@ struct TestParams {
     int fileSkipper;
 };
 
+struct ParlArsIsoParams { //Isotropic ARS Parallelization Params
+    int numPts;
+    int numPtsAfterPadding;
+    int blockSize;
+    int numBlocks;
+    int gridTotalSize;
+    //depth of mega-matrix
+    int coeffsMatNumCols;
+    int coeffsMatNumColsPadded;
+    int coeffsMatTotalSz;
+    //Fourier matrix sum -> parallelization parameters
+    int sumBlockSz;
+    int sumGridSz;
+
+};
+
 
 
 void findComparisonPair(const std::vector<std::string>& inputFilenames, std::vector<std::pair<int, int> >& comPairs);
@@ -62,7 +78,9 @@ std::string getShortName(std::string filename);
 
 std::string getLeafDirectory(std::string filename);
 
-void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc, const ArsImgTests::PointReaderWriter& pointsDst, TestParams& tp, double& rotOut);
+void setupParallelization(ParlArsIsoParams& pp, int pointsSrcSz, int pointsDstSz, int fourierOrder);
+
+void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc, const ArsImgTests::PointReaderWriter& pointsDst, TestParams& tp, ParlArsIsoParams& paip, double& rotOut);
 
 double mod180(double angle);
 
@@ -79,6 +97,7 @@ int main(int argc, char **argv) {
     ArsImgTests::PointReaderWriter pointsSrc;
     ArsImgTests::PointReaderWriter pointsDst;
     TestParams tparams;
+    ParlArsIsoParams paiParams;
 
 
     rofl::ParamMap params;
@@ -93,6 +112,7 @@ int main(int argc, char **argv) {
     //    int sampleNum;
     //    bool saveOn;
     //    bool saveCov;
+    std::string resumeFilename;
     std::string filenameOut;
 
     std::string prefixName;
@@ -112,12 +132,13 @@ int main(int argc, char **argv) {
     params.read(argc, argv);
     params.getParam<std::string>("in", inputGlob, std::experimental::filesystem::current_path().string() + "/*");
     params.getParam<std::string>("out", filenameOut, mpeg7io::generateStampedString("results_", ".txt"));
+    params.getParam<std::string>("resume", resumeFilename, "");
     params.getParam<bool>("extrainfoEnable", tparams.extrainfoEnable, bool(false));
 
 
     // ArsIso params
     params.getParam<bool>("arsisoEnable", tparams.arsIsoEnable, false);
-    params.getParam<bool>("arsisoEnable", tparams.gpu_arsIsoEnable, true);
+    params.getParam<bool>("gpu_arsisoEnable", tparams.gpu_arsIsoEnable, true);
     params.getParam<int>("arsisoOrder", tparams.arsIsoOrder, 20);
     params.getParam<double>("arsisoSigma", tparams.arsIsoSigma, 1.0);
     params.getParam<double>("arsisoTollDeg", tparams.arsIsoThetaToll, 0.5);
@@ -127,7 +148,6 @@ int main(int argc, char **argv) {
     //    arsSrc.initLUT(0.0001);
     //    arsSrc.setComputeMode(ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT);
     arsSrc.setComputeMode(cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD);
-
 
 
     params.getParam<int>("fileSkipper", tparams.fileSkipper, int(1));
@@ -190,6 +210,8 @@ int main(int argc, char **argv) {
 
     findComparisonPair(inputFilenames, allPairs);
     std::cout << "Processing " << inputFilenames.size() << " files, " << allPairs.size() << " comparisons\n" << std::endl;
+    filterComparisonPair(resumeFilename, outfile, inputFilenames, allPairs, outPairs);
+    std::cout << "Remaining comparisons " << outPairs.size() << " comparisons\n" << std::endl;
 
     outfile << "# Parameters:\n";
     params.write(outfile, "#  ");
@@ -211,11 +233,7 @@ int main(int argc, char **argv) {
 
 
 
-
-
-
-
-    //execution couple-by-couple of ARS
+    //execution couple-by-couple (of files) of ARS
     int countPairs = 0;
     for (auto& comp : outPairs) {
         if (countPairs % tparams.fileSkipper) {
@@ -226,38 +244,17 @@ int main(int argc, char **argv) {
         pointsDst.load(inputFilenames[comp.second]);
         prefixName = getPrefix(inputFilenames[comp.first]);
 
-        //PARALLELIZATION SCOPE
-        {
-            //Parallelization parameters
-            //Fourier coefficients mega-matrix computation
-            int numPts = std::min<int>(pointsSrc.points().size(), pointsDst.points().size()); //the two should normally be equal
-            const int numPtsAfterPadding = ceilPow2(numPts); //for apple1 -> numPts 661; padded 1024
-            const int blockSize = 256; //num threads per block
-            const int numBlocks = (numPtsAfterPadding * numPtsAfterPadding) / blockSize; //number of blocks in grid (each block contains blockSize threads)
-            const int gridTotalSize = blockSize*numBlocks; //total number of threads in grid
-            //depth of mega-matrix
-            const int coeffsMatNumCols = 2 * tparams.arsIsoOrder + 2;
-            const int coeffsMatNumColsPadded = ceilPow2(coeffsMatNumCols);
-            const int coeffsMatTotalSz = numPtsAfterPadding * numPtsAfterPadding * coeffsMatNumColsPadded;
-            //Fourier matrix sum -> parallelization parameters
-            const int sumBlockSz = 64;
-            const int sumGridSz = 256; //can be used to futher parallelize sum of mega-matrix (for now in sum kernel it is actually set to 1)
-            std::cout << "Parallelization params:" << std::endl;
-            std::cout << "numPtsAfterPadding " << numPtsAfterPadding << " blockSize " << blockSize << " numBlocks " << numBlocks << " gridTotalSize " << gridTotalSize << std::endl;
-            std::cout << "sumBlockSz " << sumBlockSz << " sumGridSz " << sumGridSz << std::endl;
-
-            std::cout << "\n------\n" << std::endl;
-
-            std::cout << "\n\nCalling kernel functions on GPU\n" << std::endl;
-        }
 
         std::cout << "[" << countPairs << "/" << outPairs.size() << "]\n" << "  * \"" << inputFilenames[comp.first] << "\"\n    \"" << inputFilenames[comp.second] << "\"" << std::endl;
         rotTrue = pointsDst.getRotTheta() - pointsSrc.getRotTheta();
+        
+        setupParallelization(paiParams, pointsSrc.points().size(), pointsDst.points().size(), tparams.arsIsoOrder);
+
         //    if (rotTrue < 0.0) rotTrue += M_PI;
         //    else if (rotTrue > M_PI) rotTrue -= M_PI;
         std::cout << " angle dst " << (180.0 / M_PI * pointsDst.getRotTheta()) << " [deg], src " << (180.0 / M_PI * pointsSrc.getRotTheta()) << " [deg]" << std::endl;
         std::cout << std::fixed << std::setprecision(2) << std::setw(10)
-                << "  rotTrue \t" << (180.0 / M_PI * rotTrue) << " deg\t\t" << (180.0 / M_PI * mod180(rotTrue)) << " deg [mod 180]\n";
+                << "  rotTrue \t\t" << (180.0 / M_PI * rotTrue) << " deg\t\t" << (180.0 / M_PI * mod180(rotTrue)) << " deg [mod 180]\n";
 
         outfile
                 << std::setw(20) << getShortName(inputFilenames[comp.first]) << " "
@@ -277,13 +274,13 @@ int main(int argc, char **argv) {
         if (tparams.arsIsoEnable) {
             //                    estimateRotationArsIso(pointsSrc.points(), pointsDst.points(), tparams, rotArsIso);
             std::cout << std::fixed << std::setprecision(2) << std::setw(10)
-                    << "  rotArsIso \t" << (180.0 / M_PI * rotArsIso) << " deg\t\t" << (180.0 / M_PI * mod180(rotArsIso)) << " deg [mod 180]\n";
+                    << "  rotArsIso \t\t" << (180.0 / M_PI * rotArsIso) << " deg\t\t" << (180.0 / M_PI * mod180(rotArsIso)) << " deg [mod 180]\n";
             outfile << std::setw(6) << "arsIso " << std::fixed << std::setprecision(2) << std::setw(6) << (180.0 / M_PI * mod180(rotArsIso)) << " ";
         }
         if (tparams.gpu_arsIsoEnable) {
-            gpu_estimateRotationArsIso(pointsSrc.points(), pointsDst.points(), tparams, rotArsIso_gpu);
+            gpu_estimateRotationArsIso(pointsSrc.points(), pointsDst.points(), tparams, paiParams, rotArsIso_gpu);
             std::cout << std::fixed << std::setprecision(2) << std::setw(10)
-                    << "  rotArsIso \t" << (180.0 / M_PI * rotArsIso_gpu) << " deg\t\t" << (180.0 / M_PI * mod180(rotArsIso_gpu)) << " deg [mod 180]\n";
+                    << "  gpu_rotArsIso \t" << (180.0 / M_PI * rotArsIso_gpu) << " deg\t\t" << (180.0 / M_PI * mod180(rotArsIso_gpu)) << " deg [mod 180]\n";
             outfile << std::setw(6) << "gpu_arsIso " << std::fixed << std::setprecision(2) << std::setw(6) << (180.0 / M_PI * mod180(rotArsIso_gpu)) << " ";
         }
         if (tparams.extrainfoEnable) {
@@ -306,7 +303,7 @@ int main(int argc, char **argv) {
     }
 
 
-
+    outfile.close();
 
     return 0;
 }
@@ -464,7 +461,43 @@ std::string getLeafDirectory(std::string filename) {
     return leafDir;
 }
 
-void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc, const ArsImgTests::PointReaderWriter& pointsDst, TestParams& tp, double& rotOut) {
+void setupParallelization(ParlArsIsoParams& pp, int pointsSrcSz, int pointsDstSz, int fourierOrder) {
+    //Setting up parallelization
+    //Parallelization parameters
+    //Fourier coefficients mega-matrix computation
+    int numPts = std::min<int>(pointsSrcSz, pointsDstSz); //the two should normally be equal
+    pp.numPts = numPts;
+    const int numPtsAfterPadding = ceilPow2(numPts); //for apple1 -> numPts 661; padded 1024
+    pp.numPtsAfterPadding = numPtsAfterPadding;
+    const int blockSize = 256; //num threads per block
+    pp.blockSize = blockSize;
+    const int numBlocks = (numPtsAfterPadding * numPtsAfterPadding) / blockSize; //number of blocks in grid (each block contains blockSize threads)
+    pp.numBlocks = numBlocks;
+    const int gridTotalSize = blockSize*numBlocks; //total number of threads in grid
+    pp.gridTotalSize = gridTotalSize;
+    //depth of mega-matrix
+    const int coeffsMatNumCols = 2 * fourierOrder + 2;
+    pp.coeffsMatNumCols = coeffsMatNumCols;
+    const int coeffsMatNumColsPadded = ceilPow2(coeffsMatNumCols);
+    pp.coeffsMatNumColsPadded = coeffsMatNumColsPadded;
+    const int coeffsMatTotalSz = numPtsAfterPadding * numPtsAfterPadding * coeffsMatNumColsPadded;
+    pp.coeffsMatTotalSz = coeffsMatTotalSz;
+    //Fourier matrix sum -> parallelization parameters
+    const int sumBlockSz = 64;
+    pp.sumBlockSz = sumBlockSz;
+    const int sumGridSz = 256; //can be used to futher parallelize sum of mega-matrix (for now in sum kernel it is actually set to 1)
+    pp.sumGridSz = sumGridSz;
+
+    std::cout << "Parallelization params:" << std::endl;
+    std::cout << "numPtsAfterPadding " << numPtsAfterPadding << " blockSize " << blockSize << " numBlocks " << numBlocks << " gridTotalSize " << gridTotalSize << std::endl;
+    std::cout << "sumBlockSz " << sumBlockSz << " sumGridSz " << sumGridSz << std::endl;
+
+    std::cout << "\n------\n" << std::endl;
+
+    std::cout << "\n\nCalling kernel functions on GPU...\n" << std::endl;
+}
+
+void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc, const ArsImgTests::PointReaderWriter& pointsDst, TestParams& tp, ParlArsIsoParams& paip, double& rotOut) {
     //    //ARS SRC -> preparation for kernel calls and kernel calls
     //    cudaEvent_t startSrc, stopSrc; //timing using CUDA events
     //    cudaEventCreate(&startSrc);
