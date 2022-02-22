@@ -35,6 +35,18 @@
 #define PRINT_DIM(X) std::cout << #X << " rows " << X.rows() << " cols " << X.cols() << std::endl;
 #define RAD2DEG(X) (180.0/M_PI*(X))
 
+struct TestParams {
+    // ArsIso (Isotropic Angular Radon Spectrum) params
+    bool arsIsoEnable;
+    bool gpu_arsIsoEnable;
+    int arsIsoOrder;
+    double arsIsoSigma;
+    double arsIsoThetaToll;
+
+
+    bool extrainfoEnable;
+    int fileSkipper;
+};
 
 
 
@@ -50,6 +62,8 @@ std::string getShortName(std::string filename);
 
 std::string getLeafDirectory(std::string filename);
 
+void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc, const ArsImgTests::PointReaderWriter& pointsDst, TestParams& tp, double& rotOut);
+
 double mod180(double angle);
 
 struct BoundInterval {
@@ -64,28 +78,28 @@ int main(int argc, char **argv) {
     cuars::AngularRadonSpectrum2d arsDst;
     ArsImgTests::PointReaderWriter pointsSrc;
     ArsImgTests::PointReaderWriter pointsDst;
+    TestParams tparams;
 
 
     rofl::ParamMap params;
+    std::string inputGlob;
+
     std::string filenameCfg;
-    std::string filenameSrc;
-    std::string filenameDst;
-    std::string filenameRot;
-    std::string filenameArsSrc;
-    std::string filenameArsDst;
-    std::string filenameArsRot;
-    std::string filenameArsCor;
-    std::string filenameCovSrc;
-    std::string filenameCovDst;
-    int arsOrder;
-    double arsSigma, arsThetaToll;
-    double rotTrue, rotArs;
+
+
     //The variables below are for I/O related functionalities (plot, etc.) that are highly Eigen-based and are present in the CPU-only ArsImgTests...
     //Maybe implement them later
     //    double sampleRes, sampleAng; 
     //    int sampleNum;
     //    bool saveOn;
     //    bool saveCov;
+    std::string filenameOut;
+
+    std::string prefixName;
+    double rotTrue, rotArsIso, rotArsIso_gpu;
+    double srcExecTime, dstExecTime;
+    int srcNumPts, srcNumKers, dstNumPts, dstNumKers;
+
 
 
     params.read(argc, argv);
@@ -96,25 +110,40 @@ int main(int argc, char **argv) {
     }
 
     params.read(argc, argv);
-    params.getParam<std::string>("src", filenameSrc, "/home/rimlab/Downloads/mpeg7_point_tests/noise000_occl00_rand000/apple-1_xp0686_yp0967_t059_sigma0001_occl000.txt");
-    params.getParam<std::string>("dst", filenameDst, "/home/rimlab/Downloads/mpeg7_point_tests/noise000_occl00_rand000/apple-1_xp0749_yn0521_t090_sigma0001_occl000.txt");
-    params.getParam<int>("arsOrder", arsOrder, 20);
-    params.getParam<double>("arsSigma", arsSigma, 1.0);
-    params.getParam<double>("arsTollDeg", arsThetaToll, 1.0);
-    arsThetaToll *= M_PI / 180.0;
-    //    params.getParam<double>("sampleResDeg", sampleRes, 0.5);
-    //    sampleRes *= M_PI / 180.0;
-    //    params.getParam<bool>("saveOn", saveOn, false);
-    //    params.getParam<bool>("saveCov", saveCov, false);
+    params.getParam<std::string>("in", inputGlob, std::experimental::filesystem::current_path().string() + "/*");
+    params.getParam<std::string>("out", filenameOut, mpeg7io::generateStampedString("results_", ".txt"));
+    params.getParam<bool>("extrainfoEnable", tparams.extrainfoEnable, bool(false));
+
+
+    // ArsIso params
+    params.getParam<bool>("arsisoEnable", tparams.arsIsoEnable, false);
+    params.getParam<bool>("arsisoEnable", tparams.gpu_arsIsoEnable, true);
+    params.getParam<int>("arsisoOrder", tparams.arsIsoOrder, 20);
+    params.getParam<double>("arsisoSigma", tparams.arsIsoSigma, 1.0);
+    params.getParam<double>("arsisoTollDeg", tparams.arsIsoThetaToll, 0.5);
+    tparams.arsIsoThetaToll *= M_PI / 180.0;
+
+    arsSrc.setARSFOrder(tparams.arsIsoOrder);
+    //    arsSrc.initLUT(0.0001);
+    //    arsSrc.setComputeMode(ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT);
+    arsSrc.setComputeMode(cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD);
+
+
+
+    params.getParam<int>("fileSkipper", tparams.fileSkipper, int(1));
+
 
     std::cout << "\nParameter values:\n";
     params.write(std::cout);
     std::cout << std::endl;
 
 
+
+
     /* Reading files from folder */
-    std::string inputGlob;
     std::vector<std::string> inputFilenames;
+    std::vector<std::pair<int, int> > allPairs;
+    std::vector<std::pair<int, int> > outPairs;
 
     mpeg7io::getDirectoryFiles(inputGlob, inputFilenames);
     std::cout << "\nFilenames:\n";
@@ -132,204 +161,180 @@ int main(int argc, char **argv) {
 
 
 
-    //ARS parameters setting
-    arsSrc.setARSFOrder(arsOrder);
-    arsDst.setARSFOrder(arsOrder);
-    cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode = cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD;
-    arsSrc.setComputeMode(pnebiMode);
-    arsDst.setComputeMode(pnebiMode);
+    if (!inputFilenames.empty()) {
+        std::string leafDir = getLeafDirectory(inputFilenames[0]);
+        std::cout << "leafDir: \"" << leafDir << "\"" << std::endl;
+        std::string methodSuffix;
+        if (tparams.arsIsoEnable) {
+            methodSuffix = methodSuffix + "_arsiso";
+        }
+        if (tparams.gpu_arsIsoEnable) {
+            methodSuffix = methodSuffix + "_gpuarsiso";
+        }
+        if (tparams.extrainfoEnable) {
+            methodSuffix = methodSuffix + "_extrainfo";
+        }
+        filenameOut = mpeg7io::generateStampedString("results_" + leafDir + methodSuffix + "_", ".txt");
+        std::cout << "outputFilename: \"" << filenameOut << "\"" << std::endl;
 
-
-    //Fourier coefficients mega-matrix computation -> parallelization parameters
-    int numPts = std::min<int>(pointsSrc.points().size(), pointsDst.points().size()); //the two should normally be equal
-    const int numPtsAfterPadding = ceilPow2(numPts); //for apple1 -> numPts 661; padded 1024
-    const int blockSize = 256; //num threads per block
-    const int numBlocks = (numPtsAfterPadding * numPtsAfterPadding) / blockSize; //number of blocks in grid (each block contains blockSize threads)
-    const int gridTotalSize = blockSize*numBlocks; //total number of threads in grid
-    //depth of mega-matrix
-    const int coeffsMatNumCols = 2 * arsOrder + 2;
-    const int coeffsMatNumColsPadded = ceilPow2(coeffsMatNumCols);
-    const int coeffsMatTotalSz = numPtsAfterPadding * numPtsAfterPadding * coeffsMatNumColsPadded;
-    //Fourier matrix sum -> parallelization parameters
-    const int sumBlockSz = 64;
-    const int sumGridSz = 256; //can be used to futher parallelize sum of mega-matrix (for now in sum kernel it is actually set to 1)
-    std::cout << "Parallelization params:" << std::endl;
-    std::cout << "numPtsAfterPadding " << numPtsAfterPadding << " blockSize " << blockSize << " numBlocks " << numBlocks << " gridTotalSize " << gridTotalSize << std::endl;
-    std::cout << "sumBlockSz " << sumBlockSz << " sumGridSz " << sumGridSz << std::endl;
-
-    std::cout << "\n------\n" << std::endl;
-
-    std::cout << "\n\nCalling kernel functions on GPU\n" << std::endl;
-
-
-    //ARS SRC -> preparation for kernel calls and kernel calls
-    cudaEvent_t startSrc, stopSrc; //timing using CUDA events
-    cudaEventCreate(&startSrc);
-    cudaEventCreate(&stopSrc);
-    cuars::Vec2d * kernelInputSrc;
-    cudaMalloc((void**) &kernelInputSrc, numPtsAfterPadding * sizeof (cuars::Vec2d));
-    cudaMemcpy(kernelInputSrc, pointsSrc.points().data(), numPtsAfterPadding * sizeof (cuars::Vec2d), cudaMemcpyHostToDevice);
-
-    double *coeffsMatSrc;
-    cudaMalloc((void**) &coeffsMatSrc, coeffsMatTotalSz * sizeof (double));
-    cudaMemset(coeffsMatSrc, 0.0, coeffsMatTotalSz * sizeof (double));
-    //    for (int i = 0; i < coeffsMatTotalSz; ++i) {
-    //        coeffsMaSrc1[i] = 0.0;
-    //    }
-    double* d_coeffsArsSrc;
-    cudaMalloc((void**) &d_coeffsArsSrc, coeffsMatNumColsPadded * sizeof (double));
-    cudaMemset(d_coeffsArsSrc, 0.0, coeffsMatNumColsPadded * sizeof (double));
-
-    cudaEventRecord(startSrc);
-    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputSrc, arsSigma, arsSigma, numPts, numPtsAfterPadding, arsOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatSrc);
-    sumColumns << <1, sumBlockSz>> >(coeffsMatSrc, numPtsAfterPadding, coeffsMatNumColsPadded, d_coeffsArsSrc);
-    cudaEventRecord(stopSrc);
-
-    double* coeffsArsSrc = new double [coeffsMatNumColsPadded];
-    cudaMemcpy(coeffsArsSrc, d_coeffsArsSrc, coeffsMatNumColsPadded * sizeof (double), cudaMemcpyDeviceToHost);
-
-    cudaEventSynchronize(stopSrc);
-    float millisecondsSrc = 0.0f;
-    cudaEventElapsedTime(&millisecondsSrc, startSrc, stopSrc);
-    std::cout << "SRC -> insertIsotropicGaussians() " << millisecondsSrc << " ms" << std::endl;
-
-    cudaError_t cudaerr = cudaDeviceSynchronize();
-    if (cudaerr != cudaSuccess)
-        printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
-
-    //    for (int i = 0; i < coeffsMatNumColsPadded; ++i) {
-    //        std::cout << "coeffsArsSrc[" << i << "] " << coeffsArsSrc[i] << std::endl;
-    //    }
-
-    cudaFree(coeffsMatSrc);
-    cudaFree(kernelInputSrc);
-    cudaFree(d_coeffsArsSrc);
-    cudaEventDestroy(startSrc);
-    cudaEventDestroy(stopSrc);
-    //END OF ARS SRC
-
-
-
-    std::cout << "\n------\n" << std::endl; //"pause" between ars src and ars dst
-
-
-
-    //ARS DST -> preparation for kernel calls and kernel calls
-    cudaEvent_t startDst, stopDst; //timing using CUDA events
-    cudaEventCreate(&startDst);
-    cudaEventCreate(&stopDst);
-    cuars::Vec2d *kernelInputDst;
-    cudaMalloc((void**) &kernelInputDst, numPtsAfterPadding * sizeof (cuars::Vec2d));
-    cudaMemcpy(kernelInputDst, pointsDst.points().data(), numPtsAfterPadding * sizeof (cuars::Vec2d), cudaMemcpyHostToDevice);
-
-    double *coeffsMatDst; //magari evitare di fare il delete e poi riallocarla è più efficiente (anche se comunque ci sarebbe poi da settare tutto a 0)
-    cudaMalloc((void**) &coeffsMatDst, coeffsMatTotalSz * sizeof (double));
-    cudaMemset(coeffsMatDst, 0.0, coeffsMatTotalSz * sizeof (double));
-    //    for (int i = 0; i < coeffsMatTotalSz; ++i) {
-    //        coeffsMatDst[i] = 0.0;
-    //    }
-    double* d_coeffsArsDst;
-    cudaMalloc((void**) &d_coeffsArsDst, coeffsMatNumColsPadded * sizeof (double));
-    cudaMemset(d_coeffsArsDst, 0.0, coeffsMatNumColsPadded * sizeof (double));
-
-    cudaEventRecord(startDst);
-    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputDst, arsSigma, arsSigma, numPts, numPtsAfterPadding, arsOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatDst);
-    sumColumns << <1, sumBlockSz>> >(coeffsMatDst, numPtsAfterPadding, coeffsMatNumColsPadded, d_coeffsArsDst);
-    cudaEventRecord(stopDst);
-
-
-
-    double* coeffsArsDst = new double [coeffsMatNumColsPadded];
-    cudaMemcpy(coeffsArsDst, d_coeffsArsDst, coeffsMatNumColsPadded * sizeof (double), cudaMemcpyDeviceToHost);
-
-    cudaEventSynchronize(stopDst);
-    float millisecondsDst = 0.0f;
-    cudaEventElapsedTime(&millisecondsDst, startDst, stopDst);
-    std::cout << "DST -> insertIsotropicGaussiansDst() " << millisecondsDst << " ms" << std::endl;
-
-    cudaerr = cudaDeviceSynchronize();
-    if (cudaerr != cudaSuccess)
-        printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
-
-    //    for (int i = 0; i < coeffsMatNumColsPadded; ++i) {
-    //        std::cout << "coeffsArsDst[" << i << "] " << coeffsArsDst[i] << std::endl;
-    //    }
-
-    cudaFree(coeffsMatDst);
-    cudaFree(kernelInputDst);
-    cudaFree(d_coeffsArsDst);
-    cudaEventDestroy(startDst);
-    cudaEventDestroy(stopDst);
-    //END OF ARS DST
-
-
-
-
-
-    //Computation final computations (correlation, ...) on CPU
-    std::cout << "\nARS Coefficients:\n";
-    std::cout << "Coefficients: Src, Dst, Cor" << std::endl;
-
-    double thetaMax, corrMax, fourierTol;
-    fourierTol = 1.0; // TODO: check for a proper tolerance
-
-    std::vector<double> coeffsCor;
-    {
-        cuars::ScopedTimer("ars.correlation()");
-        std::vector<double> tmpSrc;
-        tmpSrc.assign(coeffsArsSrc, coeffsArsSrc + coeffsMatNumColsPadded);
-        std::vector<double> tmpDst;
-        tmpDst.assign(coeffsArsDst, coeffsArsDst + coeffsMatNumColsPadded);
-        cuars::computeFourierCorr(tmpSrc, tmpDst, coeffsCor);
-        cuars::findGlobalMaxBBFourier(coeffsCor, 0.0, M_PI, arsThetaToll, fourierTol, thetaMax, corrMax);
-        rotArs = thetaMax;
     }
 
 
-
-    arsSrc.setCoefficients(coeffsArsSrc, coeffsMatNumCols);
-    //    for (int i = 0; i < coeffsVectorMaxSz; i++) {
-    //        std::cout << "arsSrc - coeff_d[" << i << "] " << d_coeffsMat1[i] << std::endl;
-    //    }
-    arsDst.setCoefficients(coeffsArsDst, coeffsMatNumCols);
-    for (int i = 0; i < arsSrc.coefficients().size() && i < arsDst.coefficients().size(); ++i) {
-        std::cout << "\t" << i << " \t" << arsSrc.coefficients().at(i) << " \t" << arsDst.coefficients().at(i) << " \t" << coeffsCor[i] << std::endl;
+    // Open output results file
+    std::ofstream outfile(filenameOut.c_str());
+    if (!outfile) {
+        std::cerr << "Cannot open file \"" << filenameOut << "\"" << std::endl;
+        return -1;
     }
-    std::cout << std::endl;
+
+
+    findComparisonPair(inputFilenames, allPairs);
+    std::cout << "Processing " << inputFilenames.size() << " files, " << allPairs.size() << " comparisons\n" << std::endl;
+
+    outfile << "# Parameters:\n";
+    params.write(outfile, "#  ");
+    outfile << "# \n";
+    outfile << "# file1 numpts1 noise1 occl1 rand1 file2 numpts2 noise2 occl2 rand2 rotTrue rotTrue[deg] ";
+
+    if (tparams.arsIsoEnable) {
+        outfile << "arsIso rotArsIso[deg] ";
+    }
+    if (tparams.gpu_arsIsoEnable) {
+        outfile << "gpuarsIso rotGpuArsIso[deg] ";
+    }
+    if (tparams.extrainfoEnable)
+        outfile << "srcNumPts srcNumKers srcExecTime dstNumPts dstNumKers dstExecTime "; //Kers stands for kernels
+
+    outfile << "\n";
+    //End of outfile header setup
 
 
 
-    // Computes the rotated points,centroid, affine transf matrix between src and dst
-    ArsImgTests::PointReaderWriter pointsRot(pointsSrc.points());
-    cuars::Vec2d centroidSrc = pointsSrc.computeCentroid();
-    cuars::Vec2d centroidDst = pointsDst.computeCentroid();
-    cuars::Affine2d rotSrcDst = ArsImgTests::PointReaderWriter::coordToTransform(0.0, 0.0, rotArs);
-    //    cuars::Vec2d translSrcDst = centroidDst - rotSrcDst * centroidSrc;
-    cuars::Vec2d translSrcDst;
-    cuars::vec2diff(translSrcDst, centroidDst, cuars::aff2TimesVec2WRV(rotSrcDst, centroidSrc));
-    //    std::cout << "centroidSrc " << centroidSrc.transpose() << "\n"
-    //            << "rotSrcDst\n" << rotSrcDst.matrix() << "\n"
-    //            << "translation: [" << translSrcDst.transpose() << "] rotation[deg] " << (180.0 / M_PI * rotArs) << "\n";
-    std::cout << "centroidSrc " << centroidSrc.x << " \t" << centroidSrc.y << "\n"
-            << "centroidDst " << centroidDst.x << " \t" << centroidDst.y << "\n"
-            << "rotSrcDst\n" << rotSrcDst << "\n"
-            << "translation: [" << translSrcDst.x << " \t" << translSrcDst.y << "] rotation[deg] " << (180.0 / M_PI * rotArs) << "\n";
-    pointsRot.applyTransform(translSrcDst.x, translSrcDst.y, rotArs);
 
 
 
-    rotTrue = pointsDst.getRotTheta() - pointsSrc.getRotTheta();
-    std::cout << "\n***\npointsDst.getrotTheta() [deg]" << (180 / M_PI * pointsDst.getRotTheta())
-            << ", pointsSrc.getrotTheta() [deg] " << (180.0 / M_PI * pointsSrc.getRotTheta()) << "\n";
-    std::cout << "rotTrue[deg] \t" << (180.0 / M_PI * rotTrue) << " \t" << (180.0 / M_PI * mod180(rotTrue)) << std::endl;
-    std::cout << "rotArs[deg] \t" << (180.0 / M_PI * rotArs) << " \t" << (180.0 / M_PI * mod180(rotArs)) << std::endl;
 
-    //Free CPU memory
-    free(coeffsArsSrc);
-    free(coeffsArsDst);
+
+    //execution couple-by-couple of ARS
+    int countPairs = 0;
+    for (auto& comp : outPairs) {
+        if (countPairs % tparams.fileSkipper) {
+            countPairs++;
+            continue;
+        }
+        pointsSrc.load(inputFilenames[comp.first]);
+        pointsDst.load(inputFilenames[comp.second]);
+        prefixName = getPrefix(inputFilenames[comp.first]);
+
+        //PARALLELIZATION SCOPE
+        {
+            //Parallelization parameters
+            //Fourier coefficients mega-matrix computation
+            int numPts = std::min<int>(pointsSrc.points().size(), pointsDst.points().size()); //the two should normally be equal
+            const int numPtsAfterPadding = ceilPow2(numPts); //for apple1 -> numPts 661; padded 1024
+            const int blockSize = 256; //num threads per block
+            const int numBlocks = (numPtsAfterPadding * numPtsAfterPadding) / blockSize; //number of blocks in grid (each block contains blockSize threads)
+            const int gridTotalSize = blockSize*numBlocks; //total number of threads in grid
+            //depth of mega-matrix
+            const int coeffsMatNumCols = 2 * tparams.arsIsoOrder + 2;
+            const int coeffsMatNumColsPadded = ceilPow2(coeffsMatNumCols);
+            const int coeffsMatTotalSz = numPtsAfterPadding * numPtsAfterPadding * coeffsMatNumColsPadded;
+            //Fourier matrix sum -> parallelization parameters
+            const int sumBlockSz = 64;
+            const int sumGridSz = 256; //can be used to futher parallelize sum of mega-matrix (for now in sum kernel it is actually set to 1)
+            std::cout << "Parallelization params:" << std::endl;
+            std::cout << "numPtsAfterPadding " << numPtsAfterPadding << " blockSize " << blockSize << " numBlocks " << numBlocks << " gridTotalSize " << gridTotalSize << std::endl;
+            std::cout << "sumBlockSz " << sumBlockSz << " sumGridSz " << sumGridSz << std::endl;
+
+            std::cout << "\n------\n" << std::endl;
+
+            std::cout << "\n\nCalling kernel functions on GPU\n" << std::endl;
+        }
+
+        std::cout << "[" << countPairs << "/" << outPairs.size() << "]\n" << "  * \"" << inputFilenames[comp.first] << "\"\n    \"" << inputFilenames[comp.second] << "\"" << std::endl;
+        rotTrue = pointsDst.getRotTheta() - pointsSrc.getRotTheta();
+        //    if (rotTrue < 0.0) rotTrue += M_PI;
+        //    else if (rotTrue > M_PI) rotTrue -= M_PI;
+        std::cout << " angle dst " << (180.0 / M_PI * pointsDst.getRotTheta()) << " [deg], src " << (180.0 / M_PI * pointsSrc.getRotTheta()) << " [deg]" << std::endl;
+        std::cout << std::fixed << std::setprecision(2) << std::setw(10)
+                << "  rotTrue \t" << (180.0 / M_PI * rotTrue) << " deg\t\t" << (180.0 / M_PI * mod180(rotTrue)) << " deg [mod 180]\n";
+
+        outfile
+                << std::setw(20) << getShortName(inputFilenames[comp.first]) << " "
+                << std::setw(6) << pointsSrc.getNumIn() << " "
+                << std::fixed << std::setprecision(1) << std::setw(6) << pointsSrc.getNoiseSigma() << " "
+                << std::setw(6) << pointsSrc.getNumOccl() << " "
+                << std::setw(6) << pointsSrc.getNumRand() << " "
+                << std::setw(20) << getShortName(inputFilenames[comp.second]) << " "
+                << std::setw(6) << pointsSrc.getNumIn() << " "
+                << std::fixed << std::setprecision(1) << std::setw(6) << pointsDst.getNoiseSigma() << " "
+                << std::setw(6) << pointsDst.getNumOccl() << " "
+                << std::setw(6) << pointsDst.getNumRand() << " "
+                << "rotTrue" << std::fixed << std::setprecision(2) << std::setw(8) << (180.0 / M_PI * mod180(rotTrue)) << " ";
+
+
+
+        if (tparams.arsIsoEnable) {
+            //                    estimateRotationArsIso(pointsSrc.points(), pointsDst.points(), tparams, rotArsIso);
+            std::cout << std::fixed << std::setprecision(2) << std::setw(10)
+                    << "  rotArsIso \t" << (180.0 / M_PI * rotArsIso) << " deg\t\t" << (180.0 / M_PI * mod180(rotArsIso)) << " deg [mod 180]\n";
+            outfile << std::setw(6) << "arsIso " << std::fixed << std::setprecision(2) << std::setw(6) << (180.0 / M_PI * mod180(rotArsIso)) << " ";
+        }
+        if (tparams.gpu_arsIsoEnable) {
+            gpu_estimateRotationArsIso(pointsSrc.points(), pointsDst.points(), tparams, rotArsIso_gpu);
+            std::cout << std::fixed << std::setprecision(2) << std::setw(10)
+                    << "  rotArsIso \t" << (180.0 / M_PI * rotArsIso_gpu) << " deg\t\t" << (180.0 / M_PI * mod180(rotArsIso_gpu)) << " deg [mod 180]\n";
+            outfile << std::setw(6) << "gpu_arsIso " << std::fixed << std::setprecision(2) << std::setw(6) << (180.0 / M_PI * mod180(rotArsIso_gpu)) << " ";
+        }
+        if (tparams.extrainfoEnable) {
+            std::cout << std::fixed << std::setprecision(2) << std::setw(10)
+                    << "  srcNumPts \t" << srcNumPts << "  srcNumKers \t" << srcNumKers << "  srcExecTime \t" << srcExecTime
+                    << "  dstNumPts \t" << dstNumPts << "  dstNumKers \t" << dstNumKers << "  dstExecTime \t" << dstExecTime << "\n";
+            outfile << std::setw(6) << "sPts " << std::fixed << std::setprecision(2) << std::setw(6) << srcNumPts << " "
+                    << std::setw(6) << "sKrs " << std::fixed << std::setprecision(2) << std::setw(6) << srcNumKers << " "
+                    << std::setw(6) << "sTm " << std::fixed << std::setprecision(2) << std::setw(12) << srcExecTime << " "
+                    << std::setw(6) << "dPts " << std::fixed << std::setprecision(2) << std::setw(6) << dstNumPts << " "
+                    << std::setw(6) << "dKrs " << std::fixed << std::setprecision(2) << std::setw(6) << dstNumKers << " "
+                    << std::setw(6) << "dTm " << std::fixed << std::setprecision(2) << std::setw(12) << dstExecTime << " ";
+        }
+
+        outfile << std::endl;
+
+
+        countPairs++;
+        std::cout << "\n\n-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-\n";
+    }
+
+
 
 
     return 0;
+}
+
+void findComparisonPair(const std::vector<std::string>& inputFilenames, std::vector<std::pair<int, int> >& comPairs) {
+    std::string prefix;
+    int idx1, idx2;
+
+    idx1 = 0;
+    while (idx1 < inputFilenames.size()) {
+        // Finds the prefix of inputFilenames[idx1] and finds adjacent filenames 
+        // with the same prefix 
+        prefix = getPrefix(inputFilenames[idx1]);
+        idx2 = idx1 + 1;
+        while (idx2 < inputFilenames.size() && getPrefix(inputFilenames[idx2]) == prefix) {
+            idx2++;
+        }
+        // Computes all index pairs
+        //        std::cout << "Group \"" << prefix << "\" with " << (idx2 - idx1) << " items: ";
+        for (int i1 = idx1; i1 < idx2; ++i1) {
+            //            std::cout << "\"" << getShortName(inputFilenames[i1]) << "\" [" << i1 << "], ";
+            for (int i2 = i1 + 1; i2 < idx2; ++i2) {
+                comPairs.push_back(std::make_pair(i1, i2));
+            }
+        }
+        //        std::cout << "\n";
+        idx1 = idx2;
+    }
 }
 
 // Reads outputFilename for the list of already processed files
@@ -457,6 +462,174 @@ std::string getLeafDirectory(std::string filename) {
         leafDir = parent.substr(pos + 1, parent.length());
     }
     return leafDir;
+}
+
+void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc, const ArsImgTests::PointReaderWriter& pointsDst, TestParams& tp, double& rotOut) {
+    //    //ARS SRC -> preparation for kernel calls and kernel calls
+    //    cudaEvent_t startSrc, stopSrc; //timing using CUDA events
+    //    cudaEventCreate(&startSrc);
+    //    cudaEventCreate(&stopSrc);
+    //    cuars::Vec2d * kernelInputSrc;
+    //    cudaMalloc((void**) &kernelInputSrc, numPtsAfterPadding * sizeof (cuars::Vec2d));
+    //    cudaMemcpy(kernelInputSrc, pointsSrc.points().data(), numPtsAfterPadding * sizeof (cuars::Vec2d), cudaMemcpyHostToDevice);
+    //
+    //    double *coeffsMatSrc;
+    //    cudaMalloc((void**) &coeffsMatSrc, coeffsMatTotalSz * sizeof (double));
+    //    cudaMemset(coeffsMatSrc, 0.0, coeffsMatTotalSz * sizeof (double));
+    //    //    for (int i = 0; i < coeffsMatTotalSz; ++i) {
+    //    //        coeffsMaSrc1[i] = 0.0;
+    //    //    }
+    //    double* d_coeffsArsSrc;
+    //    cudaMalloc((void**) &d_coeffsArsSrc, coeffsMatNumColsPadded * sizeof (double));
+    //    cudaMemset(d_coeffsArsSrc, 0.0, coeffsMatNumColsPadded * sizeof (double));
+    //
+    //    cudaEventRecord(startSrc);
+    //    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputSrc, arsSigma, arsSigma, numPts, numPtsAfterPadding, arsOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatSrc);
+    //    sumColumns << <1, sumBlockSz>> >(coeffsMatSrc, numPtsAfterPadding, coeffsMatNumColsPadded, d_coeffsArsSrc);
+    //    cudaEventRecord(stopSrc);
+    //
+    //    double* coeffsArsSrc = new double [coeffsMatNumColsPadded];
+    //    cudaMemcpy(coeffsArsSrc, d_coeffsArsSrc, coeffsMatNumColsPadded * sizeof (double), cudaMemcpyDeviceToHost);
+    //
+    //    cudaEventSynchronize(stopSrc);
+    //    float millisecondsSrc = 0.0f;
+    //    cudaEventElapsedTime(&millisecondsSrc, startSrc, stopSrc);
+    //    std::cout << "SRC -> insertIsotropicGaussians() " << millisecondsSrc << " ms" << std::endl;
+    //
+    //    cudaError_t cudaerr = cudaDeviceSynchronize();
+    //    if (cudaerr != cudaSuccess)
+    //        printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
+    //
+    //    //    for (int i = 0; i < coeffsMatNumColsPadded; ++i) {
+    //    //        std::cout << "coeffsArsSrc[" << i << "] " << coeffsArsSrc[i] << std::endl;
+    //    //    }
+    //
+    //    cudaFree(coeffsMatSrc);
+    //    cudaFree(kernelInputSrc);
+    //    cudaFree(d_coeffsArsSrc);
+    //    cudaEventDestroy(startSrc);
+    //    cudaEventDestroy(stopSrc);
+    //    //END OF ARS SRC
+    //
+    //
+    //
+    //    std::cout << "\n------\n" << std::endl; //"pause" between ars src and ars dst
+    //
+    //
+    //
+    //    //ARS DST -> preparation for kernel calls and kernel calls
+    //    cudaEvent_t startDst, stopDst; //timing using CUDA events
+    //    cudaEventCreate(&startDst);
+    //    cudaEventCreate(&stopDst);
+    //    cuars::Vec2d *kernelInputDst;
+    //    cudaMalloc((void**) &kernelInputDst, numPtsAfterPadding * sizeof (cuars::Vec2d));
+    //    cudaMemcpy(kernelInputDst, pointsDst.points().data(), numPtsAfterPadding * sizeof (cuars::Vec2d), cudaMemcpyHostToDevice);
+    //
+    //    double *coeffsMatDst; //magari evitare di fare il delete e poi riallocarla è più efficiente (anche se comunque ci sarebbe poi da settare tutto a 0)
+    //    cudaMalloc((void**) &coeffsMatDst, coeffsMatTotalSz * sizeof (double));
+    //    cudaMemset(coeffsMatDst, 0.0, coeffsMatTotalSz * sizeof (double));
+    //    //    for (int i = 0; i < coeffsMatTotalSz; ++i) {
+    //    //        coeffsMatDst[i] = 0.0;
+    //    //    }
+    //    double* d_coeffsArsDst;
+    //    cudaMalloc((void**) &d_coeffsArsDst, coeffsMatNumColsPadded * sizeof (double));
+    //    cudaMemset(d_coeffsArsDst, 0.0, coeffsMatNumColsPadded * sizeof (double));
+    //
+    //    cudaEventRecord(startDst);
+    //    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputDst, arsSigma, arsSigma, numPts, numPtsAfterPadding, arsOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatDst);
+    //    sumColumns << <1, sumBlockSz>> >(coeffsMatDst, numPtsAfterPadding, coeffsMatNumColsPadded, d_coeffsArsDst);
+    //    cudaEventRecord(stopDst);
+    //
+    //
+    //
+    //    double* coeffsArsDst = new double [coeffsMatNumColsPadded];
+    //    cudaMemcpy(coeffsArsDst, d_coeffsArsDst, coeffsMatNumColsPadded * sizeof (double), cudaMemcpyDeviceToHost);
+    //
+    //    cudaEventSynchronize(stopDst);
+    //    float millisecondsDst = 0.0f;
+    //    cudaEventElapsedTime(&millisecondsDst, startDst, stopDst);
+    //    std::cout << "DST -> insertIsotropicGaussiansDst() " << millisecondsDst << " ms" << std::endl;
+    //
+    //    cudaerr = cudaDeviceSynchronize();
+    //    if (cudaerr != cudaSuccess)
+    //        printf("kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
+    //
+    //    //    for (int i = 0; i < coeffsMatNumColsPadded; ++i) {
+    //    //        std::cout << "coeffsArsDst[" << i << "] " << coeffsArsDst[i] << std::endl;
+    //    //    }
+    //
+    //    cudaFree(coeffsMatDst);
+    //    cudaFree(kernelInputDst);
+    //    cudaFree(d_coeffsArsDst);
+    //    cudaEventDestroy(startDst);
+    //    cudaEventDestroy(stopDst);
+    //    //END OF ARS DST
+    //
+    //
+    //
+    //
+    //
+    //    //Computation final computations (correlation, ...) on CPU
+    //    std::cout << "\nARS Coefficients:\n";
+    //    std::cout << "Coefficients: Src, Dst, Cor" << std::endl;
+    //
+    //    double thetaMax, corrMax, fourierTol;
+    //    fourierTol = 1.0; // TODO: check for a proper tolerance
+    //
+    //    std::vector<double> coeffsCor;
+    //    {
+    //        cuars::ScopedTimer("ars.correlation()");
+    //        std::vector<double> tmpSrc;
+    //        tmpSrc.assign(coeffsArsSrc, coeffsArsSrc + coeffsMatNumColsPadded);
+    //        std::vector<double> tmpDst;
+    //        tmpDst.assign(coeffsArsDst, coeffsArsDst + coeffsMatNumColsPadded);
+    //        cuars::computeFourierCorr(tmpSrc, tmpDst, coeffsCor);
+    //        cuars::findGlobalMaxBBFourier(coeffsCor, 0.0, M_PI, arsThetaToll, fourierTol, thetaMax, corrMax);
+    //        rotArs = thetaMax;
+    //    }
+    //
+    //
+    //
+    //    arsSrc.setCoefficients(coeffsArsSrc, coeffsMatNumCols);
+    //    //    for (int i = 0; i < coeffsVectorMaxSz; i++) {
+    //    //        std::cout << "arsSrc - coeff_d[" << i << "] " << d_coeffsMat1[i] << std::endl;
+    //    //    }
+    //    arsDst.setCoefficients(coeffsArsDst, coeffsMatNumCols);
+    //    for (int i = 0; i < arsSrc.coefficients().size() && i < arsDst.coefficients().size(); ++i) {
+    //        std::cout << "\t" << i << " \t" << arsSrc.coefficients().at(i) << " \t" << arsDst.coefficients().at(i) << " \t" << coeffsCor[i] << std::endl;
+    //    }
+    //    std::cout << std::endl;
+    //
+    //
+    //
+    //    // Computes the rotated points,centroid, affine transf matrix between src and dst
+    //    ArsImgTests::PointReaderWriter pointsRot(pointsSrc.points());
+    //    cuars::Vec2d centroidSrc = pointsSrc.computeCentroid();
+    //    cuars::Vec2d centroidDst = pointsDst.computeCentroid();
+    //    cuars::Affine2d rotSrcDst = ArsImgTests::PointReaderWriter::coordToTransform(0.0, 0.0, rotArs);
+    //    //    cuars::Vec2d translSrcDst = centroidDst - rotSrcDst * centroidSrc;
+    //    cuars::Vec2d translSrcDst;
+    //    cuars::vec2diff(translSrcDst, centroidDst, cuars::aff2TimesVec2WRV(rotSrcDst, centroidSrc));
+    //    //    std::cout << "centroidSrc " << centroidSrc.transpose() << "\n"
+    //    //            << "rotSrcDst\n" << rotSrcDst.matrix() << "\n"
+    //    //            << "translation: [" << translSrcDst.transpose() << "] rotation[deg] " << (180.0 / M_PI * rotArs) << "\n";
+    //    std::cout << "centroidSrc " << centroidSrc.x << " \t" << centroidSrc.y << "\n"
+    //            << "centroidDst " << centroidDst.x << " \t" << centroidDst.y << "\n"
+    //            << "rotSrcDst\n" << rotSrcDst << "\n"
+    //            << "translation: [" << translSrcDst.x << " \t" << translSrcDst.y << "] rotation[deg] " << (180.0 / M_PI * rotArs) << "\n";
+    //    pointsRot.applyTransform(translSrcDst.x, translSrcDst.y, rotArs);
+    //
+    //
+    //
+    //    rotTrue = pointsDst.getRotTheta() - pointsSrc.getRotTheta();
+    //    std::cout << "\n***\npointsDst.getrotTheta() [deg]" << (180 / M_PI * pointsDst.getRotTheta())
+    //            << ", pointsSrc.getrotTheta() [deg] " << (180.0 / M_PI * pointsSrc.getRotTheta()) << "\n";
+    //    std::cout << "rotTrue[deg] \t" << (180.0 / M_PI * rotTrue) << " \t" << (180.0 / M_PI * mod180(rotTrue)) << std::endl;
+    //    std::cout << "rotArs[deg] \t" << (180.0 / M_PI * rotArs) << " \t" << (180.0 / M_PI * mod180(rotArs)) << std::endl;
+    //
+    //    //Free CPU memory
+    //    free(coeffsArsSrc);
+    //    free(coeffsArsDst);
 }
 
 double mod180(double angle) {
