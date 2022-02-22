@@ -5,7 +5,7 @@
 #include <fstream>
 #include <vector>
 #include <random>
-
+#include <algorithm>
 
 #include <flann/flann.hpp>
 #include <flann/flann.h>

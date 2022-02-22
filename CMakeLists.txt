@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 project(ars-cuda LANGUAGES CXX CUDA)
 #add_definitions(-std=c++0x)
 
+add_compile_options(-std=c++14)
+
 set(CMAKE_BUILD_TYPE Debug)
 
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -gencode arch=compute_75,code=sm_75)
@@ -64,62 +66,37 @@ add_library(cuars_mpeg7 STATIC
     src/Profiler.cpp
 
     src/mpeg7RW.cpp
+    src/mpeg7_io.cpp
 )
 
-#add_executable(testFunctions app/testFunctions.cpp )
-#target_link_libraries(testFunctions ${ars_LINK_LIBS} ars)
-#
-#add_executable(testIsotropicArs app/testIsotropicArs.cpp )
-#target_link_libraries(testIsotropicArs ${ars_LINK_LIBS} ars)
-
-
+####################################################################################
 
 add_executable(gpu_testIsotropicArs app/gpu_testIsotropicArs.cu )
 target_link_libraries(gpu_testIsotropicArs ${ars_LINK_LIBS} cuars_base)
 
-target_compile_features(gpu_testIsotropicArs PUBLIC cxx_std_11)
+#target_compile_features(gpu_testIsotropicArs PUBLIC cxx_std_11)
 set_target_properties(gpu_testIsotropicArs PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(gpu_testIsotropicArs PROPERTIES CUDA_ARCHITECTURES "52")
 
 ####################################################################################
  
 add_executable(gpu_testArsIsoMpeg7 app/gpu_testArsIsoMpeg7.cu)
-target_link_libraries(gpu_testArsIsoMpeg7 ${ars_LINK_LIBS} cuars_mpeg7 rofl_common ${PCL_LIBRARIES})
+target_link_libraries(gpu_testArsIsoMpeg7 ${ars_LINK_LIBS} cuars_mpeg7 rofl_common ${PCL_LIBRARIES} -lstdc++fs)
 
 target_compile_features(gpu_testArsIsoMpeg7 PUBLIC cxx_std_11)
 set_target_properties(gpu_testArsIsoMpeg7 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(gpu_testArsIsoMpeg7 PROPERTIES CUDA_ARCHITECTURES "52")
 
-#add_executable(testAnisotropicArs app/testAnisotropicArs.cpp)
-#target_link_libraries(testAnisotropicArs ${ars_LINK_LIBS} ars)
-#
-#add_executable(testCorrelationArs app/testCorrelationArs.cpp)
-#target_link_libraries(testCorrelationArs ${ars_LINK_LIBS} ars)
-#
-#add_executable(testAnisotropicKernel app/testAnisotropicKernel.cpp)
-#target_link_libraries(testAnisotropicKernel ${ars_LINK_LIBS} ars)
-#
-#add_executable(testGaussianMixtureEstimator app/testGaussianMixtureEstimator.cpp)
-#target_link_libraries(testGaussianMixtureEstimator ${ars_LINK_LIBS} ars)
+####################################################################################
+ 
+add_executable(gpu_fullArsIsoMpeg7 app/gpu_fullArsIsoMpeg7.cu)
+target_link_libraries(gpu_fullArsIsoMpeg7 ${ars_LINK_LIBS} cuars_mpeg7 rofl_common ${PCL_LIBRARIES} -lstdc++fs)
 
-#add_executable(testMortonOrderedPoints app/testMortonOrderedPoints.cpp)
-#target_link_libraries(testMortonOrderedPoints ${ars_LINK_LIBS} ars)
+target_compile_features(gpu_fullArsIsoMpeg7 PUBLIC cxx_std_11)
+set_target_properties(gpu_fullArsIsoMpeg7 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(gpu_fullArsIsoMpeg7 PROPERTIES CUDA_ARCHITECTURES "52")
 
-# Option "make install": copy binaries
-#INSTALL(TARGETS ars 
-#  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
-#  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-#  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-#)
 
-# Option "make install": copy headers
-#FILE(GLOB headers "${CMAKE_CURRENT_SOURCE_DIR}/include/ars/*.h")
-#FILE(GLOB headers_3rdparty "${CMAKE_CURRENT_SOURCE_DIR}/include/ars/thirdparty/*.h")
-#INSTALL(FILES ${headers} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ars/)
-#INSTALL(FILES ${headers_3rdparty} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ars/thirdparty/)
 
-# Option "make install": copy cmake script
-#FILE(GLOB cmake_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/arsConfig.cmake")
-#message(STATUS "cmake_script " ${cmake_script})
-#INSTALL(FILES ${cmake_script} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/ars/)
+
 

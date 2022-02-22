@@ -1,6 +1,3 @@
-#include <algorithm>
-
-
 #include "ars/mpeg7RW.h"
 
 
