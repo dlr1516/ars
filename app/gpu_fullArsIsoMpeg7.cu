@@ -63,6 +63,11 @@ struct ParlArsIsoParams { //Isotropic ARS Parallelization Params
     int sumBlockSz;
     int sumGridSz;
 
+    //time profiling
+    double srcExecTime;
+    double gpu_srcExecTime;
+    double dstExecTime;
+    double gpu_dstExecTime;
 };
 
 
@@ -118,8 +123,7 @@ int main(int argc, char **argv) {
 
     std::string prefixName;
     double rotTrue, rotArsIso, rotArsIso_gpu;
-    double srcExecTime, dstExecTime;
-    int srcNumPts, srcNumKers, dstNumPts, dstNumKers;
+    int srcNumPts, dstNumPts;
 
 
 
@@ -134,7 +138,7 @@ int main(int argc, char **argv) {
     params.getParam<std::string>("in", inputGlob, std::experimental::filesystem::current_path().string() + "/*");
     params.getParam<std::string>("out", filenameOut, mpeg7io::generateStampedString("results_", ".txt"));
     params.getParam<std::string>("resume", resumeFilename, "");
-    params.getParam<bool>("extrainfoEnable", tparams.extrainfoEnable, bool(false));
+    params.getParam<bool>("extrainfoEnable", tparams.extrainfoEnable, bool(true));
 
 
     // ArsIso params
@@ -151,6 +155,13 @@ int main(int argc, char **argv) {
     //    arsSrc.initLUT(0.0001);
     //    arsSrc.setComputeMode(ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT);
     arsSrc.setComputeMode(cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD);
+    arsDst.setARSFOrder(tparams.arsIsoOrder);
+    arsDst.setComputeMode(cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD);
+
+
+    //parallelization parameters
+    params.getParam<int>("blockSz", paiParams.blockSize, 1024);
+
 
 
     params.getParam<int>("fileSkipper", tparams.fileSkipper, int(1));
@@ -267,6 +278,7 @@ int main(int argc, char **argv) {
                     << std::setw(6) << pointsDst.getNumOccl() << " "
                     << std::setw(6) << pointsDst.getNumRand() << " "
                     << "SKIPPED" << std::endl;
+            countPairs++;
             continue;
         }
 
@@ -305,15 +317,19 @@ int main(int argc, char **argv) {
             outfile << std::setw(6) << "gpu_arsIso " << std::fixed << std::setprecision(2) << std::setw(6) << (180.0 / M_PI * mod180(rotArsIso_gpu)) << " ";
         }
         if (tparams.extrainfoEnable) {
+            srcNumPts = paiParams.numPts;
+            dstNumPts = paiParams.numPts; //all couples on mpeg7 have the same number of points
             std::cout << std::fixed << std::setprecision(2) << std::setw(10)
-                    << "  srcNumPts \t" << srcNumPts << "  srcNumKers \t" << srcNumKers << "  srcExecTime \t" << srcExecTime
-                    << "  dstNumPts \t" << dstNumPts << "  dstNumKers \t" << dstNumKers << "  dstExecTime \t" << dstExecTime << "\n";
-            outfile << std::setw(6) << "sPts " << std::fixed << std::setprecision(2) << std::setw(6) << srcNumPts << " "
-                    << std::setw(6) << "sKrs " << std::fixed << std::setprecision(2) << std::setw(6) << srcNumKers << " "
-                    << std::setw(6) << "sTm " << std::fixed << std::setprecision(2) << std::setw(12) << srcExecTime << " "
-                    << std::setw(6) << "dPts " << std::fixed << std::setprecision(2) << std::setw(6) << dstNumPts << " "
-                    << std::setw(6) << "dKrs " << std::fixed << std::setprecision(2) << std::setw(6) << dstNumKers << " "
-                    << std::setw(6) << "dTm " << std::fixed << std::setprecision(2) << std::setw(12) << dstExecTime << " ";
+                    << "  srcNumPts \t" << srcNumPts << "  srcExecTime \t" << paiParams.srcExecTime << "  gpu_srcExecTime \t" << paiParams.gpu_srcExecTime
+                    << "  dstNumPts \t" << dstNumPts << "  dstExecTime \t" << paiParams.dstExecTime << "  gpu_dstExecTime \t" << paiParams.gpu_dstExecTime
+                    << std::endl;
+
+            outfile << std::setw(8) << "sPts " << std::fixed << std::setprecision(2) << std::setw(6) << srcNumPts << " "
+                    << std::setw(8) << "sTm " << std::fixed << std::setprecision(2) << std::setw(6) << paiParams.srcExecTime << " "
+                    << std::setw(8) << "gpu_sTm " << std::fixed << std::setprecision(2) << std::setw(12) << paiParams.gpu_srcExecTime << " "
+                    << std::setw(8) << "dPts " << std::fixed << std::setprecision(2) << std::setw(6) << dstNumPts << " "
+                    << std::setw(8) << "dTm " << std::fixed << std::setprecision(2) << std::setw(6) << paiParams.dstExecTime << " "
+                    << std::setw(8) << "gpu_dTm " << std::fixed << std::setprecision(2) << std::setw(12) << paiParams.gpu_dstExecTime << " ";
         }
 
         outfile << std::endl;
@@ -491,19 +507,27 @@ void setupParallelization(ParlArsIsoParams& pp, int pointsSrcSz, int pointsDstSz
     pp.numPts = numPts;
     const int numPtsAfterPadding = ceilPow2(numPts); //for apple1 -> numPts 661; padded 1024
     pp.numPtsAfterPadding = numPtsAfterPadding;
-    const int blockSize = 256; //num threads per block
-    pp.blockSize = blockSize;
+    
+    //    const int blockSize = 1024; //num threads per block -> read as param
+    //    pp.blockSize = blockSize;
+    const int blockSize = pp.blockSize;
+    
     const int numBlocks = (numPtsAfterPadding * numPtsAfterPadding) / blockSize; //number of blocks in grid (each block contains blockSize threads)
     pp.numBlocks = numBlocks;
+    
     const int gridTotalSize = blockSize*numBlocks; //total number of threads in grid
     pp.gridTotalSize = gridTotalSize;
+    
     //depth of mega-matrix
     const int coeffsMatNumCols = 2 * fourierOrder + 2;
     pp.coeffsMatNumCols = coeffsMatNumCols;
+    
     const int coeffsMatNumColsPadded = ceilPow2(coeffsMatNumCols);
     pp.coeffsMatNumColsPadded = coeffsMatNumColsPadded;
+    
     const int coeffsMatTotalSz = numPtsAfterPadding * numPtsAfterPadding * coeffsMatNumColsPadded;
     pp.coeffsMatTotalSz = coeffsMatTotalSz;
+    
     //Fourier matrix sum -> parallelization parameters
     const int sumBlockSz = 64;
     pp.sumBlockSz = sumBlockSz;
@@ -550,6 +574,7 @@ void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc,
     float millisecondsSrc = 0.0f;
     cudaEventElapsedTime(&millisecondsSrc, startSrc, stopSrc);
     std::cout << "SRC -> insertIsotropicGaussians() " << millisecondsSrc << " ms" << std::endl;
+    paip.gpu_srcExecTime = millisecondsSrc;
 
     cudaError_t cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
@@ -604,6 +629,8 @@ void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc,
     float millisecondsDst = 0.0f;
     cudaEventElapsedTime(&millisecondsDst, startDst, stopDst);
     std::cout << "DST -> insertIsotropicGaussiansDst() " << millisecondsDst << " ms" << std::endl;
+    paip.gpu_dstExecTime = millisecondsDst;
+
 
     cudaerr = cudaDeviceSynchronize();
     if (cudaerr != cudaSuccess)
