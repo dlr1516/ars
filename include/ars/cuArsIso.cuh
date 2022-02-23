@@ -276,10 +276,10 @@ void iigKernelDownward(cuars::Vec2d* means, double sigma1, double sigma2, int nu
 
         int i = getIfromTid(tid, numPts);
         int j = getJfromTid(tid, numPts, i);
-        printf("i %d j %d\n", i, j);
+        //        printf("i %d j %d\n", i, j);
 
         if (i >= numPts || j >= numPts || j <= i) {
-            printf("BAD INDEXING!!!!\n");
+            //            printf("BAD INDEXING!!!!\n"); //could actually be ok because of padding... maybe optimization can be further improved in this regard
             continue;
         }
 

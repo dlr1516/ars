@@ -117,21 +117,28 @@ int main(int argc, char **argv) {
 
 
     //Fourier coefficients mega-matrix computation -> parallelization parameters
-    int numPts = std::min<int>(pointsSrc.points().size(), pointsDst.points().size()); //the two should normally be equal
-    const int numPtsAfterPadding = ceilPow2(numPts); //for apple1 -> numPts 661; padded 1024
-    const int blockSize = 256; //num threads per block
-    const int numBlocks = (numPtsAfterPadding * numPtsAfterPadding) / blockSize; //number of blocks in grid (each block contains blockSize threads)
-    const int gridTotalSize = blockSize*numBlocks; //total number of threads in grid
-    //depth of mega-matrix
+    int numPts = std::min<int>(pointsSrc.points().size(), pointsDst.points().size()); //the two should normally be equals
+    int numPtsAfterPadding = numPts;
+    const int gridTotalSize = sumNaturalsUpToN(numPts - 1); //total number of threads in grid Fourier coefficients grid - BEFORE PADDING
+    const int blockSize = 256;
+    const int numBlocks = floor(gridTotalSize / blockSize) + 1; //number of blocks in grid (each block contains blockSize threads)
+    const int gridTotalSizeAfterPadding = blockSize * numBlocks;
+
     const int coeffsMatNumCols = 2 * arsOrder + 2;
-    const int coeffsMatNumColsPadded = ceilPow2(coeffsMatNumCols);
-    const int coeffsMatTotalSz = numPtsAfterPadding * numPtsAfterPadding * coeffsMatNumColsPadded;
+    //    const int coeffsMatNumColsPadded = ceilPow2(coeffsMatNumCols);
+    const int coeffsMatNumColsPadded = coeffsMatNumCols;
+    const int coeffsMatTotalSz = gridTotalSizeAfterPadding * coeffsMatNumColsPadded; //sumNaturalsUpToN(numPts - 1) * coeffsMatNumColsPadded
+    std::cout << "sum parallelization params: " << std::endl
+            << " coeffMatNumCols " << coeffsMatNumCols << " coeffsMatTotalSz " << coeffsMatTotalSz << std::endl;
+
     //Fourier matrix sum -> parallelization parameters
-    const int sumBlockSz = 64;
-    const int sumGridSz = 256; //can be used to futher parallelize sum of mega-matrix (for now in sum kernel it is actually set to 1)
+    const int sumBlockSz = 2 * arsOrder + 2;
+    const int sumGridSz = 256; //unused for now
     std::cout << "Parallelization params:" << std::endl;
-    std::cout << "numPtsAfterPadding " << numPtsAfterPadding << " blockSize " << blockSize << " numBlocks " << numBlocks << " gridTotalSize " << gridTotalSize << std::endl;
-    std::cout << "sumBlockSz " << sumBlockSz << " sumGridSz " << sumGridSz << std::endl;
+    std::cout << "numPts " << numPts << " blockSize " << blockSize << " numBlocks " << numBlocks
+            << " gridTotalSize " << gridTotalSize << " gridTotalSizeAP " << gridTotalSizeAfterPadding << std::endl;
+    std::cout << "sumSrcBlockSz " << sumBlockSz << " sumGridSz " << sumGridSz << std::endl;
+
 
     std::cout << "\n------\n" << std::endl;
 
@@ -157,8 +164,8 @@ int main(int argc, char **argv) {
     cudaMemset(d_coeffsArsSrc, 0.0, coeffsMatNumColsPadded * sizeof (double));
 
     cudaEventRecord(startSrc);
-    iigKernelDownward_old << <numBlocks, blockSize >> >(kernelInputSrc, arsSigma, arsSigma, numPts, numPtsAfterPadding, arsOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatSrc);
-    sumColumns << <1, sumBlockSz>> >(coeffsMatSrc, numPtsAfterPadding, coeffsMatNumColsPadded, d_coeffsArsSrc);
+    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputSrc, arsSigma, arsSigma, numPts, arsOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatSrc);
+    sumColumnsNoPadding << <1, sumBlockSz>> >(coeffsMatSrc, gridTotalSizeAfterPadding, coeffsMatNumColsPadded, d_coeffsArsSrc);
     cudaEventRecord(stopSrc);
 
     double* coeffsArsSrc = new double [coeffsMatNumColsPadded];
@@ -209,8 +216,8 @@ int main(int argc, char **argv) {
     cudaMemset(d_coeffsArsDst, 0.0, coeffsMatNumColsPadded * sizeof (double));
 
     cudaEventRecord(startDst);
-    iigKernelDownward_old << <numBlocks, blockSize >> >(kernelInputDst, arsSigma, arsSigma, numPts, numPtsAfterPadding, arsOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatDst);
-    sumColumns << <1, sumBlockSz>> >(coeffsMatDst, numPtsAfterPadding, coeffsMatNumColsPadded, d_coeffsArsDst);
+    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputDst, arsSigma, arsSigma, numPts, arsOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatDst);
+    sumColumnsNoPadding << <1, sumBlockSz>> >(coeffsMatDst, gridTotalSizeAfterPadding, coeffsMatNumColsPadded, d_coeffsArsDst);
     cudaEventRecord(stopDst);
 
 

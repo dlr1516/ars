@@ -55,6 +55,7 @@ struct ParlArsIsoParams { //Isotropic ARS Parallelization Params
     int blockSize;
     int numBlocks;
     int gridTotalSize;
+    int gridTotalSizeAfterPadding;
     //depth of mega-matrix
     int coeffsMatNumCols;
     int coeffsMatNumColsPadded;
@@ -85,6 +86,8 @@ std::string getShortName(std::string filename);
 std::string getLeafDirectory(std::string filename);
 
 void setupParallelization(ParlArsIsoParams& pp, int pointsSrcSz, int pointsDstSz, int fourierOrder);
+
+void setupParallelizationNoPad(ParlArsIsoParams& pp, int pointsSrcSz, int pointsDstSz, int fourierOrder);
 
 void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc, const ArsImgTests::PointReaderWriter& pointsDst, TestParams& tp, ParlArsIsoParams& paip, double& rotOut);
 
@@ -249,7 +252,7 @@ int main(int argc, char **argv) {
 
     //execution couple-by-couple (of files) of ARS
     int countPairs = 0;
-    const int maxNumPtsAllowed = 4095;
+    const int maxNumPtsAllowed = 5000;
     for (auto& comp : outPairs) {
         if (countPairs % tparams.fileSkipper) {
             countPairs++;
@@ -263,7 +266,7 @@ int main(int argc, char **argv) {
         std::cout << "[" << countPairs << "/" << outPairs.size() << "]\n" << "  * \"" << inputFilenames[comp.first] << "\"\n    \"" << inputFilenames[comp.second] << "\"" << std::endl;
         rotTrue = pointsDst.getRotTheta() - pointsSrc.getRotTheta();
 
-        setupParallelization(paiParams, pointsSrc.points().size(), pointsDst.points().size(), tparams.arsIsoOrder);
+        setupParallelizationNoPad(paiParams, pointsSrc.points().size(), pointsDst.points().size(), tparams.arsIsoOrder);
         if (paiParams.numPts > maxNumPtsAllowed) {
             std::cout << "CANNOT process all data in single block... skipping to next" << std::endl;
             outfile
@@ -500,43 +503,88 @@ std::string getLeafDirectory(std::string filename) {
 }
 
 void setupParallelization(ParlArsIsoParams& pp, int pointsSrcSz, int pointsDstSz, int fourierOrder) {
+    //    //Setting up parallelization
+    //    //Parallelization parameters
+    //    //Fourier coefficients mega-matrix computation
+    //    int numPts = std::min<int>(pointsSrcSz, pointsDstSz); //the two should normally be equal
+    //    pp.numPts = numPts;
+    //    const int numPtsAfterPadding = ceilPow2(numPts); //for apple1 -> numPts 661; padded 1024
+    //    pp.numPtsAfterPadding = numPtsAfterPadding;
+    //    
+    //    //    const int blockSize = 1024; //num threads per block -> read as param
+    //    //    pp.blockSize = blockSize;
+    //    const int blockSize = pp.blockSize;
+    //    
+    //    const int numBlocks = (numPtsAfterPadding * numPtsAfterPadding) / blockSize; //number of blocks in grid (each block contains blockSize threads)
+    //    pp.numBlocks = numBlocks;
+    //    
+    //    const int gridTotalSize = blockSize*numBlocks; //total number of threads in grid
+    //    pp.gridTotalSize = gridTotalSize;
+    //    
+    //    //depth of mega-matrix
+    //    const int coeffsMatNumCols = 2 * fourierOrder + 2;
+    //    pp.coeffsMatNumCols = coeffsMatNumCols;
+    //    
+    //    const int coeffsMatNumColsPadded = ceilPow2(coeffsMatNumCols);
+    //    pp.coeffsMatNumColsPadded = coeffsMatNumColsPadded;
+    //    
+    //    const int coeffsMatTotalSz = numPtsAfterPadding * numPtsAfterPadding * coeffsMatNumColsPadded;
+    //    pp.coeffsMatTotalSz = coeffsMatTotalSz;
+    //    
+    //    //Fourier matrix sum -> parallelization parameters
+    //    const int sumBlockSz = 64;
+    //    pp.sumBlockSz = sumBlockSz;
+    //    const int sumGridSz = 256; //can be used to futher parallelize sum of mega-matrix (for now in sum kernel it is actually set to 1)
+    //    pp.sumGridSz = sumGridSz;
+    //
+    //    std::cout << "Parallelization params:" << std::endl;
+    //    std::cout << "numPtsAfterPadding " << numPtsAfterPadding << " blockSize " << blockSize << " numBlocks " << numBlocks << " gridTotalSize " << gridTotalSize << std::endl;
+    //    std::cout << "sumBlockSz " << sumBlockSz << " sumGridSz " << sumGridSz << std::endl;
+    //
+    //    std::cout << "\n------\n" << std::endl;
+    //
+    //    std::cout << "\n\nCalling kernel functions on GPU...\n" << std::endl;
+}
+
+void setupParallelizationNoPad(ParlArsIsoParams& pp, int pointsSrcSz, int pointsDstSz, int fourierOrder) {
     //Setting up parallelization
     //Parallelization parameters
     //Fourier coefficients mega-matrix computation
-    int numPts = std::min<int>(pointsSrcSz, pointsDstSz); //the two should normally be equal
+    int numPts = std::max<int>(pointsSrcSz, pointsDstSz); //the two should normally be equal
     pp.numPts = numPts;
-    const int numPtsAfterPadding = ceilPow2(numPts); //for apple1 -> numPts 661; padded 1024
+
+    int numPtsAfterPadding = numPts;
     pp.numPtsAfterPadding = numPtsAfterPadding;
-    
-    //    const int blockSize = 1024; //num threads per block -> read as param
-    //    pp.blockSize = blockSize;
-    const int blockSize = pp.blockSize;
-    
-    const int numBlocks = (numPtsAfterPadding * numPtsAfterPadding) / blockSize; //number of blocks in grid (each block contains blockSize threads)
-    pp.numBlocks = numBlocks;
-    
-    const int gridTotalSize = blockSize*numBlocks; //total number of threads in grid
+    const int gridTotalSize = sumNaturalsUpToN(numPts - 1); //total number of threads in grid Fourier coefficients grid - BEFORE PADDING
     pp.gridTotalSize = gridTotalSize;
-    
-    //depth of mega-matrix
+    const int blockSize = 256;
+    pp.blockSize = blockSize;
+    const int numBlocks = floor(gridTotalSize / blockSize) + 1; //number of blocks in grid (each block contains blockSize threads)
+    pp.numBlocks = numBlocks;
+    const int gridTotalSizeAfterPadding = blockSize * numBlocks;
+    pp.gridTotalSizeAfterPadding = gridTotalSizeAfterPadding;
+
     const int coeffsMatNumCols = 2 * fourierOrder + 2;
     pp.coeffsMatNumCols = coeffsMatNumCols;
-    
-    const int coeffsMatNumColsPadded = ceilPow2(coeffsMatNumCols);
+    const int coeffsMatNumColsPadded = coeffsMatNumCols;
     pp.coeffsMatNumColsPadded = coeffsMatNumColsPadded;
-    
-    const int coeffsMatTotalSz = numPtsAfterPadding * numPtsAfterPadding * coeffsMatNumColsPadded;
+    const int coeffsMatTotalSz = gridTotalSizeAfterPadding * coeffsMatNumColsPadded; //sumNaturalsUpToN(numPts - 1) * coeffsMatNumColsPadded
     pp.coeffsMatTotalSz = coeffsMatTotalSz;
-    
-    //Fourier matrix sum -> parallelization parameters
-    const int sumBlockSz = 64;
-    pp.sumBlockSz = sumBlockSz;
-    const int sumGridSz = 256; //can be used to futher parallelize sum of mega-matrix (for now in sum kernel it is actually set to 1)
-    pp.sumGridSz = sumGridSz;
+    std::cout << "sum parallelization params: " << std::endl
+            << " coeffMatNumCols " << coeffsMatNumCols << " coeffsMatTotalSz " << coeffsMatTotalSz << std::endl;
 
+    //Fourier matrix sum -> parallelization parameters
+    const int sumBlockSz = 2 * fourierOrder + 2;
+    pp.sumBlockSz = sumBlockSz;
+    const int sumGridSz = 256; //unused for now
+    pp.sumGridSz = sumGridSz;
     std::cout << "Parallelization params:" << std::endl;
-    std::cout << "numPtsAfterPadding " << numPtsAfterPadding << " blockSize " << blockSize << " numBlocks " << numBlocks << " gridTotalSize " << gridTotalSize << std::endl;
-    std::cout << "sumBlockSz " << sumBlockSz << " sumGridSz " << sumGridSz << std::endl;
+    std::cout << "numPts " << numPts << " blockSize " << blockSize << " numBlocks " << numBlocks
+            << " gridTotalSize " << gridTotalSize << " gridTotalSizeAP " << gridTotalSizeAfterPadding << std::endl;
+    std::cout << "sumSrcBlockSz " << sumBlockSz << " sumGridSz " << sumGridSz << std::endl;
+
+
+
 
     std::cout << "\n------\n" << std::endl;
 
@@ -563,8 +611,8 @@ void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc,
     cudaMemset(d_coeffsArsSrc, 0.0, paip.coeffsMatNumColsPadded * sizeof (double));
 
     cudaEventRecord(startSrc);
-    iigKernelDownward_old << <paip.numBlocks, paip.blockSize >> >(kernelInputSrc, tp.arsIsoSigma, tp.arsIsoSigma, paip.numPts, paip.numPtsAfterPadding, tp.arsIsoOrder, paip.coeffsMatNumColsPadded, tp.arsIsoPnebiMode, coeffsMatSrc);
-    sumColumns << <1, paip.sumBlockSz>> >(coeffsMatSrc, paip.numPtsAfterPadding, paip.coeffsMatNumColsPadded, d_coeffsArsSrc);
+    iigKernelDownward << <paip.numBlocks, paip.blockSize >> >(kernelInputSrc, tp.arsIsoSigma, tp.arsIsoSigma, paip.numPts, tp.arsIsoOrder, paip.coeffsMatNumColsPadded, tp.arsIsoPnebiMode, coeffsMatSrc);
+    sumColumnsNoPadding << <1, paip.sumBlockSz>> >(coeffsMatSrc, paip.gridTotalSizeAfterPadding, paip.coeffsMatNumColsPadded, d_coeffsArsSrc);
     cudaEventRecord(stopSrc);
 
     double* coeffsArsSrc = new double [paip.coeffsMatNumColsPadded];
@@ -616,8 +664,8 @@ void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc,
     cudaMemset(d_coeffsArsDst, 0.0, paip.coeffsMatNumColsPadded * sizeof (double));
 
     cudaEventRecord(startDst);
-    iigKernelDownward_old << <paip.numBlocks, paip.blockSize >> >(kernelInputDst, tp.arsIsoSigma, tp.arsIsoSigma, paip.numPts, paip.numPtsAfterPadding, tp.arsIsoOrder, paip.coeffsMatNumColsPadded, tp.arsIsoPnebiMode, coeffsMatDst);
-    sumColumns << <1, paip.sumBlockSz>> >(coeffsMatDst, paip.numPtsAfterPadding, paip.coeffsMatNumColsPadded, d_coeffsArsDst);
+    iigKernelDownward << <paip.numBlocks, paip.blockSize >> >(kernelInputDst, tp.arsIsoSigma, tp.arsIsoSigma, paip.numPts, tp.arsIsoOrder, paip.coeffsMatNumColsPadded, tp.arsIsoPnebiMode, coeffsMatDst);
+    sumColumnsNoPadding << <1, paip.sumBlockSz>> >(coeffsMatDst, paip.gridTotalSizeAfterPadding, paip.coeffsMatNumColsPadded, d_coeffsArsDst);
     cudaEventRecord(stopDst);
 
 

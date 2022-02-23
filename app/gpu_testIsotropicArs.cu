@@ -116,6 +116,7 @@ int main(void) {
     const int coeffsMatTotalSz = gridTotalSizeAfterPadding * coeffsMatNumColsPadded; //sumNaturalsUpToN(numPts - 1) * coeffsMatNumColsPadded
     std::cout << "sum parallelization params: " << std::endl
             << " coeffMatNumCols " << coeffsMatNumCols << " coeffsMatTotalSz " << coeffsMatTotalSz << std::endl;
+    
     double *coeffsMat1;
     cudaMalloc((void**) &coeffsMat1, coeffsMatTotalSz * sizeof (double));
     cudaMemset(coeffsMat1, 0.0, coeffsMatTotalSz * sizeof (double));
