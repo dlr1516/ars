@@ -27,7 +27,7 @@
 
 #include "ars/mpeg7RW.h"
 #include "ars/mpeg7_io.h"
-#include "ars/cuArsIso.cuh"
+#include "ars/ars2d.cuh"
 
 
 

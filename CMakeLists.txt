@@ -46,6 +46,7 @@ endif()
 # Library files
 add_library(cuars_base STATIC
     src/ars2d.cpp
+    src/ars2d.cu
 #    src/definitions.cpp #since using double2 and double4, those definitions are not used anymore
     src/functions.cpp
 
@@ -56,6 +57,7 @@ add_library(cuars_base STATIC
 
 add_library(cuars_mpeg7 STATIC
     src/ars2d.cpp
+    src/ars2d.cu
 
     src/functions.cpp
     src/utils.cpp

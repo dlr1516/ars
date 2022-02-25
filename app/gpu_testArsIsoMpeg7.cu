@@ -24,7 +24,7 @@
 #include "ars/Profiler.h"
 
 #include "ars/mpeg7RW.h"
-#include "ars/cuArsIso.cuh"
+#include "ars/ars2d.cuh"
 
 
 

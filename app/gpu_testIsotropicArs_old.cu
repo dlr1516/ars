@@ -21,7 +21,7 @@
 #include <iostream>
 #include <chrono>
 
-#include "ars/cuArsIso.cuh"
+#include "ars/ars2d.cuh"
 
 
 
