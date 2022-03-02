@@ -522,7 +522,7 @@ void sumColumnsNoPadding(double* mat, int nrows, int ncols, double* sums) {
 __global__
 void makePartialSums(double* matIn, int nrowsIn, int ncols, double *matOut) {
     //    int index = blockIdx.x * blockDim.x + threadIdx.x;
-    int index = threadIdx.x * gridDim.x + blockIdx.x;
+    int index = threadIdx.x * gridDim.x + blockIdx.x; //!!! indexing is done "column-major" (in terms of kernel grid)
     int stride = blockDim.x * gridDim.x;
 
     int totalSzIn = nrowsIn*ncols; //matrix is considered of size nrows*ncols, with nrows = sumNaturalsUpToN(numPts)

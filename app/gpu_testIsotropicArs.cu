@@ -58,7 +58,7 @@ int main(void) {
 
 
     const int sumBlockSz = 2 * fourierOrder + 2;
-    const int sumGridSz = 256; //unused for now
+    const int sumGridSz = blockSize; //unused for now
     std::cout << "Parallelization params:" << std::endl;
     std::cout << "numPts " << numPts << " blockSize " << blockSize << " numBlocks " << numBlocks
             << " gridTotalSize " << gridTotalSize << " gridTotalSizeAP " << gridTotalSizeAfterPadding << std::endl;

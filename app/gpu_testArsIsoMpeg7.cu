@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
 
     //Fourier matrix sum -> parallelization parameters
     const int sumBlockSz = 2 * arsOrder + 2;
-    const int sumGridSz = 256; //unused for now
+    const int sumGridSz = blockSize; //unused for now
     std::cout << "Parallelization params:" << std::endl;
     std::cout << "numPts " << numPts << " blockSize " << blockSize << " numBlocks " << numBlocks
             << " gridTotalSize " << gridTotalSize << " gridTotalSizeAP " << gridTotalSizeAfterPadding << std::endl;
@@ -153,19 +153,26 @@ int main(int argc, char **argv) {
     cudaMalloc((void**) &kernelInputSrc, numPtsAfterPadding * sizeof (cuars::Vec2d));
     cudaMemcpy(kernelInputSrc, pointsSrc.points().data(), numPtsAfterPadding * sizeof (cuars::Vec2d), cudaMemcpyHostToDevice);
 
-    double *coeffsMatSrc;
-    cudaMalloc((void**) &coeffsMatSrc, coeffsMatTotalSz * sizeof (double));
-    cudaMemset(coeffsMatSrc, 0.0, coeffsMatTotalSz * sizeof (double));
+    double *d_coeffsMatSrc;
+    cudaMalloc((void**) &d_coeffsMatSrc, coeffsMatTotalSz * sizeof (double));
+    cudaMemset(d_coeffsMatSrc, 0.0, coeffsMatTotalSz * sizeof (double));
     //    for (int i = 0; i < coeffsMatTotalSz; ++i) {
     //        coeffsMaSrc1[i] = 0.0;
     //    }
+
+    double* d_partsumsSrc;
+    cudaMalloc((void**) &d_partsumsSrc, blockSize * coeffsMatNumColsPadded * sizeof (double));
+    cudaMemset(d_partsumsSrc, 0.0, blockSize * coeffsMatNumColsPadded * sizeof (double));
+
     double* d_coeffsArsSrc;
     cudaMalloc((void**) &d_coeffsArsSrc, coeffsMatNumColsPadded * sizeof (double));
     cudaMemset(d_coeffsArsSrc, 0.0, coeffsMatNumColsPadded * sizeof (double));
 
     cudaEventRecord(startSrc);
-    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputSrc, arsSigma, arsSigma, numPts, arsOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatSrc);
-    sumColumnsNoPadding << <1, sumBlockSz>> >(coeffsMatSrc, gridTotalSizeAfterPadding, coeffsMatNumColsPadded, d_coeffsArsSrc);
+    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputSrc, arsSigma, arsSigma, numPts, arsOrder, coeffsMatNumColsPadded, pnebiMode, d_coeffsMatSrc);
+    //    sumColumnsNoPadding << <1, sumBlockSz>> >(coeffsMatSrc, gridTotalSizeAfterPadding, coeffsMatNumColsPadded, d_coeffsArsSrc);
+    makePartialSums << < coeffsMatNumColsPadded, blockSize >>> (d_coeffsMatSrc, gridTotalSizeAfterPadding, coeffsMatNumColsPadded, d_partsumsSrc);
+    sumColumnsPartialSums << <coeffsMatNumColsPadded, 1 >> >(d_partsumsSrc, blockSize, coeffsMatNumColsPadded, d_coeffsArsSrc);
     cudaEventRecord(stopSrc);
 
     double* coeffsArsSrc = new double [coeffsMatNumColsPadded];
@@ -184,9 +191,10 @@ int main(int argc, char **argv) {
     //        std::cout << "coeffsArsSrc[" << i << "] " << coeffsArsSrc[i] << std::endl;
     //    }
 
-    cudaFree(coeffsMatSrc);
-    cudaFree(kernelInputSrc);
     cudaFree(d_coeffsArsSrc);
+    cudaFree(d_partsumsSrc);
+    cudaFree(d_coeffsMatSrc);
+    cudaFree(kernelInputSrc);
     cudaEventDestroy(startSrc);
     cudaEventDestroy(stopSrc);
     //END OF ARS SRC
@@ -205,19 +213,26 @@ int main(int argc, char **argv) {
     cudaMalloc((void**) &kernelInputDst, numPtsAfterPadding * sizeof (cuars::Vec2d));
     cudaMemcpy(kernelInputDst, pointsDst.points().data(), numPtsAfterPadding * sizeof (cuars::Vec2d), cudaMemcpyHostToDevice);
 
-    double *coeffsMatDst; //magari evitare di fare il delete e poi riallocarla è più efficiente (anche se comunque ci sarebbe poi da settare tutto a 0)
-    cudaMalloc((void**) &coeffsMatDst, coeffsMatTotalSz * sizeof (double));
-    cudaMemset(coeffsMatDst, 0.0, coeffsMatTotalSz * sizeof (double));
+    double *d_coeffsMatDst; //magari evitare di fare il delete e poi riallocarla è più efficiente (anche se comunque ci sarebbe poi da settare tutto a 0)
+    cudaMalloc((void**) &d_coeffsMatDst, coeffsMatTotalSz * sizeof (double));
+    cudaMemset(d_coeffsMatDst, 0.0, coeffsMatTotalSz * sizeof (double));
     //    for (int i = 0; i < coeffsMatTotalSz; ++i) {
     //        coeffsMatDst[i] = 0.0;
     //    }
+
+    double* d_partsumsDst;
+    cudaMalloc((void**) &d_partsumsDst, blockSize * coeffsMatNumColsPadded * sizeof (double));
+    cudaMemset(d_partsumsDst, 0.0, blockSize * coeffsMatNumColsPadded * sizeof (double));
+
     double* d_coeffsArsDst;
     cudaMalloc((void**) &d_coeffsArsDst, coeffsMatNumColsPadded * sizeof (double));
     cudaMemset(d_coeffsArsDst, 0.0, coeffsMatNumColsPadded * sizeof (double));
 
     cudaEventRecord(startDst);
-    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputDst, arsSigma, arsSigma, numPts, arsOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMatDst);
-    sumColumnsNoPadding << <1, sumBlockSz>> >(coeffsMatDst, gridTotalSizeAfterPadding, coeffsMatNumColsPadded, d_coeffsArsDst);
+    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputDst, arsSigma, arsSigma, numPts, arsOrder, coeffsMatNumColsPadded, pnebiMode, d_coeffsMatDst);
+    //    sumColumnsNoPadding << <1, sumBlockSz>> >(coeffsMatDst, gridTotalSizeAfterPadding, coeffsMatNumColsPadded, d_coeffsArsDst);
+    makePartialSums << < coeffsMatNumColsPadded, blockSize >>> (d_coeffsMatDst, gridTotalSizeAfterPadding, coeffsMatNumColsPadded, d_partsumsDst);
+    sumColumnsPartialSums << <coeffsMatNumColsPadded, 1 >> >(d_partsumsDst, blockSize, coeffsMatNumColsPadded, d_coeffsArsDst);
     cudaEventRecord(stopDst);
 
 
@@ -238,9 +253,10 @@ int main(int argc, char **argv) {
     //        std::cout << "coeffsArsDst[" << i << "] " << coeffsArsDst[i] << std::endl;
     //    }
 
-    cudaFree(coeffsMatDst);
-    cudaFree(kernelInputDst);
     cudaFree(d_coeffsArsDst);
+    cudaFree(d_partsumsDst);
+    cudaFree(d_coeffsMatDst);
+    cudaFree(kernelInputDst);
     cudaEventDestroy(startDst);
     cudaEventDestroy(stopDst);
     //END OF ARS DST
@@ -308,8 +324,8 @@ int main(int argc, char **argv) {
     std::cout << "rotArs[deg] \t" << (180.0 / M_PI * rotArs) << " \t" << (180.0 / M_PI * mod180(rotArs)) << std::endl;
 
     //Free CPU memory
-    free(coeffsArsSrc);
-    free(coeffsArsDst);
+    delete coeffsArsSrc;
+    delete coeffsArsDst;
 
 
     return 0;
