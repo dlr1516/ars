@@ -35,3 +35,9 @@ void sumColumns(double* mat, int nrows, int ncols, double* sums);
 
 __global__
 void sumColumnsNoPadding(double* mat, int nrows, int ncols, double* sums);
+
+__global__
+void makePartialSums(double* matIn, int nrowsIn, int ncols, double *matOut);
+
+__global__
+void sumColumnsPartialSums(double* matIn, int nrows, int ncols, double* vecOut);

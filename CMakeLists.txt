@@ -5,6 +5,8 @@ project(ars-cuda LANGUAGES CXX CUDA)
 add_compile_options(-std=c++14)
 
 set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CUDA_FLAGS_DEBUG "-g -G")
+#add_compile_options(-lineinfo)
 
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -gencode arch=compute_75,code=sm_75)
 

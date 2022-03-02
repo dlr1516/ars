@@ -612,7 +612,7 @@ void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc,
 
     cudaEventRecord(startSrc);
     iigKernelDownward << <paip.numBlocks, paip.blockSize >> >(kernelInputSrc, tp.arsIsoSigma, tp.arsIsoSigma, paip.numPts, tp.arsIsoOrder, paip.coeffsMatNumColsPadded, tp.arsIsoPnebiMode, coeffsMatSrc);
-    sumColumnsNoPadding << <1, paip.sumBlockSz>> >(coeffsMatSrc, paip.gridTotalSizeAfterPadding, paip.coeffsMatNumColsPadded, d_coeffsArsSrc);
+    sumColumnsNoPadding << <paip.sumBlockSz, 1>> >(coeffsMatSrc, paip.gridTotalSizeAfterPadding, paip.coeffsMatNumColsPadded, d_coeffsArsSrc);
     cudaEventRecord(stopSrc);
 
     double* coeffsArsSrc = new double [paip.coeffsMatNumColsPadded];
@@ -665,7 +665,7 @@ void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc,
 
     cudaEventRecord(startDst);
     iigKernelDownward << <paip.numBlocks, paip.blockSize >> >(kernelInputDst, tp.arsIsoSigma, tp.arsIsoSigma, paip.numPts, tp.arsIsoOrder, paip.coeffsMatNumColsPadded, tp.arsIsoPnebiMode, coeffsMatDst);
-    sumColumnsNoPadding << <1, paip.sumBlockSz>> >(coeffsMatDst, paip.gridTotalSizeAfterPadding, paip.coeffsMatNumColsPadded, d_coeffsArsDst);
+    sumColumnsNoPadding << <paip.sumBlockSz, 1>> >(coeffsMatDst, paip.gridTotalSizeAfterPadding, paip.coeffsMatNumColsPadded, d_coeffsArsDst);
     cudaEventRecord(stopDst);
 
 

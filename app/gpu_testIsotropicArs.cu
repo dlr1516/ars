@@ -116,10 +116,14 @@ int main(void) {
     const int coeffsMatTotalSz = gridTotalSizeAfterPadding * coeffsMatNumColsPadded; //sumNaturalsUpToN(numPts - 1) * coeffsMatNumColsPadded
     std::cout << "sum parallelization params: " << std::endl
             << " coeffMatNumCols " << coeffsMatNumCols << " coeffsMatTotalSz " << coeffsMatTotalSz << std::endl;
-    
-    double *coeffsMat1;
-    cudaMalloc((void**) &coeffsMat1, coeffsMatTotalSz * sizeof (double));
-    cudaMemset(coeffsMat1, 0.0, coeffsMatTotalSz * sizeof (double));
+
+    double *d_coeffsMat1;
+    cudaMalloc((void**) &d_coeffsMat1, coeffsMatTotalSz * sizeof (double));
+    cudaMemset(d_coeffsMat1, 0.0, coeffsMatTotalSz * sizeof (double));
+
+    double* d_partialSums1;
+    cudaMalloc((void**) &d_partialSums1, blockSize * coeffsMatNumColsPadded * sizeof (double));
+    cudaMemset(d_partialSums1, 0.0, blockSize * coeffsMatNumColsPadded * sizeof (double));
 
     double* d_coeffsArs1;
     cudaMalloc((void**) &d_coeffsArs1, coeffsMatNumColsPadded * sizeof (double));
@@ -135,8 +139,9 @@ int main(void) {
     //    }
 
     cudaEventRecord(start);
-    iigKernelDownward << <numBlocks, blockSize >> >(kernelInput1, sigma, sigma, numPts, fourierOrder, coeffsMatNumColsPadded, pnebiMode, coeffsMat1);
-    sumColumnsNoPadding << <1, sumBlockSz>> >(coeffsMat1, gridTotalSizeAfterPadding, coeffsMatNumColsPadded, d_coeffsArs1);
+    iigKernelDownward << <numBlocks, blockSize >> >(kernelInput1, sigma, sigma, numPts, fourierOrder, coeffsMatNumColsPadded, pnebiMode, d_coeffsMat1);
+    makePartialSums << < coeffsMatNumColsPadded, blockSize >>> (d_coeffsMat1, gridTotalSizeAfterPadding, coeffsMatNumColsPadded, d_partialSums1);
+    sumColumnsPartialSums << <coeffsMatNumColsPadded, 1 >> >(d_partialSums1, blockSize, coeffsMatNumColsPadded, d_coeffsArs1);
     cudaEventRecord(stop);
 
     double* coeffsArs1 = new double [coeffsMatNumColsPadded];
@@ -148,6 +153,12 @@ int main(void) {
 
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
+
+    //    //Free GPU and CPU memory
+    cudaFree(d_coeffsMat1);
+    cudaFree(d_partialSums1);
+    cudaFree(kernelInput1);
+    cudaFree(d_coeffsArs1);
     //END OF ARS1
 
     std::cout << "\n------\n" << std::endl;
@@ -262,14 +273,12 @@ int main(void) {
 
 
     //    //Free GPU and CPU memory
+    delete coeffsArs1;
+
     cudaFree(d_coefficientsArs2);
     cudaFree(kernelInput2);
     delete coefficientsArs2;
     //    free(coefficientsArs2); //cpu array
-    cudaFree(coeffsMat1);
-    cudaFree(kernelInput1);
-    cudaFree(d_coeffsArs1);
-    delete coeffsArs1;
 
     return 0;
 }

@@ -16,6 +16,8 @@
 // * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
 // */
 
+#include <device_launch_parameters.h>
+
 #include "ars/ars2d.cuh"
 
 int ceilPow2(int n) {
@@ -380,7 +382,7 @@ void iigKernelDownward(cuars::Vec2d* means, double sigma1, double sigma2, int nu
                 sth = stmp;
             }
 
-            delete pnebis;
+            //            delete pnebis;
         } else
             printf("ERROR: pnebi mode is NOT Downward!\n");
 
@@ -500,8 +502,8 @@ void sumColumns(double* mat, int nrows, int ncols, double* sums) {
 
 __global__
 void sumColumnsNoPadding(double* mat, int nrows, int ncols, double* sums) {
-    int index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block
-    int stride = blockDim.x * gridDim.x; //total number of threads in the grids
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    int stride = blockDim.x * gridDim.x;
 
     int totalSz = nrows*ncols; //matrix is considered of size nrows*ncols, with nrows = sumNaturalsUpToN(numPts)
 
@@ -514,5 +516,46 @@ void sumColumnsNoPadding(double* mat, int nrows, int ncols, double* sums) {
         //        int i = (rowIdx - j) / nrows;
         //        printf("i %d j %d k %d rowIdx %d; accessing mat[%d]\n", i, j, k, rowIdx, idx);
         sums[k] += mat[idx];
+    }
+}
+
+__global__
+void makePartialSums(double* matIn, int nrowsIn, int ncols, double *matOut) {
+    //    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    int index = threadIdx.x * gridDim.x + blockIdx.x;
+    int stride = blockDim.x * gridDim.x;
+
+    int totalSzIn = nrowsIn*ncols; //matrix is considered of size nrows*ncols, with nrows = sumNaturalsUpToN(numPts)
+
+    //1 thread of the kernel composes 1 box of matOut
+    int rowOutId = threadIdx.x;
+    int colOutId = blockIdx.x;
+    int idOut = rowOutId * ncols + colOutId;
+    //    printf("rowOutId %d colOutId %d idOut %d\n", rowOutId, colOutId, idOut);
+
+    int nOps = 0;
+    for (int idx = index; idx < totalSzIn; idx += stride) {
+        //        printf("nOps %d\n", nOps);
+
+
+        matOut[idOut] += matIn[idx];
+        nOps++;
+    }
+}
+
+__global__
+void sumColumnsPartialSums(double* matPartialSums, int nrows, int ncols, double* sums) {
+    int index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block
+    int stride = blockDim.x * gridDim.x; //total number of threads in the grids
+
+    int totalSz = nrows*ncols; //matrix is considered of size nrows*ncols, with nrows = sumNaturalsUpToN(numPts)
+
+
+    for (int idx = index; idx < totalSz; idx += stride) {
+        //        int totalIndex = (((i * nrows) + j) * ncols) + k;
+        int k = idx % ncols;
+        int rowIdx = (idx - k) / ncols;
+        //        printf("k %d rowIdx %d; accessing mat[%d]\n", k, rowIdx, idx);
+        sums[k] += matPartialSums[idx];
     }
 }
