@@ -574,10 +574,10 @@ void setupParallelizationNoPad(ParlArsIsoParams& pp, int pointsSrcSz, int points
             << " coeffMatNumCols " << coeffsMatNumCols << " coeffsMatTotalSz " << coeffsMatTotalSz << std::endl;
 
     //Fourier matrix sum -> parallelization parameters
-    const int sumBlockSz = 2 * fourierOrder + 2;
-    pp.sumBlockSz = sumBlockSz;
-    const int sumGridSz = 256; //unused for now
+    const int sumGridSz = 2 * fourierOrder + 2;
     pp.sumGridSz = sumGridSz;
+    const int sumBlockSz = blockSize;
+    pp.sumBlockSz = sumBlockSz;
     std::cout << "Parallelization params:" << std::endl;
     std::cout << "numPts " << numPts << " blockSize " << blockSize << " numBlocks " << numBlocks
             << " gridTotalSize " << gridTotalSize << " gridTotalSizeAP " << gridTotalSizeAfterPadding << std::endl;
@@ -600,19 +600,26 @@ void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc,
     cudaMalloc((void**) &kernelInputSrc, paip.numPtsAfterPadding * sizeof (cuars::Vec2d));
     cudaMemcpy(kernelInputSrc, pointsSrc.points().data(), paip.numPtsAfterPadding * sizeof (cuars::Vec2d), cudaMemcpyHostToDevice);
 
-    double *coeffsMatSrc;
-    cudaMalloc((void**) &coeffsMatSrc, paip.coeffsMatTotalSz * sizeof (double));
-    cudaMemset(coeffsMatSrc, 0.0, paip.coeffsMatTotalSz * sizeof (double));
+    double *d_coeffsMatSrc;
+    cudaMalloc((void**) &d_coeffsMatSrc, paip.coeffsMatTotalSz * sizeof (double));
+    cudaMemset(d_coeffsMatSrc, 0.0, paip.coeffsMatTotalSz * sizeof (double));
     //    for (int i = 0; i < coeffsMatTotalSz; ++i) {
     //        coeffsMaSrc1[i] = 0.0;
     //    }
+    
+    double* d_partsumsSrc;
+    cudaMalloc((void**) &d_partsumsSrc, paip.blockSize * paip.coeffsMatNumColsPadded * sizeof (double));
+    cudaMemset(d_partsumsSrc, 0.0, paip.blockSize * paip.coeffsMatNumColsPadded * sizeof (double));
+    
     double* d_coeffsArsSrc;
     cudaMalloc((void**) &d_coeffsArsSrc, paip.coeffsMatNumColsPadded * sizeof (double));
     cudaMemset(d_coeffsArsSrc, 0.0, paip.coeffsMatNumColsPadded * sizeof (double));
 
     cudaEventRecord(startSrc);
-    iigKernelDownward << <paip.numBlocks, paip.blockSize >> >(kernelInputSrc, tp.arsIsoSigma, tp.arsIsoSigma, paip.numPts, tp.arsIsoOrder, paip.coeffsMatNumColsPadded, tp.arsIsoPnebiMode, coeffsMatSrc);
-    sumColumnsNoPadding << <paip.sumBlockSz, 1>> >(coeffsMatSrc, paip.gridTotalSizeAfterPadding, paip.coeffsMatNumColsPadded, d_coeffsArsSrc);
+    iigKernelDownward << <paip.numBlocks, paip.blockSize >> >(kernelInputSrc, tp.arsIsoSigma, tp.arsIsoSigma, paip.numPts, tp.arsIsoOrder, paip.coeffsMatNumColsPadded, tp.arsIsoPnebiMode, d_coeffsMatSrc);
+    //    sumColumnsNoPadding << <paip.sumBlockSz, 1 >> >(coeffsMatSrc, paip.gridTotalSizeAfterPadding, paip.coeffsMatNumColsPadded, d_coeffsArsSrc);
+    makePartialSums << < paip.coeffsMatNumColsPadded, paip.blockSize>>> (d_coeffsMatSrc, paip.gridTotalSizeAfterPadding, paip.coeffsMatNumColsPadded, d_partsumsSrc);
+    sumColumnsPartialSums << <paip.coeffsMatNumColsPadded, 1 >> >(d_partsumsSrc, paip.blockSize, paip.coeffsMatNumColsPadded, d_coeffsArsSrc);
     cudaEventRecord(stopSrc);
 
     double* coeffsArsSrc = new double [paip.coeffsMatNumColsPadded];
@@ -632,9 +639,10 @@ void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc,
     //        std::cout << "coeffsArsSrc[" << i << "] " << coeffsArsSrc[i] << std::endl;
     //    }
 
-    cudaFree(coeffsMatSrc);
-    cudaFree(kernelInputSrc);
     cudaFree(d_coeffsArsSrc);
+    cudaFree(d_partsumsSrc);
+    cudaFree(d_coeffsMatSrc);
+    cudaFree(kernelInputSrc);
     cudaEventDestroy(startSrc);
     cudaEventDestroy(stopSrc);
     //END OF ARS SRC
@@ -653,19 +661,26 @@ void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc,
     cudaMalloc((void**) &kernelInputDst, paip.numPtsAfterPadding * sizeof (cuars::Vec2d));
     cudaMemcpy(kernelInputDst, pointsDst.points().data(), paip.numPtsAfterPadding * sizeof (cuars::Vec2d), cudaMemcpyHostToDevice);
 
-    double *coeffsMatDst; //magari evitare di fare il delete e poi riallocarla è più efficiente (anche se comunque ci sarebbe poi da settare tutto a 0)
-    cudaMalloc((void**) &coeffsMatDst, paip.coeffsMatTotalSz * sizeof (double));
-    cudaMemset(coeffsMatDst, 0.0, paip.coeffsMatTotalSz * sizeof (double));
+    double *d_coeffsMatDst; //magari evitare di fare il delete e poi riallocarla è più efficiente (anche se comunque ci sarebbe poi da settare tutto a 0)
+    cudaMalloc((void**) &d_coeffsMatDst, paip.coeffsMatTotalSz * sizeof (double));
+    cudaMemset(d_coeffsMatDst, 0.0, paip.coeffsMatTotalSz * sizeof (double));
     //    for (int i = 0; i < coeffsMatTotalSz; ++i) {
     //        coeffsMatDst[i] = 0.0;
     //    }
+    
+    double* d_partsumsDst;
+    cudaMalloc((void**) &d_partsumsDst, paip.blockSize * paip.coeffsMatNumColsPadded * sizeof (double));
+    cudaMemset(d_partsumsDst, 0.0, paip.blockSize * paip.coeffsMatNumColsPadded * sizeof (double));
+    
     double* d_coeffsArsDst;
     cudaMalloc((void**) &d_coeffsArsDst, paip.coeffsMatNumColsPadded * sizeof (double));
     cudaMemset(d_coeffsArsDst, 0.0, paip.coeffsMatNumColsPadded * sizeof (double));
 
     cudaEventRecord(startDst);
-    iigKernelDownward << <paip.numBlocks, paip.blockSize >> >(kernelInputDst, tp.arsIsoSigma, tp.arsIsoSigma, paip.numPts, tp.arsIsoOrder, paip.coeffsMatNumColsPadded, tp.arsIsoPnebiMode, coeffsMatDst);
-    sumColumnsNoPadding << <paip.sumBlockSz, 1>> >(coeffsMatDst, paip.gridTotalSizeAfterPadding, paip.coeffsMatNumColsPadded, d_coeffsArsDst);
+    iigKernelDownward << <paip.numBlocks, paip.blockSize >> >(kernelInputDst, tp.arsIsoSigma, tp.arsIsoSigma, paip.numPts, tp.arsIsoOrder, paip.coeffsMatNumColsPadded, tp.arsIsoPnebiMode, d_coeffsMatDst);
+    //    sumColumnsNoPadding << <paip.sumBlockSz, 1>> >(coeffsMatDst, paip.gridTotalSizeAfterPadding, paip.coeffsMatNumColsPadded, d_coeffsArsDst);
+    makePartialSums << < paip.coeffsMatNumColsPadded, paip.blockSize>>> (d_coeffsMatDst, paip.gridTotalSizeAfterPadding, paip.coeffsMatNumColsPadded, d_partsumsDst);
+    sumColumnsPartialSums << <paip.coeffsMatNumColsPadded, 1 >> >(d_partsumsDst, paip.blockSize, paip.coeffsMatNumColsPadded, d_coeffsArsDst);
     cudaEventRecord(stopDst);
 
 
@@ -688,13 +703,13 @@ void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc,
     //        std::cout << "coeffsArsDst[" << i << "] " << coeffsArsDst[i] << std::endl;
     //    }
 
-    cudaFree(coeffsMatDst);
-    cudaFree(kernelInputDst);
     cudaFree(d_coeffsArsDst);
+    cudaFree(d_partsumsDst);
+    cudaFree(d_coeffsMatDst);
+    cudaFree(kernelInputDst);
     cudaEventDestroy(startDst);
     cudaEventDestroy(stopDst);
     //END OF ARS DST
-
 
 
 
@@ -760,8 +775,8 @@ void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc,
     //    std::cout << "rotArs[deg] \t" << (180.0 / M_PI * rotOut) << " \t" << (180.0 / M_PI * mod180(rotOut)) << std::endl;
 
     //Free CPU memory
-    free(coeffsArsSrc);
-    free(coeffsArsDst);
+    delete coeffsArsSrc;
+    delete coeffsArsDst;
 }
 
 double mod180(double angle) {
