@@ -309,8 +309,16 @@ namespace cuars {
 
     void threeMats2dProd(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx, const Mat2d& cMtx) {
         Mat2d tmp;
-        mat2dProd(tmp, aMtx, bMtx);
-        mat2dProd(resultMtx, tmp, cMtx);
+
+        //        mat2dProd(tmp, aMtx, bMtx);
+        //        mat2dProd(resultMtx, tmp, cMtx);
+
+        Mat2d aCopy = aMtx;
+        Mat2d bCopy = bMtx;
+        Mat2d cCopy = cMtx;
+
+        mat2dProd(tmp, aCopy, bCopy);
+        mat2dProd(resultMtx, tmp, cCopy);
     }
 
     double vec2norm(const Vec2d& v) {
@@ -346,7 +354,7 @@ namespace cuars {
         return result;
     }
 
-    double vec2dotProduct(Vec2d& a, Vec2d& b) {
+    double vec2dotProduct(const Vec2d& a, const Vec2d& b) {
         return a.x * b.x + a.y * b.y;
     }
 

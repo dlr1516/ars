@@ -125,7 +125,7 @@ namespace cuars {
 
     Vec2d vec2diffWRV(const Vec2d& a, const Vec2d & b);
 
-    double vec2dotProduct(Vec2d& a, Vec2d & b);
+    double vec2dotProduct(const Vec2d& a, const Vec2d & b);
 
     void vec2outerProduct(Mat2d& result, const Vec2d& a, const Vec2d & b); //"anti-dot" product: terms are switched
 
