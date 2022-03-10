@@ -129,9 +129,9 @@ namespace cuars {
 
     void vec2outerProduct(Mat2d& result, const Vec2d& a, const Vec2d & b); //"anti-dot" product: terms are switched
 
-    Mat2d vec2outerProductWRV(Vec2d& a, Vec2d & b); //"anti-dot" product: terms are switched
+    Mat2d vec2outerProductWRV(const Vec2d& a, const Vec2d & b); //"anti-dot" product: terms are switched
 
-    Vec2d row2VecTimesMat2WRV(Vec2d& v, Mat2d & m);
+    Vec2d row2VecTimesMat2WRV(const Vec2d& v, const Mat2d & m);
 
     //affine matrices related
 

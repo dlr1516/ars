@@ -211,8 +211,9 @@ int main(int argc, char **argv) {
     {
         cuars::ScopedTimer timer(
                 "ArsKernelIsotropic2d::insertAnisotropicGaussian()");
-        //ars1.insertAnisotropicGaussian(acesPoints, covarsUniform, weightsUniform);
-        ars1.insertAnisotropicGaussians(means, covars, weights);
+        //ars1.insertAnisotropicGaussian(acesPoints, covarsUniform, weightsUniform); //OLD
+        
+//        ars1.insertAnisotropicGaussians(means, covars, weights);
     }
 
     ars2.setARSFOrder(arsOrder);
