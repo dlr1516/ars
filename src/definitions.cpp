@@ -47,19 +47,19 @@ namespace cuars {
     //        data_[1] = 0.0;
     //    }
 
-    void Vec2d::multiplyByScalar(double sc) {
-        data_[0] *= sc;
-        data_[1] *= sc;
-    }
+    //    void Vec2d::multiplyByScalar(double sc) {
+    //        data_[0] *= sc;
+    //        data_[1] *= sc;
+    //    }
 
-    void Vec2d::divideByScalar(double sc) {
-        data_[0] /= sc;
-        data_[1] /= sc;
-    }
+    //    void Vec2d::divideByScalar(double sc) {
+    //        data_[0] /= sc;
+    //        data_[1] /= sc;
+    //    }
 
-    double Vec2d::norm() {
-        return sqrt(data_[0] * data_[0] + data_[1] * data_[1]);
-    }
+    //    double Vec2d::norm() {
+    //        return sqrt(data_[0] * data_[0] + data_[1] * data_[1]);
+    //    }
 
     //VecVec2d
 
@@ -158,26 +158,26 @@ namespace cuars {
     //        data_[1 * Two + 1] = 0.0; // = data[3]
     //    }
 
-    void Mat2d::setToIdentity() {
-        data_[0 * Two + 0] = 1.0; // = data[0]
-        data_[0 * Two + 1] = 0.0; // = data[1]
-        data_[1 * Two + 0] = 0.0; // = data[2]
-        data_[1 * Two + 1] = 1.0; // = data[3]
-    }
+    //    void Mat2d::setToIdentity() {
+    //        data_[0 * Two + 0] = 1.0; // = data[0]
+    //        data_[0 * Two + 1] = 0.0; // = data[1]
+    //        data_[1 * Two + 0] = 0.0; // = data[2]
+    //        data_[1 * Two + 1] = 1.0; // = data[3]
+    //    }
 
-    void Mat2d::multiplyByScalar(double sc) {
-        data_[0] *= sc;
-        data_[1] *= sc;
-        data_[2] *= sc;
-        data_[3] *= sc;
-    }
+    //    void Mat2d::multiplyByScalar(double sc) {
+    //        data_[0] *= sc;
+    //        data_[1] *= sc;
+    //        data_[2] *= sc;
+    //        data_[3] *= sc;
+    //    }
 
-    void Mat2d::divideByScalar(double sc) {
-        data_[0] /= sc;
-        data_[1] /= sc;
-        data_[2] /= sc;
-        data_[3] /= sc;
-    }
+    //    void Mat2d::divideByScalar(double sc) {
+    //        data_[0] /= sc;
+    //        data_[1] /= sc;
+    //        data_[2] /= sc;
+    //        data_[3] /= sc;
+    //    }
 
     //    void Mat2d::fillRowMajor(double a, double b, double c, double d) {
     //        data_[0 * Two + 0] = a;
@@ -199,57 +199,56 @@ namespace cuars {
     //        data_[1 * Two + 0] = tmp;
     //    }
 
-    Mat2d Mat2d::transposeReturningValue() {
-        Mat2d transposed;
-        transposed.data_[0 * Two + 0] = data_[0 * Two + 0];
-        transposed.data_[0 * Two + 1] = data_[0 * Two + 1];
-        transposed.data_[1 * Two + 0] = data_[1 * Two + 0];
-        transposed.data_[1 * Two + 1] = data_[1 * Two + 1];
+    //    Mat2d Mat2d::transposeReturningValue() {
+    //        Mat2d transposed;
+    //        transposed.data_[0 * Two + 0] = data_[0 * Two + 0];
+    //        transposed.data_[0 * Two + 1] = data_[0 * Two + 1];
+    //        transposed.data_[1 * Two + 0] = data_[1 * Two + 0];
+    //        transposed.data_[1 * Two + 1] = data_[1 * Two + 1];
+    //
+    //        return transposed;
+    //    }
 
-        return transposed;
-    }
+    //    double Mat2d::determinant() const {
+    //        return data_[0 * Two + 0] * data_[1 * Two + 1] - data_[0 * Two + 1] * data_[1 * Two + 0];
+    //    }
 
-    double Mat2d::determinant() const {
-        return data_[0 * Two + 0] * data_[1 * Two + 1] - data_[0 * Two + 1] * data_[1 * Two + 0];
-    }
+    //    double Mat2d::trace() const {
+    //        return data_[0 * Two + 0] + data_[1 * Two + 1];
+    //    }
 
-    double Mat2d::trace() const {
-        return data_[0 * Two + 0] + data_[1 * Two + 1];
-    }
+    //    void Mat2d::invert() {
+    //        //            double det = data_[0 * Two + 0] * data_[1 * Two + 1] - data_[0 * Two + 1] * data_[1 * Two + 0]; //maybe use directly determinant() function??
+    //        double detInv = 1.0 / determinant();
+    //
+    //        double aOrig = data_[0 * Two + 0];
+    //        double bOrig = data_[0 * Two + 1];
+    //        double cOrig = data_[1 * Two + 0];
+    //        double dOrig = data_[1 * Two + 1];
+    //
+    //        data_[0 * Two + 0] = dOrig * detInv;
+    //        data_[0 * Two + 1] = -bOrig * detInv;
+    //        data_[1 * Two + 0] = -cOrig * detInv;
+    //        data_[1 * Two + 1] = aOrig * detInv;
+    //    }
 
-    void Mat2d::invert() {
-        //            double det = data_[0 * Two + 0] * data_[1 * Two + 1] - data_[0 * Two + 1] * data_[1 * Two + 0]; //maybe use directly determinant() function??
-        double detInv = 1.0 / determinant();
-
-        double aOrig = data_[0 * Two + 0];
-        double bOrig = data_[0 * Two + 1];
-        double cOrig = data_[1 * Two + 0];
-        double dOrig = data_[1 * Two + 1];
-
-        data_[0 * Two + 0] = dOrig * detInv;
-        data_[0 * Two + 1] = -bOrig * detInv;
-        data_[1 * Two + 0] = -cOrig * detInv;
-        data_[1 * Two + 1] = aOrig * detInv;
-
-    }
-
-    Mat2d Mat2d::inverse() const {
-        Mat2d m;
-
-        double detInv = 1.0 / determinant();
-
-        double aOrig = data_[0 * Two + 0];
-        double bOrig = data_[0 * Two + 1];
-        double cOrig = data_[1 * Two + 0];
-        double dOrig = data_[1 * Two + 1];
-
-        m.data_[0 * Two + 0] = dOrig * detInv;
-        m.data_[0 * Two + 1] = -bOrig * detInv;
-        m.data_[1 * Two + 0] = -cOrig * detInv;
-        m.data_[1 * Two + 1] = aOrig * detInv;
-
-        return m;
-    }
+    //    Mat2d Mat2d::inverse() const {
+    //        Mat2d m;
+    //
+    //        double detInv = 1.0 / determinant();
+    //
+    //        double aOrig = data_[0 * Two + 0];
+    //        double bOrig = data_[0 * Two + 1];
+    //        double cOrig = data_[1 * Two + 0];
+    //        double dOrig = data_[1 * Two + 1];
+    //
+    //        m.data_[0 * Two + 0] = dOrig * detInv;
+    //        m.data_[0 * Two + 1] = -bOrig * detInv;
+    //        m.data_[1 * Two + 0] = -cOrig * detInv;
+    //        m.data_[1 * Two + 1] = aOrig * detInv;
+    //
+    //        return m;
+    //    }
 
     //    void Mat2d::setDiagonal(double a11, double a22) {
     //        data_[0 * Two + 0] = a11;

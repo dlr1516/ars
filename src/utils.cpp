@@ -87,6 +87,17 @@ namespace cuars {
         mtx.z = 0.0;
     }
 
+    void setToIdentity(Mat2d& mtx) {
+        //        data_[0 * Two + 0] = 1.0; // = data[0]
+        //        data_[0 * Two + 1] = 0.0; // = data[1]
+        //        data_[1 * Two + 0] = 0.0; // = data[2]
+        //        data_[1 * Two + 1] = 1.0; // = data[3]
+        mtx.w = 1.0;
+        mtx.x = 0.0;
+        mtx.y = 0.0;
+        mtx.z = 1.0;
+    }
+
     void setDiagonal(Mat2d& mtx, double a11, double a22) {
         mtx.w = a11;
         mtx.x = 0.0;
@@ -110,17 +121,167 @@ namespace cuars {
         mtx.z = d;
     }
 
+    void scalarMul(Vec2d& vec, double d) {
+        vec.x *= d;
+        vec.y *= d;
+    }
+
+    Vec2d scalarMulWRV(const Vec2d& vec, double d) {
+        Vec2d res;
+
+        res.x = vec.x * d;
+        res.y = vec.y * d;
+
+        return res;
+    }
+
+    void scalarMul(Mat2d& mtx, double d) {
+        mtx.w *= d;
+        mtx.x *= d;
+        mtx.y *= d;
+        mtx.z *= d;
+    }
+
+    Mat2d scalarMulWRV(const Mat2d& mtx, double d) {
+        Mat2d res;
+
+        res.w = mtx.w * d;
+        res.x = mtx.x * d;
+        res.y = mtx.y * d;
+        res.z = mtx.z * d;
+
+        return res;
+    }
+
+    void scalarDiv(Vec2d& vec, double d) {
+        if (d == 0)
+            ARS_ASSERT(false);
+
+        vec.x /= d;
+        vec.y /= d;
+    }
+
+    Vec2d scalarDivWRV(const Vec2d& vec, double d) {
+        if (d == 0)
+            ARS_ASSERT(false);
+
+        Vec2d res;
+
+        res.x = vec.x / d;
+        res.y = vec.y / d;
+
+        return res;
+    }
+
+    void scalarDiv(Mat2d& mtx, double d) {
+        if (d == 0)
+            ARS_ASSERT(false);
+
+        mtx.w /= d;
+        mtx.x /= d;
+        mtx.y /= d;
+        mtx.z /= d;
+    }
+
+    Mat2d scalarDivWRV(const Mat2d& mtx, double d) {
+        if (d == 0)
+            ARS_ASSERT(false);
+
+        Mat2d res;
+
+        res.w = mtx.w / d;
+        res.x = mtx.x / d;
+        res.y = mtx.y / d;
+        res.z = mtx.z / d;
+
+        return res;
+    }
+
     void transpose(Mat2d& mtx) {
         double tmp = mtx.x;
         mtx.x = mtx.y;
         mtx.y = tmp;
     }
 
+    Mat2d transposeWRV(const Mat2d& mtx) {
+        Mat2d res;
+        res.x = mtx.y;
+        res.y = mtx.x;
+        return res;
+    }
+
+    double mat2dDeterminant(const Mat2d& mtx) {
+        //        return data_[0 * Two + 0] * data_[1 * Two + 1] - data_[0 * Two + 1] * data_[1 * Two + 0];
+        return mtx.w * mtx.z - mtx.x * mtx.y;
+    }
+
+    double mat2dTrace(const Mat2d& mtx) {
+        //        return data_[0 * Two + 0] + data_[1 * Two + 1];
+        return mtx.w + mtx.z;
+    }
+
+    void mat2dInvert(Mat2d& mtx) {
+        double detInv = 1.0 / mat2dDeterminant(mtx);
+
+        double aOrig = mtx.w;
+        double bOrig = mtx.x;
+        double cOrig = mtx.y;
+        double dOrig = mtx.z;
+
+        mtx.w = dOrig * detInv;
+        mtx.x = -bOrig * detInv;
+        mtx.y = -cOrig * detInv;
+        mtx.z = aOrig * detInv;
+    }
+
+    Mat2d mat2dInverse(const Mat2d& mtx) {
+        double detInv = 1.0 / mat2dDeterminant(mtx);
+
+        double aOrig = mtx.w;
+        double bOrig = mtx.x;
+        double cOrig = mtx.y;
+        double dOrig = mtx.z;
+
+        Mat2d r;
+
+        r.w = dOrig * detInv;
+        r.x = -bOrig * detInv;
+        r.y = -cOrig * detInv;
+        r.z = aOrig * detInv;
+
+        return r;
+    }
+
     void mat2dSum(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx) {
-        resultMtx.w = aMtx.w * bMtx.w;
-        resultMtx.x = aMtx.x * bMtx.x;
-        resultMtx.y = aMtx.y * bMtx.y;
+        resultMtx.w = aMtx.w + bMtx.w;
+        resultMtx.x = aMtx.x + bMtx.x;
+        resultMtx.y = aMtx.y + bMtx.y;
         resultMtx.z = aMtx.z * bMtx.z;
+    }
+
+    Mat2d mat2dSumWRV(const Mat2d& aMtx, const Mat2d& bMtx) {
+        Mat2d resultMtx;
+        resultMtx.w = aMtx.w + bMtx.w;
+        resultMtx.x = aMtx.x + bMtx.x;
+        resultMtx.y = aMtx.y + bMtx.y;
+        resultMtx.z = aMtx.z + bMtx.z;
+        return resultMtx;
+    }
+
+    void mat2dDiff(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx) {
+        resultMtx.w = aMtx.w - bMtx.w;
+        resultMtx.x = aMtx.x - bMtx.x;
+        resultMtx.y = aMtx.y - bMtx.y;
+        resultMtx.z = aMtx.z - bMtx.z;
+    }
+
+    Mat2d mat2dDiffWRV(const Mat2d& aMtx, const Mat2d& bMtx) {
+        Mat2d resultMtx;
+        resultMtx.w = aMtx.w - bMtx.w;
+        resultMtx.x = aMtx.x - bMtx.x;
+        resultMtx.y = aMtx.y - bMtx.y;
+        resultMtx.z = aMtx.z - bMtx.z;
+        return resultMtx;
     }
 
     void mat2dPlusEq(Mat2d& resultMtx, const Mat2d& aMtx) {
@@ -135,6 +296,15 @@ namespace cuars {
         resultMtx.x = aMtx.w * bMtx.x + aMtx.x * bMtx.z;
         resultMtx.y = aMtx.y * bMtx.w + aMtx.z * bMtx.y;
         resultMtx.z = aMtx.x * bMtx.y + aMtx.z * bMtx.z;
+    }
+
+    Mat2d mat2dProdWRV(const Mat2d& aMtx, const Mat2d& bMtx) {
+        Mat2d resultMtx;
+        resultMtx.w = aMtx.w * bMtx.w + aMtx.x * bMtx.y;
+        resultMtx.x = aMtx.w * bMtx.x + aMtx.x * bMtx.z;
+        resultMtx.y = aMtx.y * bMtx.w + aMtx.z * bMtx.y;
+        resultMtx.z = aMtx.x * bMtx.y + aMtx.z * bMtx.z;
+        return resultMtx;
     }
 
     void threeMats2dProd(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx, const Mat2d& cMtx) {
@@ -157,6 +327,11 @@ namespace cuars {
         result.x = a.x + b.x;
         result.y = a.y + b.y;
         return result;
+    }
+
+    void vec2dPlusEq(Vec2d& result, const Vec2d& v) {
+        result.x += v.x;
+        result.y += v.y;
     }
 
     void vec2diff(Vec2d& result, const Vec2d& a, const Vec2d& b) {

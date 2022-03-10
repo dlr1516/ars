@@ -19,7 +19,6 @@
 #ifndef GAUSSIANMIXTUREESTIMATOR_H
 #define GAUSSIANMIXTUREESTIMATOR_H
 
-#include <iostream>
 #include <thrust/host_vector.h>
 #include <deque>
 
@@ -50,10 +49,13 @@ namespace cuars {
             double weight;
 
             double eval(const Vec2d &v) const {
-                double k = 1.0 / sqrt(2.0 * M_PI * covar.determinant());
+                //                double k = 1.0 / sqrt(2.0 * M_PI * covar.determinant());
+                double k = 1.0 / sqrt(2.0 * M_PI * mat2dDeterminant(covar));
                 //                double arg = (v - mean).transpose() * covar.inverse() * (v - mean);
-                Vec2d firstMultiplicationResult = row2VecTimesMat2WRV(vec2diffWRV(v, mean), covar.inverse()); //(v - mean).transpose() * covar.inverse()
-                double arg = vec2dotProduct(firstMultiplicationResult, vec2diffWRV(v, mean));
+                Vec2d tmp = vec2diffWRV(v, mean);
+                Mat2d covarInv = mat2dInverse(covar);
+                Vec2d firstMultiplicationResult = row2VecTimesMat2WRV(tmp, covarInv); //(v - mean).transpose() * covar.inverse()
+                double arg = vec2dotProduct(firstMultiplicationResult, tmp);
                 return k * exp(-0.5 * arg);
             }
         };
@@ -130,7 +132,7 @@ namespace cuars {
          * @param samples vector of samples
          * @param stepNum number of iteration of EM
          */
-        void executeEM(const VecVec2d &samples, int stepNum = 1);
+        //        void executeEM(const VecVec2d &samples, int stepNum = 1);
 
     protected:
         //        VecVec2d means_;

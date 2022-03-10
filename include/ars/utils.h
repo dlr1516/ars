@@ -60,6 +60,8 @@ namespace cuars {
     void resetToZero(Vec2d& vec);
 
     void resetToZero(Mat2d& mtx);
+    
+    void setToIdentity(Mat2d& mtx);
 
     void setDiagonal(Mat2d& mtx, double a11, double a22);
 
@@ -67,13 +69,47 @@ namespace cuars {
 
     void fillRowMajor(Mat2d& mtx, double a, double b, double c, double d);
 
+    void scalarMul(Vec2d& vec, double d);
+
+    Vec2d scalarMulWRV(const Vec2d& vec, double d);
+
+    void scalarMul(Mat2d& mtx, double d);
+
+    Mat2d scalarMulWRV(const Mat2d& mtx, double d);
+
+    void scalarDiv(Vec2d& vec, double d);
+
+    Vec2d scalarDivWRV(const Vec2d& vec, double d);
+
+    void scalarDiv(Mat2d& mtx, double d);
+
+    Mat2d scalarDivWRV(const Mat2d& mtx, double d);
+
     void transpose(Mat2d& mtx);
 
+    Mat2d transposeWRV(const Mat2d& mtx);
+
+    double mat2dDeterminant(const Mat2d& mtx);
+    
+    double mat2dTrace(const Mat2d& mtx);
+
+    void mat2dInvert(Mat2d& mtx);
+
+    Mat2d mat2dInverse(const Mat2d & mtx);
+
     void mat2dSum(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx);
+    
+    Mat2d mat2dSumWRV(const Mat2d& aMtx, const Mat2d& bMtx);
+    
+    void mat2dDiff(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx);
+    
+    Mat2d mat2dDiffWRV(const Mat2d& aMtx, const Mat2d& bMtx);
 
     void mat2dPlusEq(Mat2d& resultMtx, const Mat2d& aMtx);
 
     void mat2dProd(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d & bMtx);
+
+    Mat2d mat2dProdWRV(const Mat2d& aMtx, const Mat2d& bMtx);
 
     void threeMats2dProd(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx, const Mat2d & cMtx);
 
@@ -82,6 +118,8 @@ namespace cuars {
     void vec2sum(Vec2d& result, const Vec2d& a, const Vec2d & b);
 
     Vec2d vec2sumWRV(const Vec2d& a, const Vec2d & b);
+
+    void vec2dPlusEq(Vec2d& result, const Vec2d& v);
 
     void vec2diff(Vec2d& result, const Vec2d& a, const Vec2d & b);
 
@@ -103,13 +141,13 @@ namespace cuars {
 
     void preTranslateAff2(Affine2d& t, double x, double y);
 
-    void preTranslateAff2(Affine2d& t, const Vec2d& p);
+    void preTranslateAff2(Affine2d& t, const Vec2d & p);
 
     void aff2Prod(Affine2d& out, const Affine2d& a, const Affine2d & b);
 
     Affine2d aff2ProdWRV(const Affine2d& a, const Affine2d & b);
 
-    Vec2d aff2TimesVec2WRV(const Affine2d& mAff, const Vec2d& p);
+    Vec2d aff2TimesVec2WRV(const Affine2d& mAff, const Vec2d & p);
 
 
 

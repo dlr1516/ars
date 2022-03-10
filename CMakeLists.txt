@@ -51,6 +51,8 @@ add_library(cuars_base STATIC
     src/ars2d.cu
 #    src/definitions.cpp #since using double2 and double4, those definitions are not used anymore
     src/functions.cpp
+    src/utils.cpp
+
 
     src/ArsKernelIsotropic2d.cpp
     src/BBOptimizer1d.cpp
@@ -73,7 +75,25 @@ add_library(cuars_mpeg7 STATIC
     src/mpeg7_io.cpp
 )
 
+add_library(cuars_aniso STATIC
+    src/ars2d.cpp
+    src/ars2d.cu
+#    src/definitions.cpp #since using double2 and double4, those definitions are not used anymore
+    src/functions.cpp
+    src/utils.cpp
+    src/GaussianMixtureEstimator.cpp
+
+
+    src/ArsKernelIsotropic2d.cpp
+    src/BBOptimizer1d.cpp
+    src/Profiler.cpp
+
+    src/mpeg7RW.cpp
+    src/mpeg7_io.cpp
+)
+
 ####################################################################################
+### Isotropic cuArs
 
 add_executable(gpu_testIsotropicArs app/gpu_testIsotropicArs.cu )
 target_link_libraries(gpu_testIsotropicArs ${ars_LINK_LIBS} cuars_base)
@@ -100,6 +120,15 @@ target_compile_features(gpu_fullArsIsoMpeg7 PUBLIC cxx_std_11)
 set_target_properties(gpu_fullArsIsoMpeg7 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(gpu_fullArsIsoMpeg7 PROPERTIES CUDA_ARCHITECTURES "52")
 
+#####################################################################################
+### Anisotropic cuArs
+
+add_executable(gpu_testAnisotropicArs app/gpu_testAnisotropicArs.cu )
+target_link_libraries(gpu_testAnisotropicArs ${ars_LINK_LIBS} cuars_aniso rofl_common)
+
+#target_compile_features(gpu_testAnisotropicArs PUBLIC cxx_std_11)
+set_target_properties(gpu_testAnisotropicArs PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(gpu_testAnisotropicArs PROPERTIES CUDA_ARCHITECTURES "52")
 
 
 

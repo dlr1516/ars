@@ -60,10 +60,11 @@ namespace cuars {
     static const size_t Three = 3; //useful for expanding (i,j) indexing into  i*Two+j
     static const size_t Nine = 9; //useful for expanding (i,j) indexing into  i*Two+j
 
-
+    using Scalar = double;
 
     //    using Vector2 = Eigen::Vector2d;
 
+    using Vec2i = int2;
     using Vec2d = double2;
 
     //    class Vec2d {
