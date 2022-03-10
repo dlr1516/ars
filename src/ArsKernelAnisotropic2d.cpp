@@ -47,8 +47,11 @@ namespace cuars {
         double a, b, lmax, lmin, c, s;
 
         vec2diff(mu12, mean2, mean1);
-        muMod_ = mu12.norm();
-        muAng_ = atan2(mu12.data_[1], mu12.data_[0]);
+        //        muMod_ = mu12.norm();
+        muMod_ = vec2norm(mu12);
+        //        muAng_ = atan2(mu12.data_[1], mu12.data_[0]);
+        muAng_ = atan2(mu12.y, mu12.x);
+
         mat2dSum(sigma12, covar1, covar2);
 
         // Diagonalizes sigma12

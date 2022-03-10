@@ -202,6 +202,39 @@ namespace cuars {
         }
     }
 
+    void AngularRadonSpectrum2d::insertAnisotropicGaussians(const VecVec2d& means, const VecMat2d& covars, const std::vector<double>& weights) {
+        ArsKernelAnisotropic2d nik;
+        std::vector<double> coeffsPartial(arsfOrder_);
+        int kernelNum = means.size();
+        double wij;
+
+        if (kernelNum != covars.size()) {
+            std::cerr << __FILE__ << "," << __LINE__ << ": inconsistent vector sizes: found " << means.size()
+                    << " mean values and " << covars.size() << " covariance matrices" << std::endl;
+            return;
+        }
+
+        nik.setFourierOrder(arsfOrder_);
+        //ARS_ASSERT(coeffs_.size() == 2 * arsfOrder_ && coeffsPartial.size() == 2 * arsfOrder_);
+        coeffs_.resize(2 * arsfOrder_);
+        coeffsPartial.resize(2 * arsfOrder_);
+
+
+        std::fill(coeffs_.begin(), coeffs_.end(), 0.0);
+        for (int i = 0; i < kernelNum; ++i) {
+            for (int j = i + 1; j < kernelNum; ++j) {
+                cuars::ScopedTimer timer("AnisotropicKernel::computeFourier()");
+                nik.init(means[i], covars[i], means[j], covars[j]);
+                nik.computeFourier(coeffsPartial);
+
+                wij = weights[i] * weights[j];
+                for (int f = 0; f < coeffs_.size(); ++f) {
+                    coeffs_[f] += wij * coeffsPartial[f];
+                }
+            }
+        }
+    }
+
     void AngularRadonSpectrum2d::initLUT(double precision = 0.001) {
         //pnebiLut_.init(arsfOrder_, precision);
         isotropicKer_.initPnebiLut(arsfOrder_, precision);

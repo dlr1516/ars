@@ -46,15 +46,20 @@ endif()
 
 
 # Library files
-add_library(cuars_base STATIC
+add_library(cuars STATIC
     src/ars2d.cpp
     src/ars2d.cu
 #    src/definitions.cpp #since using double2 and double4, those definitions are not used anymore
     src/functions.cpp
     src/utils.cpp
 
+    src/GaussianMixtureEstimator.cpp
+    src/DisjointSet.cpp
+    src/MortonSort.cpp
+
 
     src/ArsKernelIsotropic2d.cpp
+    src/ArsKernelAnisotropic2d.cpp
     src/BBOptimizer1d.cpp
     src/Profiler.cpp
 )
@@ -68,6 +73,8 @@ add_library(cuars_mpeg7 STATIC
 #    src/definitions.cpp #since using double2 and double4, those definitions are not used anymore -> the used ones were moved to utils.cpp
 
     src/ArsKernelIsotropic2d.cpp
+    src/ArsKernelAnisotropic2d.cpp
+
     src/BBOptimizer1d.cpp
     src/Profiler.cpp
 
@@ -75,31 +82,13 @@ add_library(cuars_mpeg7 STATIC
     src/mpeg7_io.cpp
 )
 
-add_library(cuars_aniso STATIC
-    src/ars2d.cpp
-    src/ars2d.cu
-#    src/definitions.cpp #since using double2 and double4, those definitions are not used anymore
-    src/functions.cpp
-    src/utils.cpp
 
-    src/GaussianMixtureEstimator.cpp
-    src/DisjointSet.cpp
-    src/MortonSort.cpp
-
-
-    src/ArsKernelIsotropic2d.cpp
-    src/BBOptimizer1d.cpp
-    src/Profiler.cpp
-
-    src/mpeg7RW.cpp
-    src/mpeg7_io.cpp
-)
 
 ####################################################################################
 ### Isotropic cuArs
 
 add_executable(gpu_testIsotropicArs app/gpu_testIsotropicArs.cu )
-target_link_libraries(gpu_testIsotropicArs ${ars_LINK_LIBS} cuars_base)
+target_link_libraries(gpu_testIsotropicArs ${ars_LINK_LIBS} cuars)
 
 #target_compile_features(gpu_testIsotropicArs PUBLIC cxx_std_11)
 set_target_properties(gpu_testIsotropicArs PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
@@ -127,7 +116,7 @@ set_target_properties(gpu_fullArsIsoMpeg7 PROPERTIES CUDA_ARCHITECTURES "52")
 ### Anisotropic cuArs
 
 add_executable(gpu_testAnisotropicArs app/gpu_testAnisotropicArs.cu )
-target_link_libraries(gpu_testAnisotropicArs ${ars_LINK_LIBS} cuars_aniso rofl_common -lboost_iostreams -lboost_system -lboost_filesystem)
+target_link_libraries(gpu_testAnisotropicArs ${ars_LINK_LIBS} cuars rofl_common -lboost_iostreams -lboost_system -lboost_filesystem)
 
 #target_compile_features(gpu_testAnisotropicArs PUBLIC cxx_std_11)
 set_target_properties(gpu_testAnisotropicArs PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

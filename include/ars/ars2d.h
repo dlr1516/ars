@@ -23,6 +23,8 @@
 #include <ars/functions.h>
 #include <ars/BBOptimizer1d.h>
 #include <ars/ArsKernelIsotropic2d.h>
+#include <ars/ArsKernelAnisotropic2d.h>
+
 
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
