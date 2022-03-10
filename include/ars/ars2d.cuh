@@ -5,8 +5,10 @@
 #include <thrust/host_vector.h>
 #include <thrust/device_malloc.h>
 
+__host__
 int ceilPow2(int n);
 
+__host__
 int sumNaturalsUpToN(int n);
 
 __device__

@@ -19,6 +19,7 @@
 
 #include <ars/definitions.h>
 #include <ars/ars2d.h>
+#include <ars/niars2d.cuh>
 #include <ars/GaussianMixtureEstimator.h>
 #include <ars/utils.h>
 
@@ -27,6 +28,7 @@
 #include <rofl/common/param_map.h>
 
 #include "ars/Profiler.h"
+
 
 double acesRanges[] = {50.00, 50.00, 50.00, 5.26, 5.21, 5.06, 5.01, 3.01, 2.94,
     2.89, 2.84, 2.74, 2.69, 2.64, 2.59, 2.54, 2.49, 2.49, 2.44, 2.39, 2.34,

@@ -20,6 +20,7 @@
 
 #include "ars/ars2d.cuh"
 
+__host__
 int ceilPow2(int n) {
     ARS_ASSERT(n > 0);
 
@@ -33,6 +34,7 @@ int ceilPow2(int n) {
     return nPadded;
 }
 
+__host__
 int sumNaturalsUpToN(int n) {
     ARS_ASSERT(n > 0);
 
