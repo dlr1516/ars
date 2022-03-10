@@ -15,12 +15,17 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <ars/functions.h>
+#include <ars/definitions.h>
+
 #include <cassert> 
 #include <algorithm>
-#include <unsupported/Eigen/FFT>
 
-#include <ars/definitions.h>
+#include <unsupported/Eigen/FFT>
+//#include <cufft.h>
+//#include <cufftw.h>
+//#include <cufftXt.h>
+
+#include <ars/functions.h>
 
 
 namespace cuars {
@@ -371,6 +376,7 @@ namespace cuars {
 
     void fft(const std::vector<double>& funIn, std::vector<double>& coeffs, int fourierOrder) {
         Eigen::FFT<double> fft_;
+        
         std::vector<std::complex<double> > freqvec;
         int n = funIn.size();
         double factor = 2.0 / n;
