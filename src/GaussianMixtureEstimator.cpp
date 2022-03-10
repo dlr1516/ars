@@ -636,167 +636,167 @@ namespace cuars {
 
     }
 
-//    bool GaussianMixtureEstimatorHierarchical::estimateGaussianFromPoints(
-//            const ConstIterator &beg, const ConstIterator &end, Vec2d &mean,
-//            Mat2d &covar, double &w) const {
-//        Mat2d l, v, infoMat;
-//        Vec2d tmp;
-//        double sigmaMinSquare = sigmaMin_ * sigmaMin_;
-//        double distSqr;
-//        int num, inlier;
-//
-//        // Computes the mean value vector
-//        //        mean.resetToZero();
-//        resetToZero(mean);
-//        num = 0;
-//        for (auto it = beg; it != end; ++it) {
-//            //            mean += it->value;
-//            const Vec2d tmpVal = it->value;
-//            cuars::vec2dPlusEq(mean, tmpVal);
-//
-//            num++;
-//        }
-//        //        mean = mean / num;
-//        scalarDiv(mean, num);
-//
-//
-//        //	ARS_VARIABLE2(num, mean.transpose());
-//
-//        // Computes the covariance
-//        //        covar.resetToZero();
-//        resetToZero(covar);
-//        for (auto it = beg; it != end; ++it) {
-//            //            tmp = (it->value - mean);
-//            cuars::vec2diff(tmp, it->value, mean);
-//
-//            //            covar += tmp * tmp.transpose();
-//            cuars::mat2dPlusEq(covar, cuars::vec2outerProductWRV(tmp, tmp));
-//        }
-//
-//        if (num <= 1) {
-//            // Only one point: use the point uncertainty
-//            //            covar.fillRowMajor(sigmaMinSquare, 0.0, 0.0, sigmaMinSquare);
-//            fillRowMajor(covar, sigmaMinSquare, 0.0, 0.0, sigmaMinSquare);
-//        } else {
-//            //            covar = covar / (num - 1);
-//            scalarDiv(covar, (num - 1));
-//
-//                    diagonalize(covar, l, v);
-//                    //            if (l.data_[0 * Two + 0] < sigmaMinSquare)
-//                    //                l.data_[0 * Two + 0] = sigmaMinSquare;
-//                    //            if (l.data_[1 * Two + 1] < sigmaMinSquare)
-//                    //                l.data_[1 * Two + 1] = sigmaMinSquare;
-//            if (l.w < sigmaMinSquare)
-//                    l.w = sigmaMinSquare;
-//                if (l.z < sigmaMinSquare)
-//                        l.z = sigmaMinSquare;
-//
-//                        //            covar = v * l * v.transpose();
-//                        cuars::threeMats2dProd(covar, v, l, cuars::transposeWRV(v));
-//
-//                }
-//
-//        inlier = 0;
-//                //        infoMat = covar.inverse();
-//                infoMat = cuars::mat2dInverse(covar);
-//
-//                //ARS_PRINT("covar\n" << covar << "\neigenvalues:\n" << l.transpose() << "\ninfoMat\n" << infoMat);
-//        for (auto it = beg; it != end; ++it) {
-//            tmp = (it->value - mean);
-//
-//                    //            distSqr = tmp.transpose() * infoMat * tmp;
-//                    distSqr = tmp.transpose() * infoMat * tmp;
-//
-//            if (distSqr < chi2Thres_) {
-//                inlier++;
-//            }
-//        }
-//        //	ARS_VARIABLE2(inlier, chi2Thres_);
-//        w = num / data_.size();
-//
-//        return (inlier >= inlierPerc_ * num);
-//    }
+    //    bool GaussianMixtureEstimatorHierarchical::estimateGaussianFromPoints(
+    //            const ConstIterator &beg, const ConstIterator &end, Vec2d &mean,
+    //            Mat2d &covar, double &w) const {
+    //        Mat2d l, v, infoMat;
+    //        Vec2d tmp;
+    //        double sigmaMinSquare = sigmaMin_ * sigmaMin_;
+    //        double distSqr;
+    //        int num, inlier;
+    //
+    //        // Computes the mean value vector
+    //        //        mean.resetToZero();
+    //        resetToZero(mean);
+    //        num = 0;
+    //        for (auto it = beg; it != end; ++it) {
+    //            //            mean += it->value;
+    //            const Vec2d tmpVal = it->value;
+    //            cuars::vec2dPlusEq(mean, tmpVal);
+    //
+    //            num++;
+    //        }
+    //        //        mean = mean / num;
+    //        scalarDiv(mean, num);
+    //
+    //
+    //        //	ARS_VARIABLE2(num, mean.transpose());
+    //
+    //        // Computes the covariance
+    //        //        covar.resetToZero();
+    //        resetToZero(covar);
+    //        for (auto it = beg; it != end; ++it) {
+    //            //            tmp = (it->value - mean);
+    //            cuars::vec2diff(tmp, it->value, mean);
+    //
+    //            //            covar += tmp * tmp.transpose();
+    //            cuars::mat2dPlusEq(covar, cuars::vec2outerProductWRV(tmp, tmp));
+    //        }
+    //
+    //        if (num <= 1) {
+    //            // Only one point: use the point uncertainty
+    //            //            covar.fillRowMajor(sigmaMinSquare, 0.0, 0.0, sigmaMinSquare);
+    //            fillRowMajor(covar, sigmaMinSquare, 0.0, 0.0, sigmaMinSquare);
+    //        } else {
+    //            //            covar = covar / (num - 1);
+    //            scalarDiv(covar, (num - 1));
+    //
+    //                    diagonalize(covar, l, v);
+    //                    //            if (l.data_[0 * Two + 0] < sigmaMinSquare)
+    //                    //                l.data_[0 * Two + 0] = sigmaMinSquare;
+    //                    //            if (l.data_[1 * Two + 1] < sigmaMinSquare)
+    //                    //                l.data_[1 * Two + 1] = sigmaMinSquare;
+    //            if (l.w < sigmaMinSquare)
+    //                    l.w = sigmaMinSquare;
+    //                if (l.z < sigmaMinSquare)
+    //                        l.z = sigmaMinSquare;
+    //
+    //                        //            covar = v * l * v.transpose();
+    //                        cuars::threeMats2dProd(covar, v, l, cuars::transposeWRV(v));
+    //
+    //                }
+    //
+    //        inlier = 0;
+    //                //        infoMat = covar.inverse();
+    //                infoMat = cuars::mat2dInverse(covar);
+    //
+    //                //ARS_PRINT("covar\n" << covar << "\neigenvalues:\n" << l.transpose() << "\ninfoMat\n" << infoMat);
+    //        for (auto it = beg; it != end; ++it) {
+    //            tmp = (it->value - mean);
+    //
+    //                    //            distSqr = tmp.transpose() * infoMat * tmp;
+    //                    distSqr = tmp.transpose() * infoMat * tmp;
+    //
+    //            if (distSqr < chi2Thres_) {
+    //                inlier++;
+    //            }
+    //        }
+    //        //	ARS_VARIABLE2(inlier, chi2Thres_);
+    //        w = num / data_.size();
+    //
+    //        return (inlier >= inlierPerc_ * num);
+    //    }
 
-//    bool GaussianMixtureEstimatorHierarchical::estimateGaussianFromSegment(
-//            const ConstIterator &beg, const ConstIterator &end, Vec2d &mean,
-//            Mat2d &covar, double &w) const {
-//        Mat2d l, v, infoMat;
-//                Vec2d tmp;
-//                double sigmaMinSquare = sigmaMin_ * sigmaMin_;
-//                int num, inlier;
-//                double lmin, lmax, theta, ct, st, distSqr, d, dfirst, dlast;
-//
-//                // Computes the mean value vector
-//                resetToZero(mean);
-//                num = 0;
-//        for (auto it = beg; it != end; ++it) {
-//            mean += it->value;
-//                    num++;
-//        }
-//        //        mean = mean / num;
-//        scalarDiv(mean, num);
-//
-//                // Computes the covariance
-//                //        covar.resetToZero();
-//                resetToZero(covar);
-//        for (auto it = beg; it != end; ++it) {
-//            //            tmp = (it->value - mean);
-//            vec2diff(tmp, it->value, mean);
-//                    covar += tmp * tmp.transpose();
-//        }
-//
-//        if (num <= 1) {
-//            // Only one point: use the point uncertainty
-//            fillRowMajor(covar, sigmaMinSquare, 0.0, 0.0, sigmaMinSquare);
-//        } else {
-//            //            covar = covar / (num - 1);
-//            scalarDiv(covar, (num - 1));
-//
-//                    diagonalize(covar, lmin, lmax, theta);
-//                    ct = cos(theta);
-//                    st = sin(theta);
-//                    dfirst = 1e+6;
-//                    dlast = -1e+6;
-//            for (auto it = beg; it != end; ++it) {
-//                d = ct * it->value(0) + st * it->value(1);
-//                if (d < dfirst)
-//                        dfirst = d;
-//                    if (d > dlast)
-//                            dlast = d;
-//                    }
-//            lmax = covarWidth_ * (dlast - dfirst) * (dlast - dfirst);
-//            if (lmin < sigmaMinSquare) {
-//                lmin = sigmaMinSquare;
-//            }
-//            if (lmax < sigmaMinSquare) {
-//                lmax = sigmaMinSquare;
-//            }
-//            //            covar.fillRowMajor(lmax, 0.0, 0.0, lmin);
-//            fillRowMajor(covar, lmax, 0.0, 0.0, lmin);
-//
-//                    //                    v.make2dRotMat(theta);
-//                    cuars::make2dRotMat(v, theta);
-//                    //                    covar = v * covar * v.transpose();
-//                    covar = cuars::threeMats2dProd(v, covar, cuars::transposeWRV(v));
-//
-//        }
-//
-//        inlier = 0;
-//                //        infoMat = covar.inverse();
-//                infoMat = cuars::mat2dInverse(covar);
-//                //ARS_PRINT("covar\n" << covar << "\neigenvalues:\n" << l.transpose() << "\ninfoMat\n" << infoMat);
-//        for (auto it = beg; it != end; ++it) {
-//            tmp = (it->value - mean);
-//                    distSqr = tmp.transpose() * infoMat * tmp;
-//            if (distSqr < chi2Thres_) {
-//                inlier++;
-//            }
-//        }
-//        //	ARS_VARIABLE2(inlier, chi2Thres_);
-//        w = num / data_.size();
-//
-//        return (inlier >= inlierPerc_ * num);
-//    }
+    //    bool GaussianMixtureEstimatorHierarchical::estimateGaussianFromSegment(
+    //            const ConstIterator &beg, const ConstIterator &end, Vec2d &mean,
+    //            Mat2d &covar, double &w) const {
+    //        Mat2d l, v, infoMat;
+    //                Vec2d tmp;
+    //                double sigmaMinSquare = sigmaMin_ * sigmaMin_;
+    //                int num, inlier;
+    //                double lmin, lmax, theta, ct, st, distSqr, d, dfirst, dlast;
+    //
+    //                // Computes the mean value vector
+    //                resetToZero(mean);
+    //                num = 0;
+    //        for (auto it = beg; it != end; ++it) {
+    //            mean += it->value;
+    //                    num++;
+    //        }
+    //        //        mean = mean / num;
+    //        scalarDiv(mean, num);
+    //
+    //                // Computes the covariance
+    //                //        covar.resetToZero();
+    //                resetToZero(covar);
+    //        for (auto it = beg; it != end; ++it) {
+    //            //            tmp = (it->value - mean);
+    //            vec2diff(tmp, it->value, mean);
+    //                    covar += tmp * tmp.transpose();
+    //        }
+    //
+    //        if (num <= 1) {
+    //            // Only one point: use the point uncertainty
+    //            fillRowMajor(covar, sigmaMinSquare, 0.0, 0.0, sigmaMinSquare);
+    //        } else {
+    //            //            covar = covar / (num - 1);
+    //            scalarDiv(covar, (num - 1));
+    //
+    //                    diagonalize(covar, lmin, lmax, theta);
+    //                    ct = cos(theta);
+    //                    st = sin(theta);
+    //                    dfirst = 1e+6;
+    //                    dlast = -1e+6;
+    //            for (auto it = beg; it != end; ++it) {
+    //                d = ct * it->value(0) + st * it->value(1);
+    //                if (d < dfirst)
+    //                        dfirst = d;
+    //                    if (d > dlast)
+    //                            dlast = d;
+    //                    }
+    //            lmax = covarWidth_ * (dlast - dfirst) * (dlast - dfirst);
+    //            if (lmin < sigmaMinSquare) {
+    //                lmin = sigmaMinSquare;
+    //            }
+    //            if (lmax < sigmaMinSquare) {
+    //                lmax = sigmaMinSquare;
+    //            }
+    //            //            covar.fillRowMajor(lmax, 0.0, 0.0, lmin);
+    //            fillRowMajor(covar, lmax, 0.0, 0.0, lmin);
+    //
+    //                    //                    v.make2dRotMat(theta);
+    //                    cuars::make2dRotMat(v, theta);
+    //                    //                    covar = v * covar * v.transpose();
+    //                    covar = cuars::threeMats2dProd(v, covar, cuars::transposeWRV(v));
+    //
+    //        }
+    //
+    //        inlier = 0;
+    //                //        infoMat = covar.inverse();
+    //                infoMat = cuars::mat2dInverse(covar);
+    //                //ARS_PRINT("covar\n" << covar << "\neigenvalues:\n" << l.transpose() << "\ninfoMat\n" << infoMat);
+    //        for (auto it = beg; it != end; ++it) {
+    //            tmp = (it->value - mean);
+    //                    distSqr = tmp.transpose() * infoMat * tmp;
+    //            if (distSqr < chi2Thres_) {
+    //                inlier++;
+    //            }
+    //        }
+    //        //	ARS_VARIABLE2(inlier, chi2Thres_);
+    //        w = num / data_.size();
+    //
+    //        return (inlier >= inlierPerc_ * num);
+    //    }
 
     bool GaussianMixtureEstimatorHierarchical::estimateGaussianISE(const ConstIterator &beg, const ConstIterator &end, Vec2d &mean,
             Mat2d &covar, double &wMerged) const {
@@ -804,56 +804,66 @@ namespace cuars {
         ARS_ASSERT(beg != end);
 
 
-                double sigmaMinSqrd = sigmaMin_ * sigmaMin_;
-                double wOrig = 1.0 / data_.size(); //w_i
+        double sigmaMinSqrd = sigmaMin_ * sigmaMin_;
+        double wOrig = 1.0 / data_.size(); //w_i
 
 
-                int num = 0;
-                //        mean.resetToZero();
-                resetToZero(mean);
+        int num = 0;
+        //        mean.resetToZero();
+        resetToZero(mean);
         for (auto it = beg; it != end; ++it) {
             mean += it->value;
-                    num++;
+            num++;
         }
         //        mean /= num;
         scalarDiv(mean, num);
 
 
-                //std::cout << "num " << num << std::endl;
-                //std::cout << "mean " << mean << std::endl;
+        //std::cout << "num " << num << std::endl;
+        //std::cout << "mean " << mean << std::endl;
 
 
 
-                wMerged = wOrig*num; //w_L
+        wMerged = wOrig*num; //w_L
 
-                //        covar.resetToZero();
-                resetToZero(covar);
+        //        covar.resetToZero();
+        resetToZero(covar);
         for (auto it = beg; it != end; ++it) {
             Vec2d tmp = vec2diffWRV(it->value, mean);
-                    //            covar += tmp * tmp.transpose();
-                    cuars::mat2dPlusEq(covar, vec2outerProductWRV(tmp, tmp));
+            //            covar += tmp * tmp.transpose();
+            cuars::mat2dPlusEq(covar, vec2outerProductWRV(tmp, tmp));
         }
         //        covar = covar / num;
         scalarDiv(covar, num);
-                //        covar.data_[0 * Two + 0] += sigmaMinSqrd;
-                covar.w += sigmaMinSqrd;
-                //        covar.data_[1 * Two + 1] += sigmaMinSqrd;
-                covar.z += sigmaMinSqrd;
+        //        covar.data_[0 * Two + 0] += sigmaMinSqrd;
+        covar.w += sigmaMinSqrd;
+        //        covar.data_[1 * Two + 1] += sigmaMinSqrd;
+        covar.z += sigmaMinSqrd;
 
 
-                //std::cout << "covar\n" << covar << std::endl;
+        //std::cout << "covar\n" << covar << std::endl;
 
 
-                double jNN = 0.0, jLL = 0.0, jNL = 0.0;
+        double jNN = 0.0, jLL = 0.0, jNL = 0.0;
 
-                jLL = wMerged * wMerged / (2 * M_PI * sqrt((2 * covar).determinant()));
+        //                jLL = wMerged * wMerged / (2 * M_PI * sqrt((2 * covar).determinant()));
+        jLL = wMerged * wMerged / (2 * M_PI * sqrt(cuars::mat2dDeterminant(cuars::scalarMulWRV(covar, 2))));
 
-                double normOrig = 1.0 / (4 * M_PI * sigmaMinSqrd); //normNN
-                double gaussConstOrig = -0.25 / sigmaMinSqrd; //const2
 
-                Mat2d covarNL = covar + sigmaMinSqrd * Mat2d::Identity();
-                Mat2d infoNL = covarNL.inverse();
-                double normNL = 1.0 / (2 * M_PI * sqrt(covarNL.determinant()));
+        double normOrig = 1.0 / (4 * M_PI * sigmaMinSqrd); //normNN
+        double gaussConstOrig = -0.25 / sigmaMinSqrd; //const2
+
+        //        Mat2d covarNL = covar + sigmaMinSqrd * Mat2d::Identity();
+        Mat2d sigmaMinSqrdDiagMat;
+        cuars::fillRowMajor(sigmaMinSqrdDiagMat, sigmaMinSqrd, 0.0, 0.0, sigmaMinSqrd);
+        Mat2d covarNL = cuars::mat2dSumWRV(covar, sigmaMinSqrdDiagMat);
+
+        //        Mat2d infoNL = covarNL.inverse();
+        Mat2d infoNL = cuars::mat2dInverse(covarNL);
+
+        //        double normNL = 1.0 / (2 * M_PI * sqrt(covarNL.determinant()));
+        double normNL = 1.0 / (2 * M_PI * sqrt(cuars::mat2dDeterminant(covarNL)));
+
 
         for (auto it = beg; it != end; ++it) {
             jNN += 1.0;
@@ -865,10 +875,10 @@ namespace cuars {
         }
         jNN *= wOrig * wOrig * normOrig;
 
-                jNL *= wOrig * wMerged * normNL;
+        jNL *= wOrig * wMerged * normNL;
 
 
-                double nise = 1 - 2 * jNL / (jNN + jLL);
+        double nise = 1 - 2 * jNL / (jNN + jLL);
 
         if (num == 1) {
             //std::cout << "nise " << nise << std::endl;

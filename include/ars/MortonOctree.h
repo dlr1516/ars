@@ -82,6 +82,22 @@ namespace cuars {
             );
         }
 
+        void insert(const VecVec2d& points) {
+            // Converts each input point into an item (original point, integer 
+            // indices, position in original vector)
+            items_.resize(points.size());
+            for (size_t i = 0; i < points.size(); ++i) {
+                pointToItem(points[i], i, items_[i]);
+            }
+
+            // Sorts in morton order
+            std::sort(std::begin(items_), std::end(items_),
+                    [&](const Item& item1, const Item & item2) -> bool {
+                        return mortonCmpInt(item1.index, item2.index);
+                    }
+            );
+        }
+
         /**
          * Returns a reference to the internal container. 
          * @return 
@@ -235,6 +251,17 @@ namespace cuars {
             for (size_t d = 0; d < Dim; ++d) {
                 item.index(d) = (Integer) round(p(d) / res_);
             }
+            item.pos = pos;
+        }
+
+        void pointToItem(const Vec2d& p, size_t pos, Item& item) const {
+            //for original function -> see homonymous function above
+            item.value(0) = p.x;
+            item.value(1) = p.y;
+
+            item.index(0) = (Integer) round(p.x / res_);
+            item.index(1) = (Integer) round(p.y / res_);
+
             item.pos = pos;
         }
     };
