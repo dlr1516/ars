@@ -60,7 +60,7 @@ namespace cuars {
     void resetToZero(Vec2d& vec);
 
     void resetToZero(Mat2d& mtx);
-    
+
     void setToIdentity(Mat2d& mtx);
 
     void setDiagonal(Mat2d& mtx, double a11, double a22);
@@ -90,7 +90,7 @@ namespace cuars {
     Mat2d transposeWRV(const Mat2d& mtx);
 
     double mat2dDeterminant(const Mat2d& mtx);
-    
+
     double mat2dTrace(const Mat2d& mtx);
 
     void mat2dInvert(Mat2d& mtx);
@@ -98,11 +98,11 @@ namespace cuars {
     Mat2d mat2dInverse(const Mat2d & mtx);
 
     void mat2dSum(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx);
-    
+
     Mat2d mat2dSumWRV(const Mat2d& aMtx, const Mat2d& bMtx);
-    
+
     void mat2dDiff(Mat2d& resultMtx, const Mat2d& aMtx, const Mat2d& bMtx);
-    
+
     Mat2d mat2dDiffWRV(const Mat2d& aMtx, const Mat2d& bMtx);
 
     void mat2dPlusEq(Mat2d& resultMtx, const Mat2d& aMtx);

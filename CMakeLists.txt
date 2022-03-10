@@ -81,7 +81,10 @@ add_library(cuars_aniso STATIC
 #    src/definitions.cpp #since using double2 and double4, those definitions are not used anymore
     src/functions.cpp
     src/utils.cpp
+
     src/GaussianMixtureEstimator.cpp
+    src/DisjointSet.cpp
+    src/MortonSort.cpp
 
 
     src/ArsKernelIsotropic2d.cpp
@@ -124,7 +127,7 @@ set_target_properties(gpu_fullArsIsoMpeg7 PROPERTIES CUDA_ARCHITECTURES "52")
 ### Anisotropic cuArs
 
 add_executable(gpu_testAnisotropicArs app/gpu_testAnisotropicArs.cu )
-target_link_libraries(gpu_testAnisotropicArs ${ars_LINK_LIBS} cuars_aniso rofl_common)
+target_link_libraries(gpu_testAnisotropicArs ${ars_LINK_LIBS} cuars_aniso rofl_common -lboost_iostreams -lboost_system -lboost_filesystem)
 
 #target_compile_features(gpu_testAnisotropicArs PUBLIC cxx_std_11)
 set_target_properties(gpu_testAnisotropicArs PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

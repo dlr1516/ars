@@ -606,11 +606,11 @@ void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc,
     //    for (int i = 0; i < coeffsMatTotalSz; ++i) {
     //        coeffsMaSrc1[i] = 0.0;
     //    }
-    
+
     double* d_partsumsSrc;
     cudaMalloc((void**) &d_partsumsSrc, paip.blockSize * paip.coeffsMatNumColsPadded * sizeof (double));
     cudaMemset(d_partsumsSrc, 0.0, paip.blockSize * paip.coeffsMatNumColsPadded * sizeof (double));
-    
+
     double* d_coeffsArsSrc;
     cudaMalloc((void**) &d_coeffsArsSrc, paip.coeffsMatNumColsPadded * sizeof (double));
     cudaMemset(d_coeffsArsSrc, 0.0, paip.coeffsMatNumColsPadded * sizeof (double));
@@ -667,11 +667,11 @@ void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc,
     //    for (int i = 0; i < coeffsMatTotalSz; ++i) {
     //        coeffsMatDst[i] = 0.0;
     //    }
-    
+
     double* d_partsumsDst;
     cudaMalloc((void**) &d_partsumsDst, paip.blockSize * paip.coeffsMatNumColsPadded * sizeof (double));
     cudaMemset(d_partsumsDst, 0.0, paip.blockSize * paip.coeffsMatNumColsPadded * sizeof (double));
-    
+
     double* d_coeffsArsDst;
     cudaMalloc((void**) &d_coeffsArsDst, paip.coeffsMatNumColsPadded * sizeof (double));
     cudaMemset(d_coeffsArsDst, 0.0, paip.coeffsMatNumColsPadded * sizeof (double));

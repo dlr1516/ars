@@ -16,12 +16,12 @@
  * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <iostream>
-//#include <eigen3/Eigen/Dense>
 
 #include <ars/definitions.h>
 #include <ars/ars2d.h>
 #include <ars/GaussianMixtureEstimator.h>
 #include <ars/utils.h>
+
 #include <ars/thirdparty/gnuplot-iostream.h>
 
 #include <rofl/common/param_map.h>
@@ -207,13 +207,12 @@ int main(int argc, char **argv) {
     //    }
 
     ars1.setARSFOrder(arsOrder);
-    //ars1.insertAnisotropicGaussian(means, covars, weights);
     {
         cuars::ScopedTimer timer(
                 "ArsKernelIsotropic2d::insertAnisotropicGaussian()");
         //ars1.insertAnisotropicGaussian(acesPoints, covarsUniform, weightsUniform); //OLD
-        
-//        ars1.insertAnisotropicGaussians(means, covars, weights);
+
+        //        ars1.insertAnisotropicGaussians(means, covars, weights);
     }
 
     ars2.setARSFOrder(arsOrder);

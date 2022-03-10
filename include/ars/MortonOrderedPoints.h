@@ -27,7 +27,6 @@
 #include <algorithm>
 #include <type_traits> // for static_assert()
 
-#include <eigen3/Eigen/Dense>
 #include <ars/definitions.h>
 
 namespace ars {
