@@ -376,7 +376,7 @@ namespace cuars {
 
     void fft(const std::vector<double>& funIn, std::vector<double>& coeffs, int fourierOrder) {
         Eigen::FFT<double> fft_;
-        
+
         std::vector<std::complex<double> > freqvec;
         int n = funIn.size();
         double factor = 2.0 / n;

@@ -19,9 +19,10 @@
 
 #include <ars/definitions.h>
 #include <ars/ars2d.h>
-#include <ars/niars2d.cuh>
 #include <ars/GaussianMixtureEstimator.h>
 #include <ars/utils.h>
+
+#include <ars/niars2d.cuh>
 
 #include <ars/thirdparty/gnuplot-iostream.h>
 
@@ -210,8 +211,7 @@ int main(int argc, char **argv) {
 
     ars1.setARSFOrder(arsOrder);
     {
-        cuars::ScopedTimer timer(
-                "ArsKernelIsotropic2d::insertAnisotropicGaussian()");
+        cuars::ScopedTimer timer("ArsKernelIsotropic2d::insertAnisotropicGaussian()");
 
         ars1.insertAnisotropicGaussians(means, covars, weights);
     }
@@ -220,9 +220,8 @@ int main(int argc, char **argv) {
     ars2.initLUT(0.0001);
     ars2.setComputeMode(cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT);
     {
-        cuars::ScopedTimer timer(
-                "ArsKernelIsotropic2d::insertIsotropicGaussians()");
-        
+        cuars::ScopedTimer timer("ArsKernelIsotropic2d::insertIsotropicGaussians()");
+
         ars2.insertIsotropicGaussians(acesPoints, sigmaMin);
     }
 
