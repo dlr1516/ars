@@ -22,6 +22,8 @@
 #include <queue>
 #include <cmath>
 
+#include <ars/definitions.h>
+
 
 namespace cuars {
 

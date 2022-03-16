@@ -81,8 +81,6 @@ namespace cuars {
         int nPadded = std::pow<int>(2, exponent);
         std::cout << "ceilPow2(" << n << ") = " << nPadded << std::endl;
 
-
-
         return nPadded;
     }
 
@@ -96,7 +94,9 @@ namespace cuars {
         return result;
     }
 
-    //
+    // --------------------------------------------------------
+    // Below: Vec2d and Mat2d util functions (simpler reimplementation of basic Eigen functions)
+    // --------------------------------------------------------
 
     void resetToZero(Vec2d& vec) {
         vec.x = 0.0;

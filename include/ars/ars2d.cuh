@@ -1,11 +1,10 @@
-#include <ars/definitions.h>
-#include <ars/ars2d.h>
-#include <ars/BBOptimizer1d.h>
+#include <ars/functions.h>
 
-#include <thrust/host_vector.h>
-#include <thrust/device_malloc.h>
+//#include <ars/ars2d.h>
 
-
+// --------------------------------------------------------
+// 2D->1D INDICIZATION IN FOURIER COEFFICIENT MATRIX
+// --------------------------------------------------------
 
 /**
  * When dealing with Fourier coefficient matrix, return index referring to the first point that is being dealt with.
@@ -51,9 +50,9 @@ double evaluatePnebi0Polynom(double x);
 __device__
 void evaluatePnebiVectorGPU(int n, double x, double* pnebis, int pnebisSz);
 
-
-// GLOBAL KERNELS
-
+// --------------------------------------------------------
+// GLOBAL CUDA KERNELS
+// --------------------------------------------------------
 
 /**
  * Insert Isotropic Gaussians Kernel, that uses Downward method for partial coefficients computing
@@ -67,7 +66,7 @@ void evaluatePnebiVectorGPU(int n, double x, double* pnebis, int pnebisSz);
  * @param coeffsMat
  */
 __global__
-void iigDw(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int fourierOrder, int numColsPadded, cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode, double* coeffsMat);
+void iigDw(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int fourierOrder, int numColsPadded, cuars::ArsKernelIso2dComputeMode pnebiMode, double* coeffsMat);
 
 /**
  * !! UNFINISHED
@@ -84,13 +83,7 @@ void iigDw(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int fo
  * @param coeffsMat
  */
 __global__
-void iigLut(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int numPtsAfterPadding, int fourierOrder, int numColsPadded, cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode, cuars::PnebiLUT& pnebiLUT, double* coeffsMat);
-
-__global__
-void sumColumns(double* mat, int nrows, int ncols, double* sums);
-
-__global__
-void sumColumnsNoPadding(double* mat, int nrows, int ncols, double* sums);
+void iigLut(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int numPtsAfterPadding, int fourierOrder, int numColsPadded, cuars::ArsKernelIso2dComputeMode pnebiMode, cuars::PnebiLUT& pnebiLUT, double* coeffsMat);
 
 __global__
 void makePartialSums(double* matIn, int nrowsIn, int ncols, double *matOut);

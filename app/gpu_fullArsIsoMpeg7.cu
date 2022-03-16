@@ -28,6 +28,8 @@
 #include "ars/mpeg7RW.h"
 #include "ars/mpeg7_io.h"
 #include "ars/ars2d.cuh"
+#include <ars/ars2d.h>
+
 
 
 
@@ -42,7 +44,7 @@ struct TestParams {
     int arsIsoOrder;
     double arsIsoSigma;
     double arsIsoThetaToll;
-    cuars::ArsKernelIsotropic2d::ComputeMode arsIsoPnebiMode;
+    cuars::ArsKernelIso2dComputeMode arsIsoPnebiMode;
 
 
     bool extrainfoEnable;
@@ -151,9 +153,9 @@ int main(int argc, char **argv) {
     arsSrc.setARSFOrder(tparams.arsIsoOrder);
     //    arsSrc.initLUT(0.0001);
     //    arsSrc.setComputeMode(ars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT);
-    arsSrc.setComputeMode(cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD);
+    arsSrc.setComputeMode(cuars::ArsKernelIso2dComputeMode::PNEBI_DOWNWARD);
     arsDst.setARSFOrder(tparams.arsIsoOrder);
-    arsDst.setComputeMode(cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD);
+    arsDst.setComputeMode(cuars::ArsKernelIso2dComputeMode::PNEBI_DOWNWARD);
 
 
     //parallelization parameters

@@ -20,13 +20,16 @@
 
 #include "ars/ars2d.cuh"
 
+// --------------------------------------------------------
+// 2D->1D INDICIZATION IN FOURIER COEFFICIENT MATRIX
+// --------------------------------------------------------
 
 __device__
 int getIfromTid(int tid, int n) {
     if (tid < 0 || n < 0)
         return -1;
     const int nId = n - 1; //max n in ids (indices start from 0)
-    const int tidStart = tid; //useful for debugging
+    //    const int tidStart = tid; //useful for debugging
     /*i is equal to the number of times that we can subtract NID, NID-1, NID-2, ...
      from tid before tid goes below 0*/
     int i = 0;
@@ -55,8 +58,8 @@ int getJfromTid(int tid, int n, int i) {
         return -1;
 
     const int nId = n - 1; //max n in ids (indices start from 0)
-    const int tidStart = tid; //useful for debugging
-    const int iStart = i; //useful for debugging
+    //    const int tidStart = tid; //useful for debugging
+    //    const int iStart = i; //useful for debugging
     /*i is equal to the number of times that we can subtract NID, NID-1, NID-2, ...
      from tid before tid goes below 0*/
     int j = -1;
@@ -75,6 +78,10 @@ int getJfromTid(int tid, int n, int i) {
     //    printf("tid %d i %d j %d       n %d\n", tidStart, iStart, j, n);
     return j;
 }
+
+// --------------------------------------------------------
+// PNEBI FUNCTIONS
+// --------------------------------------------------------
 
 __device__
 double evaluatePnebi0Polynom(double x) {
@@ -144,120 +151,12 @@ void evaluatePnebiVectorGPU(int n, double x, double* pnebis, int pnebisSz) {
     }
 }
 
-__global__
-void iigKernelDownward_old(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int numPtsAfterPadding, int fourierOrder, int numColsPadded, cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode, double* coeffsMat) {
-    //    //    a.insertIsotropicGaussians(points, sigma);
-    //
-    //    int index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block
-    //    int stride = blockDim.x * gridDim.x; //total number of threads in the grid
-    //
-    //    const int totalNumComparisons = numPtsAfterPadding * numPtsAfterPadding;
-    //
-    //    for (int tid = index; tid < totalNumComparisons; tid += stride) {
-    //
-    //        int j = tid % numPtsAfterPadding;
-    //        int i = (tid - j) / numPtsAfterPadding;
-    //        //        printf("i %d j %d\n", i, j);
-    //        //        printf("tid %d i %d j %d tidIJ %d --- numPts %d numPtsAfterPadding %d numColsPadded %d totNumComp %d index %d\n", tid, i, j, i * numPtsAfterPadding + j, numPts, numPtsAfterPadding, numColsPadded, totalNumComparisons, index);
-    //
-    //        if (i >= numPts || j >= numPts || j <= i)
-    //            continue;
-    //
-    //        cuars::Vec2d vecI = means[i];
-    //        cuars::Vec2d vecJ = means[j];
-    //
-    //        //            isotropicKer_.init(means[i], means[j], sigma);
-    //        double dx, dy;
-    //        dx = vecJ.x - vecI.x;
-    //        dy = vecJ.y - vecI.y;
-    //        double phi;
-    //
-    //        //        if (dx == 0 && dy == 0) {
-    //        //                        phi = 0.0; //mathematically undefined
-    //        //            //            for (int k = 0; k <= numColsPadded; ++k) {
-    //        //            //                int rowIndex = (i * numPtsAfterPadding) + j; //it's more a block index rather than row 
-    //        //            //                coeffsMat[rowIndex * numColsPadded + k] = 0.0;
-    //        //            //            }
-    //        ////            continue;
-    //        //
-    //        //        } else
-    //        phi = atan2(dy, dx);
-    //
-    //        double sigmaValSq = sigma1 * sigma1 + sigma2 * sigma2;
-    //        double lambdaSqNorm = 0.25 * (dx * dx + dy * dy) / sigmaValSq;
-    //
-    //
-    //        //            isotropicKer_.updateFourier(arsfOrder_, coeffs_, w);
-    //        double wNorm = 1.0 / (numPts * numPts);
-    //        double weight = wNorm / sqrt(2.0 * M_PI * sigmaValSq);
-    //
-    //
-    //
-    //        //updating Fourier coefficients (2 modes)
-    //        if (pnebiMode == cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD) {
-    //            //                updateARSF2CoeffRecursDown(lambdaSqNorm, phi, w2, nFourier, coeffs);
-    //
-    //            double cth2, sth2;
-    //            cth2 = cos(2.0 * phi);
-    //            sth2 = sin(2.0 * phi);
-    //            //                updateARSF2CoeffRecursDown(lambda, cth2, sth2, factor, n, coeffs);
-    //
-    //
-    //
-    //
-    //            int pnebisSz = fourierOrder + 1;
-    //            //TODO: find a better solution instead of hard-coding 21
-    //            double pnebis[21]; //Fourier Order + 1
-    //            if (pnebis == nullptr)
-    //                printf("ERROR ALLOCATING WITH NEW[]!\n");
-    //            for (int pn = 0; pn < pnebisSz; ++pn)
-    //                pnebis[pn] = 0.0;
-    //
-    //            double sgn, cth, sth, ctmp, stmp;
-    //
-    //            // Fourier Coefficients 
-    //            //                if (coeffs.size() != 2 * n + 2) {
-    //            //                    std::cerr << __FILE__ << "," << __LINE__ << ": invalid size of Fourier coefficients vector " << coeffs.size() << " should be " << (2 * n + 2) << std::endl;
-    //            //                    return;
-    //            //                }
-    //
-    //            evaluatePnebiVectorGPU(fourierOrder, lambdaSqNorm, pnebis, pnebisSz);
-    //            //                ARS_PRINT(pnebis[0]);
-    //
-    //            //!!!! factor = w2
-    //            double factor = weight;
-    //            int rowIndex = (i * numPtsAfterPadding) + j; // = tid
-    //            coeffsMat[rowIndex * numColsPadded + 0] += 0.5 * factor * pnebis[0];
-    //            //            printf("coeff 0 %f\n", 0.5 * factor * pnebis[0]);
-    //
-    //
-    //            sgn = -1.0;
-    //            cth = cth2;
-    //            sth = sth2;
-    //            //!!!! n in the for below is fourierOrder
-    //            for (int k = 1; k <= fourierOrder; ++k) {
-    //                //                printf("coeff %d %f\n", 2 * k, factor * pnebis[k] * sgn * cth);
-    //                //                printf("coeff %d %f\n", 2 * k + 1, factor * pnebis[k] * sgn * sth);
-    //                coeffsMat[(rowIndex * numColsPadded) + (2 * k)] += factor * pnebis[k] * sgn * cth;
-    //                coeffsMat[(rowIndex * numColsPadded) + ((2 * k) + 1)] += factor * pnebis[k] * sgn * sth;
-    //                sgn = -sgn;
-    //                ctmp = cth2 * cth - sth2 * sth;
-    //                stmp = sth2 * cth + cth2 * sth;
-    //                cth = ctmp;
-    //                sth = stmp;
-    //            }
-    //
-    //            delete pnebis;
-    //        } else
-    //            printf("ERROR: pnebi mode is NOT Downward!\n");
-    //
-    //
-    //
-    //    }
-}
+// --------------------------------------------------------
+// GLOBAL CUDA KERNELS
+// --------------------------------------------------------
 
 __global__
-void iigDw(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int fourierOrder, int numColsPadded, cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode, double* coeffsMat) {
+void iigDw(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int fourierOrder, int numColsPadded, cuars::ArsKernelIso2dComputeMode pnebiMode, double* coeffsMat) {
     //    a.insertIsotropicGaussians(points, sigma);
 
     int index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block
@@ -307,7 +206,7 @@ void iigDw(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int fo
 
 
         //updating Fourier coefficients (2 modes)
-        if (pnebiMode == cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD) {
+        if (pnebiMode == cuars::ArsKernelIso2dComputeMode::PNEBI_DOWNWARD) {
             //                updateARSF2CoeffRecursDown(lambdaSqNorm, phi, w2, nFourier, coeffs);
 
             double cth2, sth2;
@@ -364,13 +263,11 @@ void iigDw(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int fo
         } else
             printf("ERROR: pnebi mode is NOT Downward!\n");
 
-
-
     }
 }
 
 __global__
-void iigLut(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int numPtsAfterPadding, int fourierOrder, int numColsPadded, cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode, cuars::PnebiLUT& pnebiLUT, double* coeffsMat) {
+void iigLut(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int numPtsAfterPadding, int fourierOrder, int numColsPadded, cuars::ArsKernelIso2dComputeMode pnebiMode, cuars::PnebiLUT& pnebiLUT, double* coeffsMat) {
     //    a.insertIsotropicGaussians(points, sigma);
 
     int index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block
@@ -420,7 +317,7 @@ void iigLut(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int n
 
 
         //updating Fourier coefficients (2 modes)
-        if (pnebiMode == cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT) {
+        if (pnebiMode == cuars::ArsKernelIso2dComputeMode::PNEBI_LUT) {
             printf("Method not fully implemented!\n");
             continue;
 
@@ -460,44 +357,6 @@ void iigLut(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int n
 }
 
 __global__
-void sumColumns(double* mat, int nrows, int ncols, double* sums) {
-    int index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block
-    int stride = blockDim.x * gridDim.x; //total number of threads in the grids
-
-    int totalSz = nrows * nrows*ncols; //!! matrix is considered of size (nrows*nrows)*ncols
-
-
-    for (int idx = index; idx < totalSz; idx += stride) {
-        //        int totalIndex = (((i * nrows) + j) * ncols) + k;
-        int k = idx % ncols;
-        //        int rowIdx = (idx - k) / ncols;
-        //        int j = rowIdx % nrows;
-        //        int i = (rowIdx - j) / nrows;
-        //        printf("i %d j %d k %d rowIdx %d; accessing mat[%d]\n", i, j, k, rowIdx, idx);
-        sums[k] += mat[idx];
-    }
-}
-
-__global__
-void sumColumnsNoPadding(double* mat, int nrows, int ncols, double* sums) {
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
-    int stride = blockDim.x * gridDim.x;
-
-    int totalSz = nrows*ncols; //matrix is considered of size nrows*ncols, with nrows = sumNaturalsUpToN(numPts)
-
-
-    for (int idx = index; idx < totalSz; idx += stride) {
-        //        int totalIndex = (((i * nrows) + j) * ncols) + k;
-        int k = idx % ncols;
-        //        int rowIdx = (idx - k) / ncols;
-        //        int j = rowIdx % nrows;
-        //        int i = (rowIdx - j) / nrows;
-        //        printf("i %d j %d k %d rowIdx %d; accessing mat[%d]\n", i, j, k, rowIdx, idx);
-        sums[k] += mat[idx];
-    }
-}
-
-__global__
 void makePartialSums(double* matIn, int nrowsIn, int ncols, double *matOut) {
     //    int index = blockIdx.x * blockDim.x + threadIdx.x;
     int index = threadIdx.x * gridDim.x + blockIdx.x; //!!! indexing is done "column-major" (in terms of kernel grid)
@@ -515,7 +374,6 @@ void makePartialSums(double* matIn, int nrowsIn, int ncols, double *matOut) {
     for (int idx = index; idx < totalSzIn; idx += stride) {
         //        printf("nOps %d\n", nOps);
 
-
         matOut[idOut] += matIn[idx];
         nOps++;
     }
@@ -532,7 +390,7 @@ void sumColumnsPartialSums(double* matPartialSums, int nrows, int ncols, double*
     for (int idx = index; idx < totalSz; idx += stride) {
         //        int totalIndex = (((i * nrows) + j) * ncols) + k;
         int k = idx % ncols;
-        int rowIdx = (idx - k) / ncols;
+        //        int rowIdx = (idx - k) / ncols; //useful for debugging
         //        printf("k %d rowIdx %d; accessing mat[%d]\n", k, rowIdx, idx);
         sums[k] += matPartialSums[idx];
     }

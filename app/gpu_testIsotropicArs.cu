@@ -21,7 +21,10 @@
 #include <chrono>
 
 #include "ars/utils.h"
+#include <ars/ars2d.h>
+
 #include "ars/ars2d.cuh"
+#include "ars/mpeg7RW.h"
 
 
 
@@ -102,7 +105,7 @@ int main(void) {
 
 
     //    ars1.initLUT(0.0001);
-    cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode = cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD;
+    cuars::ArsKernelIso2dComputeMode pnebiMode = cuars::ArsKernelIso2dComputeMode::PNEBI_DOWNWARD;
     ars1.setComputeMode(pnebiMode);
 
 
@@ -161,7 +164,7 @@ int main(void) {
 
 
     //ARS2    
-    ars2.setComputeMode(cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT);
+    ars2.setComputeMode(cuars::ArsKernelIso2dComputeMode::PNEBI_LUT);
 
     cuars::PnebiLUT pnebiLUT2; //LUT setup
     double lutPrecision = 0.001; //already initialized for pnebiLUT1
@@ -181,7 +184,7 @@ int main(void) {
 
     cuars::Vec2d* kernelInput2;
     cudaMalloc((void **) &kernelInput2, numPtsAfterPadding * sizeof (cuars::Vec2d));
-    pnebiMode = cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_LUT;
+    pnebiMode = cuars::ArsKernelIso2dComputeMode::PNEBI_LUT;
 
     double *coefficientsArs2 = new double[coeffsMatTotalSz](); //() initialize to 0
     double *d_coefficientsArs2; //d_ stands for device

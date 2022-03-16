@@ -81,7 +81,7 @@ namespace cuars {
          * Sets the mode for computing ARS coefficients in the case of isotropic kernels. 
          * @param mode the desired mode
          */
-        void setComputeMode(ArsKernelIsotropic2d::ComputeMode mode);
+        void setComputeMode(ArsKernelIso2dComputeMode mode);
 
         /**
          * Returns a string description of the current mode. 

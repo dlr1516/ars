@@ -141,7 +141,7 @@ namespace cuars {
         thetaToll_ = thetaToll;
     }
 
-    void AngularRadonSpectrum2d::setComputeMode(ArsKernelIsotropic2d::ComputeMode mode) {
+    void AngularRadonSpectrum2d::setComputeMode(ArsKernelIso2dComputeMode mode) {
         //mode_ = mode;
         isotropicKer_.setComputeMode(mode);
     }

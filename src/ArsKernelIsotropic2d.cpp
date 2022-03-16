@@ -19,16 +19,16 @@
 
 namespace cuars {
 
-    ArsKernelIsotropic2d::ArsKernelIsotropic2d() : lambdaSqNorm_(0.0), sigmaValSq_(1.0), phi_(0.0), pnebiLut_(40, 0.001), mode_(ComputeMode::PNEBI_LUT) {
+    ArsKernelIsotropic2d::ArsKernelIsotropic2d() : lambdaSqNorm_(0.0), sigmaValSq_(1.0), phi_(0.0), pnebiLut_(40, 0.001), mode_(ArsKernelIso2dComputeMode::PNEBI_LUT) {
     }
 
     ArsKernelIsotropic2d::ArsKernelIsotropic2d(const Vec2d& mean1, const Vec2d& mean2, double sigma)
-    : pnebiLut_(40, 0.001), mode_(ComputeMode::PNEBI_LUT) {
+    : pnebiLut_(40, 0.001), mode_(ArsKernelIso2dComputeMode::PNEBI_LUT) {
         init(mean1, mean2, sigma);
     }
 
     ArsKernelIsotropic2d::ArsKernelIsotropic2d(const Vec2d& mean1, const Vec2d& mean2, double sigma1, double sigma2)
-    : pnebiLut_(40, 0.001), mode_(ComputeMode::PNEBI_LUT) {
+    : pnebiLut_(40, 0.001), mode_(ArsKernelIso2dComputeMode::PNEBI_LUT) {
         init(mean1, mean2, sigma1, sigma2);
     }
 
@@ -78,10 +78,10 @@ namespace cuars {
             pnebiLut_.init(nFourier, 0.0001);
         }
 
-        if (mode_ == ComputeMode::PNEBI_DOWNWARD) {
+        if (mode_ == ArsKernelIso2dComputeMode::PNEBI_DOWNWARD) {
             //updateARSF2CoeffRecursDown(lambda, ux * ux - uy*uy, 2.0 * ux * uy, 1.0, arsfOrder_, coeffs_);
             updateARSF2CoeffRecursDown(lambdaSqNorm_, phi_, w, nFourier, coeffs);
-        } else if (mode_ == ComputeMode::PNEBI_LUT) {
+        } else if (mode_ == ArsKernelIso2dComputeMode::PNEBI_LUT) {
             //updateARSF2CoeffRecursDownLUT(lambda, ux * ux - uy*uy, 2.0 * ux * uy, 1.0, arsfOrder_, pnebiLut_, coeffs_);
             updateARSF2CoeffRecursDownLUT(lambdaSqNorm_, phi_, w, nFourier, pnebiLut_, coeffs);
         }

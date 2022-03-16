@@ -72,7 +72,9 @@ namespace cuars {
      */
     int sumNaturalsUpToN(int n);
 
+    // --------------------------------------------------------
     // Below: Vec2d and Mat2d util functions (simpler reimplementation of basic Eigen functions)
+    // --------------------------------------------------------
 
     void resetToZero(Vec2d& vec);
 

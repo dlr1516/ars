@@ -80,10 +80,6 @@ namespace cuars {
     class ArsKernelIsotropic2d {
     public:
 
-        enum class ComputeMode : unsigned int {
-            PNEBI_DOWNWARD = 0, PNEBI_LUT = 1
-        };
-
         /**
          * Default constructor.
          */
@@ -170,7 +166,7 @@ namespace cuars {
          * Sets the mode for computing ARS coefficients in the case of isotropic kernels. 
          * @param mode the desired mode
          */
-        void setComputeMode(ComputeMode mode) {
+        void setComputeMode(ArsKernelIso2dComputeMode mode) {
             mode_ = mode;
         }
 
@@ -227,7 +223,7 @@ namespace cuars {
         double sigmaValSq_;
         double phi_;
         PnebiLUT pnebiLut_;
-        ComputeMode mode_;
+        ArsKernelIso2dComputeMode mode_;
     };
 
 }

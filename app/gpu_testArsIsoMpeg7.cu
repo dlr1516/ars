@@ -23,8 +23,10 @@
 
 #include "ars/Profiler.h"
 
-#include "ars/mpeg7RW.h"
+#include <ars/ars2d.h>
+
 #include "ars/ars2d.cuh"
+#include "ars/mpeg7RW.h"
 
 
 
@@ -106,7 +108,7 @@ int main(int argc, char **argv) {
     //ARS parameters setting
     arsSrc.setARSFOrder(arsOrder);
     arsDst.setARSFOrder(arsOrder);
-    cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode = cuars::ArsKernelIsotropic2d::ComputeMode::PNEBI_DOWNWARD;
+    cuars::ArsKernelIso2dComputeMode pnebiMode = cuars::ArsKernelIso2dComputeMode::PNEBI_DOWNWARD;
     arsSrc.setComputeMode(pnebiMode);
     arsDst.setComputeMode(pnebiMode);
 

@@ -19,6 +19,8 @@
 #include <ars/definitions.h>
 
 namespace cuars {
+    
+    
 
     Affine2d::Affine2d() {
         rot_ = 0.0;
