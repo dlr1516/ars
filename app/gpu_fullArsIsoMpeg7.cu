@@ -93,12 +93,6 @@ void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc,
 
 double mod180(double angle);
 
-struct BoundInterval {
-    double x0;
-    double x1;
-    double y0;
-    double y1;
-};
 
 int main(int argc, char **argv) {
     cuars::AngularRadonSpectrum2d arsSrc;

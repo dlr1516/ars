@@ -24,6 +24,13 @@
 
 namespace cuars {
 
+    struct BoundInterval {
+        double x0;
+        double x1;
+        double y0;
+        double y1;
+    };
+
     /**
      * Computes the diagonalization of the given positive definite matrix m. 
      * 

@@ -36,12 +36,7 @@ double mod180(double angle) {
     return (angle - floor(angle / M_PI) * M_PI);
 }
 
-struct BoundInterval {
-    double x0;
-    double x1;
-    double y0;
-    double y1;
-};
+
 
 int main(int argc, char **argv) {
     cuars::AngularRadonSpectrum2d arsSrc;

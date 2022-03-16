@@ -29,12 +29,7 @@
 #define PRINT_DIM(X) std::cout << #X << " rows " << X.rows() << " cols " << X.cols() << std::endl;
 #define RAD2DEG(X) (180.0/M_PI*(X))
 
-struct BoundInterval {
-    double x0;
-    double x1;
-    double y0;
-    double y1;
-};
+
 
 void rangeToPoint(double* ranges, int num, double angleMin, double angleRes, std::vector<cuars::Vec2d>& points);
 
@@ -249,7 +244,7 @@ int main(void) {
 
     std::cout << "\nBranch and Bound limits:\n";
     int bbnum = 32;
-    std::vector<BoundInterval> bbbs(bbnum);
+    std::vector<cuars::BoundInterval> bbbs(bbnum);
     for (int i = 0; i < bbnum; ++i) {
         bbbs[i].x0 = M_PI * i / bbnum;
         bbbs[i].x1 = M_PI * (i + 1) / bbnum;
