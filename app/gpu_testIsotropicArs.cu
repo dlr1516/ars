@@ -1,4 +1,3 @@
-
 /**
  * ARS - Angular Radon Spectrum 
  * Copyright (C) 2017 Dario Lodi Rizzini.
@@ -21,7 +20,9 @@
 #include <iostream>
 #include <chrono>
 
+#include "ars/utils.h"
 #include "ars/ars2d.cuh"
+
 
 
 
@@ -51,7 +52,7 @@ int main(void) {
     //parallelization parameters
     int numPts = 180; // = acesRanges.size()
     int numPtsAfterPadding = numPts;
-    const int gridTotalSize = sumNaturalsUpToN(numPts - 1); //total number of threads in grid Fourier coefficients grid - BEFORE PADDING
+    const int gridTotalSize = cuars::sumNaturalsUpToN(numPts - 1); //total number of threads in grid Fourier coefficients grid - BEFORE PADDING
     const int blockSize = 256;
     const int numBlocks = floor(gridTotalSize / blockSize) + 1; //number of blocks in grid (each block contains blockSize threads)
     const int gridTotalSizeAfterPadding = blockSize * numBlocks;
@@ -139,7 +140,7 @@ int main(void) {
     //    }
 
     cudaEventRecord(start);
-    iigKernelDownward << <numBlocks, blockSize >> >(kernelInput1, sigma, sigma, numPts, fourierOrder, coeffsMatNumColsPadded, pnebiMode, d_coeffsMat1);
+    iigDw << <numBlocks, blockSize >> >(kernelInput1, sigma, sigma, numPts, fourierOrder, coeffsMatNumColsPadded, pnebiMode, d_coeffsMat1);
     makePartialSums << < coeffsMatNumColsPadded, blockSize >>> (d_coeffsMat1, gridTotalSizeAfterPadding, coeffsMatNumColsPadded, d_partialSums1);
     sumColumnsPartialSums << <coeffsMatNumColsPadded, 1 >> >(d_partialSums1, blockSize, coeffsMatNumColsPadded, d_coeffsArs1);
     cudaEventRecord(stop);

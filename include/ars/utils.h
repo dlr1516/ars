@@ -55,6 +55,16 @@ namespace cuars {
      */
     void saturateEigenvalues(Mat2d& covar, double sigmaMinSquare);
 
+    /**
+     * @return smallest possible number that is not smaller that @param n, and is power of 2
+     */
+    int ceilPow2(int n);
+
+    /**
+     * @return (@param n)*(@param n + 1)/2
+     */
+    int sumNaturalsUpToN(int n);
+
     // Below: Vec2d and Mat2d util functions (simpler reimplementation of basic Eigen functions)
 
     void resetToZero(Vec2d& vec);
@@ -148,7 +158,6 @@ namespace cuars {
     Affine2d aff2ProdWRV(const Affine2d& a, const Affine2d & b);
 
     Vec2d aff2TimesVec2WRV(const Affine2d& mAff, const Vec2d & p);
-
 
 
 

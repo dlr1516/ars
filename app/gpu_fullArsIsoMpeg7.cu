@@ -555,7 +555,7 @@ void setupParallelizationNoPad(ParlArsIsoParams& pp, int pointsSrcSz, int points
 
     int numPtsAfterPadding = numPts;
     pp.numPtsAfterPadding = numPtsAfterPadding;
-    const int gridTotalSize = sumNaturalsUpToN(numPts - 1); //total number of threads in grid Fourier coefficients grid - BEFORE PADDING
+    const int gridTotalSize = cuars::sumNaturalsUpToN(numPts - 1); //total number of threads in grid Fourier coefficients grid - BEFORE PADDING
     pp.gridTotalSize = gridTotalSize;
     const int blockSize = 256;
     pp.blockSize = blockSize;
@@ -616,7 +616,7 @@ void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc,
     cudaMemset(d_coeffsArsSrc, 0.0, paip.coeffsMatNumColsPadded * sizeof (double));
 
     cudaEventRecord(startSrc);
-    iigKernelDownward << <paip.numBlocks, paip.blockSize >> >(kernelInputSrc, tp.arsIsoSigma, tp.arsIsoSigma, paip.numPts, tp.arsIsoOrder, paip.coeffsMatNumColsPadded, tp.arsIsoPnebiMode, d_coeffsMatSrc);
+    iigDw << <paip.numBlocks, paip.blockSize >> >(kernelInputSrc, tp.arsIsoSigma, tp.arsIsoSigma, paip.numPts, tp.arsIsoOrder, paip.coeffsMatNumColsPadded, tp.arsIsoPnebiMode, d_coeffsMatSrc);
     //    sumColumnsNoPadding << <paip.sumBlockSz, 1 >> >(coeffsMatSrc, paip.gridTotalSizeAfterPadding, paip.coeffsMatNumColsPadded, d_coeffsArsSrc);
     makePartialSums << < paip.coeffsMatNumColsPadded, paip.blockSize>>> (d_coeffsMatSrc, paip.gridTotalSizeAfterPadding, paip.coeffsMatNumColsPadded, d_partsumsSrc);
     sumColumnsPartialSums << <paip.coeffsMatNumColsPadded, 1 >> >(d_partsumsSrc, paip.blockSize, paip.coeffsMatNumColsPadded, d_coeffsArsSrc);
@@ -677,7 +677,7 @@ void gpu_estimateRotationArsIso(const ArsImgTests::PointReaderWriter& pointsSrc,
     cudaMemset(d_coeffsArsDst, 0.0, paip.coeffsMatNumColsPadded * sizeof (double));
 
     cudaEventRecord(startDst);
-    iigKernelDownward << <paip.numBlocks, paip.blockSize >> >(kernelInputDst, tp.arsIsoSigma, tp.arsIsoSigma, paip.numPts, tp.arsIsoOrder, paip.coeffsMatNumColsPadded, tp.arsIsoPnebiMode, d_coeffsMatDst);
+    iigDw << <paip.numBlocks, paip.blockSize >> >(kernelInputDst, tp.arsIsoSigma, tp.arsIsoSigma, paip.numPts, tp.arsIsoOrder, paip.coeffsMatNumColsPadded, tp.arsIsoPnebiMode, d_coeffsMatDst);
     //    sumColumnsNoPadding << <paip.sumBlockSz, 1>> >(coeffsMatDst, paip.gridTotalSizeAfterPadding, paip.coeffsMatNumColsPadded, d_coeffsArsDst);
     makePartialSums << < paip.coeffsMatNumColsPadded, paip.blockSize>>> (d_coeffsMatDst, paip.gridTotalSizeAfterPadding, paip.coeffsMatNumColsPadded, d_partsumsDst);
     sumColumnsPartialSums << <paip.coeffsMatNumColsPadded, 1 >> >(d_partsumsDst, paip.blockSize, paip.coeffsMatNumColsPadded, d_coeffsArsDst);

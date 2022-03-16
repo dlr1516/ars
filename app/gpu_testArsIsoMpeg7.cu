@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
     //Fourier coefficients mega-matrix computation -> parallelization parameters
     int numPts = std::min<int>(pointsSrc.points().size(), pointsDst.points().size()); //the two should normally be equals
     int numPtsAfterPadding = numPts;
-    const int gridTotalSize = sumNaturalsUpToN(numPts - 1); //total number of threads in grid Fourier coefficients grid - BEFORE PADDING
+    const int gridTotalSize = cuars::sumNaturalsUpToN(numPts - 1); //total number of threads in grid Fourier coefficients grid - BEFORE PADDING
     const int blockSize = 256;
     const int numBlocks = floor(gridTotalSize / blockSize) + 1; //number of blocks in grid (each block contains blockSize threads)
     const int gridTotalSizeAfterPadding = blockSize * numBlocks;
@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
     cudaMemset(d_coeffsArsSrc, 0.0, coeffsMatNumColsPadded * sizeof (double));
 
     cudaEventRecord(startSrc);
-    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputSrc, arsSigma, arsSigma, numPts, arsOrder, coeffsMatNumColsPadded, pnebiMode, d_coeffsMatSrc);
+    iigDw << <numBlocks, blockSize >> >(kernelInputSrc, arsSigma, arsSigma, numPts, arsOrder, coeffsMatNumColsPadded, pnebiMode, d_coeffsMatSrc);
     //    sumColumnsNoPadding << <1, sumBlockSz>> >(coeffsMatSrc, gridTotalSizeAfterPadding, coeffsMatNumColsPadded, d_coeffsArsSrc);
     makePartialSums << < coeffsMatNumColsPadded, blockSize >>> (d_coeffsMatSrc, gridTotalSizeAfterPadding, coeffsMatNumColsPadded, d_partsumsSrc);
     sumColumnsPartialSums << <coeffsMatNumColsPadded, 1 >> >(d_partsumsSrc, blockSize, coeffsMatNumColsPadded, d_coeffsArsSrc);
@@ -229,7 +229,7 @@ int main(int argc, char **argv) {
     cudaMemset(d_coeffsArsDst, 0.0, coeffsMatNumColsPadded * sizeof (double));
 
     cudaEventRecord(startDst);
-    iigKernelDownward << <numBlocks, blockSize >> >(kernelInputDst, arsSigma, arsSigma, numPts, arsOrder, coeffsMatNumColsPadded, pnebiMode, d_coeffsMatDst);
+    iigDw << <numBlocks, blockSize >> >(kernelInputDst, arsSigma, arsSigma, numPts, arsOrder, coeffsMatNumColsPadded, pnebiMode, d_coeffsMatDst);
     //    sumColumnsNoPadding << <1, sumBlockSz>> >(coeffsMatDst, gridTotalSizeAfterPadding, coeffsMatNumColsPadded, d_coeffsArsDst);
     makePartialSums << < coeffsMatNumColsPadded, blockSize >>> (d_coeffsMatDst, gridTotalSizeAfterPadding, coeffsMatNumColsPadded, d_partsumsDst);
     sumColumnsPartialSums << <coeffsMatNumColsPadded, 1 >> >(d_partsumsDst, blockSize, coeffsMatNumColsPadded, d_coeffsArsDst);

@@ -20,30 +20,6 @@
 
 #include "ars/ars2d.cuh"
 
-__host__
-int ceilPow2(int n) {
-    ARS_ASSERT(n > 0);
-
-    int exponent = ceil(log2(n));
-
-    int nPadded = std::pow<int>(2, exponent);
-    std::cout << "ceilPow2(" << n << ") = " << nPadded << std::endl;
-
-
-
-    return nPadded;
-}
-
-__host__
-int sumNaturalsUpToN(int n) {
-    ARS_ASSERT(n > 0);
-
-    int result = 0.5 * n * (n + 1);
-
-    std::cout << "sumNaturals(" << n << ") = " << result << std::endl;
-
-    return result;
-}
 
 __device__
 int getIfromTid(int tid, int n) {
@@ -281,7 +257,7 @@ void iigKernelDownward_old(cuars::Vec2d* means, double sigma1, double sigma2, in
 }
 
 __global__
-void iigKernelDownward(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int fourierOrder, int numColsPadded, cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode, double* coeffsMat) {
+void iigDw(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int fourierOrder, int numColsPadded, cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode, double* coeffsMat) {
     //    a.insertIsotropicGaussians(points, sigma);
 
     int index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block
@@ -394,7 +370,7 @@ void iigKernelDownward(cuars::Vec2d* means, double sigma1, double sigma2, int nu
 }
 
 __global__
-void iigKernelLut(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int numPtsAfterPadding, int fourierOrder, int numColsPadded, cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode, cuars::PnebiLUT& pnebiLUT, double* coeffsMat) {
+void iigLut(cuars::Vec2d* means, double sigma1, double sigma2, int numPts, int numPtsAfterPadding, int fourierOrder, int numColsPadded, cuars::ArsKernelIsotropic2d::ComputeMode pnebiMode, cuars::PnebiLUT& pnebiLUT, double* coeffsMat) {
     //    a.insertIsotropicGaussians(points, sigma);
 
     int index = blockIdx.x * blockDim.x + threadIdx.x; //index runs through a single block

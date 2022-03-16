@@ -73,6 +73,29 @@ namespace cuars {
         transpose(v); //transpose back after using it for the product
     }
 
+    int ceilPow2(int n) {
+        ARS_ASSERT(n > 0);
+
+        int exponent = ceil(log2(n));
+
+        int nPadded = std::pow<int>(2, exponent);
+        std::cout << "ceilPow2(" << n << ") = " << nPadded << std::endl;
+
+
+
+        return nPadded;
+    }
+
+    int sumNaturalsUpToN(int n) {
+        ARS_ASSERT(n > 0);
+
+        int result = 0.5 * n * (n + 1);
+
+        std::cout << "sumNaturals(" << n << ") = " << result << std::endl;
+
+        return result;
+    }
+
     //
 
     void resetToZero(Vec2d& vec) {
