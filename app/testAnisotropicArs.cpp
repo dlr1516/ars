@@ -217,7 +217,7 @@ int main(int argc, char **argv) {
 	}
 
 	std::cout << "\n\n";
-	ARS_VARIABLE2(ars1.coefficients().size(), ars2.coefficients().size());
+	ARS_VAR2(ars1.coefficients().size(), ars2.coefficients().size());
 	std::cout << "\tnum\tanisotr\tisotr\n";
 	for (int i = 0;
 			i < ars1.coefficients().size() && i < ars2.coefficients().size();

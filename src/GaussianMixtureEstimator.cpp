@@ -210,7 +210,7 @@ namespace ars {
             }
         }
 
-        ARS_VARIABLE(sum);
+        ARS_VAR1(sum);
     }
 
     void GaussianMixtureEstimatorScan::findFarthest(const VectorVector2 &points,
