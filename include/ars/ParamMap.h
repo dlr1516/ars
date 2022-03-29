@@ -62,6 +62,11 @@ namespace ars {
         /** Writes the pairs (key,value).
          */
         bool write(std::ostream& out) const;
+        
+        /** Writes the pairs (key,value) appending each line to linePrefix
+         * (e.g. with linePrefix = "#  " -> line becomes "#  key value")
+         */
+        bool write(std::ostream& out, const std::string& linePrefix) const;
 
         /** Writes the parameters to an output file (format as above).
          */
