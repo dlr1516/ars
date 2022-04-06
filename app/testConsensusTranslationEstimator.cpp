@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     std::cout << "Inserting pair source-destination:\n";
     translEstim.insert(pointsSrc, pointsDst);
     
-    plotGrid(translEstim.getGrid(), translMin, translRes, "consensus_tranl_grid.plot", 1.0);
+    plotGrid(translEstim.getGrid(), translMin, translRes, "consensus_transl_grid.plot", 1.0);
     
     std::cout << "Computing maxima:\n";
     translEstim.computeMaxima(translCandidates);
