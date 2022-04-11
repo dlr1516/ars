@@ -17,7 +17,6 @@
  */
 #ifndef ARS2D_H
 #define ARS2D_H
-#endif //ARS2D_H
 
 #include <iostream>
 #include <vector>
@@ -207,3 +206,4 @@ namespace ars {
 
 } // end of namespace
 
+#endif //ARS2D_H
