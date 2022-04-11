@@ -42,10 +42,8 @@ namespace ars {
     class GaussianMixtureEstimator {
     public:
 
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
         struct Gaussian {
-            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
             Vector2 mean;
             Matrix2 covar;
@@ -57,7 +55,7 @@ namespace ars {
                 return k * exp(-0.5 * arg);
             }
         };
-        using VectorGaussian = std::deque<Gaussian, Eigen::aligned_allocator<Gaussian> >;
+        using VectorGaussian = std::deque<Gaussian>;
 
         /**
          * Default constructor.
@@ -146,7 +144,6 @@ namespace ars {
     class GaussianMixtureEstimatorScan : public GaussianMixtureEstimator {
     public:
 
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
         //using IndexInterval = std::pair<int, int>;
         struct IndexInterval {
@@ -256,7 +253,6 @@ namespace ars {
 
     class GaussianMixtureEstimatorMeanShift : public GaussianMixtureEstimator {
     public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
         /**
          * Default constructor.
@@ -347,7 +343,6 @@ namespace ars {
      */
     class GaussianMixtureEstimatorHierarchical : public GaussianMixtureEstimator {
     public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
         // Private
         using PointContainer = MortonOctree<2, double, int32_t>;

@@ -21,21 +21,19 @@ namespace ars {
     template <unsigned int Dim, typename Scalar, typename Integer = int64_t>
     class MortonOctree {
     public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
         using PointInt = Eigen::Matrix<Integer, Dim, 1>;
         using PointScalar = Eigen::Matrix<Scalar, Dim, 1>;
-        using VectorPointInt = std::vector<PointInt, Eigen::aligned_allocator<PointInt> >;
-        using VectorPointScalar = std::vector<PointScalar, Eigen::aligned_allocator<PointScalar> >;
+        using VectorPointInt = std::vector<PointInt>;
+        using VectorPointScalar = std::vector<PointScalar>;
 
         struct Item {
-            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
             PointInt index;
             PointScalar value;
             size_t pos;
         };
-        using VectorItem = std::vector<Item, Eigen::aligned_allocator<Item> >;
+        using VectorItem = std::vector<Item>;
         using Iterator = typename VectorItem::iterator;
         using ConstIterator = typename VectorItem::const_iterator;
 

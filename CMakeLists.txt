@@ -4,6 +4,9 @@ add_definitions(-std=c++0x)
 
 set(CMAKE_BUILD_TYPE Release)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # Set the output directory for the build executables and libraries
 SET(ars_RUNTIME_OUTPUT_DIRECTORY ${ars_SOURCE_DIR}/bin CACHE PATH "Target for the binaries")
 SET(ars_LIBRARY_OUTPUT_DIRECTORY ${ars_SOURCE_DIR}/lib CACHE PATH "Target for the libraries")

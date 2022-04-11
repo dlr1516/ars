@@ -51,7 +51,6 @@ namespace ars {
     template <size_t Dim, typename Scalar = double>
     class ConsensusTranslationEstimator {
     public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
         using Index = int;
         using Counter = size_t;
@@ -60,7 +59,7 @@ namespace ars {
         using PeakFinder = rofl::PeakFinderD<Dim, Counter, Index, std::greater<Index> >;
 
         using Point = Eigen::Matrix<Scalar, Dim, 1>;
-        using VectorPoint = std::vector<Point, Eigen::aligned_allocator<Point> >;
+        using VectorPoint = std::vector<Point>;
 
         /**
          * Default constructor. 

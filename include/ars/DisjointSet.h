@@ -53,7 +53,7 @@ namespace ars {
         /**
          * Destructor. 
          */
-        ~DisjointSet();
+        virtual ~DisjointSet();
 
         /** Creates a disjoint set with an initial number of nodes.
          * Each node corresponds to a set at the beginning. 

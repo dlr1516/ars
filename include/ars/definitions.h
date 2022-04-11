@@ -83,11 +83,11 @@ namespace ars {
 
     using Vector2 = Eigen::Vector2d;
 
-    using VectorVector2 = std::vector<Vector2, Eigen::aligned_allocator<Vector2> >;
+    using VectorVector2 = std::vector<Vector2>;
 
     using Matrix2 = Eigen::Matrix2d;
     
-    using VectorMatrix2 = std::vector<Matrix2, Eigen::aligned_allocator<Matrix2> >;
+    using VectorMatrix2 = std::vector<Matrix2>;
 
 } // end of namespace
 
