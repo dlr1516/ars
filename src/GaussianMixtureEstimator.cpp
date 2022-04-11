@@ -37,7 +37,8 @@ namespace ars {
     }
 
     void GaussianMixtureEstimator::clearGaussians() {
-        gaussians_.clear();
+        if (gaussians_.size() > 0)
+            gaussians_.clear();
     }
 
     size_t GaussianMixtureEstimator::size() const {

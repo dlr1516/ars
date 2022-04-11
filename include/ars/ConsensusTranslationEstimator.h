@@ -129,7 +129,7 @@ namespace ars {
             translMax.reserve(indicesMax.size());
             for (auto idx : indicesMax) {
                 Point p = getTranslation(idx);
-                //ARS_VARIABLE4(idx[0], idx[1], grid_.value(idx), p.transpose());
+                ARS_VAR4(idx[0], idx[1], grid_.value(idx), p.transpose());
                 translMax.push_back(p);
             }
         }

@@ -45,10 +45,13 @@ namespace ars {
         evaluatePnebiVector(n, lambda, pnebis);
         //ARS_PRINT(pnebis[0]);
         coeffs[0] += 0.5 * factor * pnebis[0];
+        // std::cout << "coeff0" << 0.5 * factor * pnebis[0] << std::endl;
         sgn = -1.0;
         cth = cth2;
         sth = sth2;
         for (int k = 1; k <= n; ++k) {
+            // std::cout << "coeff" << 2*k << " " << factor * pnebis[k] * sgn * cth << std::endl;
+            // std::cout << "coeff" << 2*k+1 << " " << factor * pnebis[k] * sgn * cth << std::endl;
             coeffs[2 * k] += factor * pnebis[k] * sgn * cth;
             coeffs[2 * k + 1] += factor * pnebis[k] * sgn * sth;
             sgn = -sgn;
@@ -190,6 +193,7 @@ namespace ars {
         for (int i = 0; i < kernelNum; ++i) {
             for (int j = i + 1; j < kernelNum; ++j) {
                 ars::ScopedTimer timer("ArsKernelIsotropic2d::computeFourier()");
+                // std::cout << "i "  << i << " j " << j << std::endl;
                 isotropicKer_.init(means[i], means[j], sigma);
                 isotropicKer_.updateFourier(arsfOrder_, coeffs_, w);
                 //                dx = means[i].x() - means[j].x();

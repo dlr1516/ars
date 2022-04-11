@@ -54,7 +54,7 @@ int main() {
     ars2.setARSFOrder(fourierOrder);
 
     rangeToPoint(acesRanges1, 180, -0.5 * M_PI, M_PI / 180.0 * 1.0, acesPoints1);
-    acesPoints1.push_back(ars::Vector2::Zero());
+    //acesPoints1.push_back(ars::Vector2::Zero());
     std::cout << "Number of input points: " << acesPoints1.size() << std::endl;
     //    for (int i = 0; i < acesPoints1.size(); ++i) {
     //        std::cout << i << "\t" << acesPoints1[i].x() << "\t" << acesPoints1[i].y() << std::endl;
