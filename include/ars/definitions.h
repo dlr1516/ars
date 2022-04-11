@@ -15,8 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef DEFINITIONS_H
-#define DEFINITIONS_H
+#ifndef ARS_DEFINITIONS_H
+#define ARS_DEFINITIONS_H
 
 #include <iostream>
 #include <Eigen/Dense>
@@ -91,5 +91,5 @@ namespace ars {
 
 } // end of namespace
 
-#endif /* DEFINITIONS_H */
+#endif /* ARS_DEFINITIONS_H */
 

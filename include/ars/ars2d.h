@@ -15,7 +15,9 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
-#pragma once
+#ifndef ARS2D_H
+#define ARS2D_H
+#endif //ARS2D_H
 
 #include <iostream>
 #include <vector>

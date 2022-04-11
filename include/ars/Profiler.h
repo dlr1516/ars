@@ -15,8 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with LIRE.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PROFILER_H
-#define PROFILER_H
+#ifndef ARS_PROFILER_H
+#define ARS_PROFILER_H
 
 #include <iostream>
 #include <map>
@@ -156,5 +156,5 @@ namespace ars {
 
 } // end of namespace
 
-#endif /* PROFILER_H */
+#endif /* ARS_PROFILER_H */
 

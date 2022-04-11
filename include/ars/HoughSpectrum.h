@@ -15,7 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
-#pragma once
+#ifndef HOUGH_SPECTRUM_H
+#define HOUGH_SPECTRUM_H
 
 #include <iostream>
 #include <Eigen/Dense>
@@ -146,3 +147,4 @@ namespace ars {
 
 } // end of namespace emotion
 
+#endif //HOUGH_SPECTRUM_H

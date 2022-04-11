@@ -15,7 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
-#pragma once
+#ifndef ARS_FUNCTIONS_H
+#define ARS_FUNCTIONS_H
 
 #include <iostream>
 #include <vector>
@@ -202,3 +203,4 @@ namespace ars {
 
 } // end of namespace
 
+#endif //ARS_FUNCTIONS_H

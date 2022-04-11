@@ -15,8 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef ARS_UTILS_H
+#define ARS_UTILS_H
 
 #include <ars/definitions.h>
 
