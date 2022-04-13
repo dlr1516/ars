@@ -15,8 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef DEFINITIONS_H
-#define DEFINITIONS_H
+#ifndef ARS_DEFINITIONS_H
+#define ARS_DEFINITIONS_H
 
 #include <iostream>
 #include <Eigen/Dense>
@@ -81,6 +81,8 @@
 
 namespace ars {
 
+#if __cplusplus < 201703L
+    
     using Vector2 = Eigen::Vector2d;
 
     using VectorVector2 = std::vector<Vector2, Eigen::aligned_allocator<Vector2> >;
@@ -88,8 +90,20 @@ namespace ars {
     using Matrix2 = Eigen::Matrix2d;
     
     using VectorMatrix2 = std::vector<Matrix2, Eigen::aligned_allocator<Matrix2> >;
+    
+#else 
+    
+    using Vector2 = Eigen::Vector2d;
+
+    using VectorVector2 = std::vector<Vector2>;
+
+    using Matrix2 = Eigen::Matrix2d;
+    
+    using VectorMatrix2 = std::vector<Matrix2>;
+    
+#endif
 
 } // end of namespace
 
-#endif /* DEFINITIONS_H */
+#endif /* ARS_DEFINITIONS_H */
 

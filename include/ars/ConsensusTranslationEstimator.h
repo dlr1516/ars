@@ -51,7 +51,6 @@ namespace ars {
     template <size_t Dim, typename Scalar = double>
     class ConsensusTranslationEstimator {
     public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
         using Index = int;
         using Counter = size_t;
@@ -59,8 +58,13 @@ namespace ars {
         using Indices = typename Grid::Indices;
         using PeakFinder = rofl::PeakFinderD<Dim, Counter, Index, std::greater<Index> >;
 
+#if __cplusplus < 201703L
         using Point = Eigen::Matrix<Scalar, Dim, 1>;
         using VectorPoint = std::vector<Point, Eigen::aligned_allocator<Point> >;
+#else
+        using Point = Eigen::Matrix<Scalar, Dim, 1>;
+        using VectorPoint = std::vector<Point>;
+#endif
 
         /**
          * Default constructor. 
@@ -81,7 +85,7 @@ namespace ars {
             grid_.initBounds(gridSize);
             translMin_ = translMin;
             translRes_ = translRes;
-            peakFinder_.setDomain(gridSize); 
+            peakFinder_.setDomain(gridSize);
         }
 
         void reset() {
@@ -92,9 +96,36 @@ namespace ars {
             peakFinder_.setPeakWindow(dim);
         }
 
-        void insert(const VectorPoint& pointsSrc, const VectorPoint& pointsDst) {
-            Point transl;
-            Indices indices;
+        void insert(const VectorPoint& pointsSrc, const VectorPoint& pointsDst, bool adaptive = false) {
+            Point transl, translMax, srcMin, srcMax, dstMin, dstMax;
+            Indices indices, gridSize;
+
+            if (adaptive) {
+                srcMin.fill(std::numeric_limits<Scalar>::max());
+                srcMax.fill(std::numeric_limits<Scalar>::lowest());
+                for (auto& p : pointsSrc) {
+                    for (int d = 0; d < Dim; ++d) {
+                        if (p(d) < srcMin(d)) srcMin(d) = p(d);
+                        if (p(d) > srcMax(d)) srcMax(d) = p(d);
+                    }
+                }
+                dstMin.fill(std::numeric_limits<Scalar>::max());
+                dstMax.fill(std::numeric_limits<Scalar>::lowest());
+                for (auto& p : pointsDst) {
+                    for (int d = 0; d < Dim; ++d) {
+                        if (p(d) < dstMin(d)) dstMin(d) = p(d);
+                        if (p(d) > dstMax(d)) dstMax(d) = p(d);
+                    }
+                }
+                translMin_ = dstMin - srcMax;
+                translMax = dstMax - srcMin;
+                for (int d = 0; d < Dim; ++d) {
+                    gridSize[d] = (Index) ceil((translMax(d) - translMin_(d)) / translRes_);
+                }
+                //                ARS_VAR5(translMin_.transpose(), translMax.transpose(), translRes_, gridSize[0], gridSize[1]);
+                init(translMin_, translRes_, gridSize);
+            }
+
             for (auto& ps : pointsSrc) {
                 for (auto& pd : pointsDst) {
                     transl = pd - ps;
@@ -115,11 +146,11 @@ namespace ars {
                 return grid_.value(indices);
             };
             peakFinder_.detect(histoMap, std::back_inserter(indicesMax));
-//            ARS_PRINT("Maxima:");
-//            for (auto &idx : indicesMax) {
-//                std::cout << "  indices [" << idx[0] << "," << idx[1] << "] value " << histoMap(idx) 
-//                        << " grid2.value() " << grid_.value(idx) << std::endl;
-//            }
+            //            ARS_PRINT("Maxima:");
+            //            for (auto &idx : indicesMax) {
+            //                std::cout << "  indices [" << idx[0] << "," << idx[1] << "] value " << histoMap(idx) 
+            //                        << " grid2.value() " << grid_.value(idx) << std::endl;
+            //            }
         }
 
         void computeMaxima(VectorPoint& translMax) {
@@ -129,7 +160,7 @@ namespace ars {
             translMax.reserve(indicesMax.size());
             for (auto idx : indicesMax) {
                 Point p = getTranslation(idx);
-                ARS_VAR4(idx[0], idx[1], grid_.value(idx), p.transpose());
+                //                ARS_VAR4(idx[0], idx[1], grid_.value(idx), p.transpose());
                 translMax.push_back(p);
             }
         }
@@ -148,6 +179,15 @@ namespace ars {
                 transl(d) = translRes_ * indices[d] + translMin_(d);
             }
             return transl;
+        }
+
+        Counter getScore(const Point& p) const {
+            Indices indices = getIndices(p);
+            return getScore(indices);
+        }
+
+        Counter getScore(const Indices& indices) const {
+            return grid_.value(indices);
         }
 
         const Grid& getGrid() const {

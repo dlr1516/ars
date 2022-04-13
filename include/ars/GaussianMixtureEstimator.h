@@ -57,7 +57,12 @@ namespace ars {
                 return k * exp(-0.5 * arg);
             }
         };
+
+#if __cplusplus < 201703L        
         using VectorGaussian = std::deque<Gaussian, Eigen::aligned_allocator<Gaussian> >;
+#else
+         using VectorGaussian = std::deque<Gaussian>;
+#endif 
 
         /**
          * Default constructor.

@@ -23,6 +23,7 @@ namespace ars {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
+#if __cplusplus < 201703L 
         using PointInt = Eigen::Matrix<Integer, Dim, 1>;
         using PointScalar = Eigen::Matrix<Scalar, Dim, 1>;
         using VectorPointInt = std::vector<PointInt, Eigen::aligned_allocator<PointInt> >;
@@ -36,6 +37,22 @@ namespace ars {
             size_t pos;
         };
         using VectorItem = std::vector<Item, Eigen::aligned_allocator<Item> >;
+#else 
+        using PointInt = Eigen::Matrix<Integer, Dim, 1>;
+        using PointScalar = Eigen::Matrix<Scalar, Dim, 1>;
+        using VectorPointInt = std::vector<PointInt>;
+        using VectorPointScalar = std::vector<PointScalar>;
+
+        struct Item {
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+            PointInt index;
+            PointScalar value;
+            size_t pos;
+        };
+        using VectorItem = std::vector<Item>;
+#endif
+        
         using Iterator = typename VectorItem::iterator;
         using ConstIterator = typename VectorItem::const_iterator;
 

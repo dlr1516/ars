@@ -1,5 +1,5 @@
-#ifndef PARAM_MAP_H
-#define PARAM_MAP_H
+#ifndef ARS_PARAM_MAP_H
+#define ARS_PARAM_MAP_H
 
 #include <iostream>
 #include <fstream>
@@ -156,5 +156,5 @@ namespace ars {
 
 } // end of namespace 
 
-#endif
+#endif //ARS_PARAM_MAP_H
 

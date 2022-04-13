@@ -12,9 +12,10 @@ int main(int argc, char** argv) {
     ars::Vector2 translMin, translGt, p;
     double translRes;
     typename ars::ConsensusTranslationEstimator2d::Indices gridSize, gridWin;
+    bool adaptiveGrid;
     ars::ParamMap params;
     std::string filenameCfg;
-    
+
     // Reads params from command line
     params.read(argc, argv);
     params.getParam("cfg", filenameCfg, std::string(""));
@@ -25,12 +26,13 @@ int main(int argc, char** argv) {
     params.getParam<double>("translRes", translRes, double(1.0));
     params.getParamContainer("gridSize", gridSize.data(), gridSize.data() + gridSize.size(), "[21,21]", int(0), "[,]");
     params.getParamContainer("gridWin", gridWin.data(), gridWin.data() + gridWin.size(), "[1,1]", int(1), "[,]");
-    
+    params.getParam<bool>("adaptiveGrid", adaptiveGrid, false);
+
 
     std::cout << "\nParams:" << std::endl;
     params.write(std::cout);
     std::cout << "-------\n" << std::endl;
-    
+
     for (int i = 0; i < 10; ++i) {
         p << (1.0 + 0.4 * i), (-2.0 - 0.35 * i);
         pointsSrc.push_back(p);
@@ -40,7 +42,7 @@ int main(int argc, char** argv) {
     pointsDst.push_back(ars::Vector2(4.0, 4.0));
     pointsSrc.push_back(ars::Vector2(3.2, 6.2));
     pointsSrc.push_back(ars::Vector2(3.5, 2.6));
-    
+
     std::cout << "Source point set:\n";
     for (auto& pt : pointsSrc) {
         std::cout << "  [" << pt.transpose() << "]\n";
@@ -49,23 +51,23 @@ int main(int argc, char** argv) {
     for (auto& pt : pointsDst) {
         std::cout << "  [" << pt.transpose() << "]\n";
     }
-    
+
     translEstim.init(translMin, translRes, gridSize);
     translEstim.setNonMaximaWindowDim(gridWin);
-    
+
     std::cout << "Inserting pair source-destination:\n";
-    translEstim.insert(pointsSrc, pointsDst);
-    
+    translEstim.insert(pointsSrc, pointsDst, adaptiveGrid);
+
     plotGrid(translEstim.getGrid(), translMin, translRes, "consensus_transl_grid.plot", 1.0);
-    
+
     std::cout << "Computing maxima:\n";
     translEstim.computeMaxima(translCandidates);
-    
+
     std::cout << "Estimated translation values:\n";
     for (auto& pt : translCandidates) {
         std::cout << "  [" << pt.transpose() << "]\n";
     }
-    
+
     return 0;
 }
 
@@ -75,13 +77,13 @@ void plotGrid(const ars::ConsensusTranslationEstimator2d::Grid& grid, const ars:
     int dim0Reduced = round(dim0 / factor);
     int dim1Reduced = round(dim1 / factor);
     double v0, v1;
-    
+
     std::ofstream file(filename);
     if (!file) {
         std::cerr << "Cannot open \"" << filename << "\"" << std::endl;
         return;
     }
-    
+
     std::cout << "plotting grid with size " << dim0 << " x " << dim1 << std::endl;
 
     file << "set grid nopolar\n" << "set style data lines\n" << "set dgrid3d " << dim0Reduced << "," << dim1Reduced << "\n" << "set hidden3d\n";
