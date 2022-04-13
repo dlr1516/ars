@@ -117,7 +117,7 @@ namespace ars {
                 for (int d = 0; d < Dim; ++d) {
                     gridSize[d] = (Index) ceil((translMax(d) - translMin_(d)) / translRes_);
                 }
-                ARS_VAR5(translMin_.transpose(), translMax.transpose(), translRes_, gridSize[0], gridSize[1]);
+                //                ARS_VAR5(translMin_.transpose(), translMax.transpose(), translRes_, gridSize[0], gridSize[1]);
                 init(translMin_, translRes_, gridSize);
             }
 
@@ -155,7 +155,7 @@ namespace ars {
             translMax.reserve(indicesMax.size());
             for (auto idx : indicesMax) {
                 Point p = getTranslation(idx);
-                ARS_VAR4(idx[0], idx[1], grid_.value(idx), p.transpose());
+                //                ARS_VAR4(idx[0], idx[1], grid_.value(idx), p.transpose());
                 translMax.push_back(p);
             }
         }
@@ -175,12 +175,12 @@ namespace ars {
             }
             return transl;
         }
-        
+
         Counter getScore(const Point& p) const {
-            Indices indices  = getIndices(p);
+            Indices indices = getIndices(p);
             return getScore(indices);
         }
-        
+
         Counter getScore(const Indices& indices) const {
             return grid_.value(indices);
         }
