@@ -1,6 +1,14 @@
 #include <ars/TranslationRefiner.h>
 
 namespace ars {
+    
+    TranslationRefiner::TranslationRefiner(){
+    }
+    
+    
+    TranslationRefiner::~TranslationRefiner(){
+    }
+
 
     void TranslationRefiner::associate() {
         std::cout << "" << std::endl;

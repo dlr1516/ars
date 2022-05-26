@@ -73,6 +73,9 @@ target_link_libraries(testGaussianMixtureEstimator ${ars_LINK_LIBS} ars)
 add_executable(testConsensusTranslationEstimator app/testConsensusTranslationEstimator.cpp)
 target_link_libraries(testConsensusTranslationEstimator ${ars_LINK_LIBS} ars)
 
+add_executable(testTranslationRefiner app/testTranslationRefiner.cpp)
+target_link_libraries(testTranslationRefiner ${ars_LINK_LIBS} ars)
+
 #add_executable(testMortonOrderedPoints app/testMortonOrderedPoints.cpp)
 #target_link_libraries(testMortonOrderedPoints ${ars_LINK_LIBS} ars)
 
