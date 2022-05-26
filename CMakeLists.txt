@@ -49,6 +49,7 @@ add_library(ars
   src/MortonSort.cpp
   src/ParamMap.cpp
   src/Profiler.cpp
+  src/TranslationRefiner.cpp
 )
 
 add_executable(testFunctions app/testFunctions.cpp )
