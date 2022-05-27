@@ -29,21 +29,23 @@ namespace ars {
 
     class TranslationRefiner {
     public:
-        ars::Vector2 transl_;
-        //ars::VectorVector2 pointsSrcTransl_;
-        //ars::VectorVector2 pointsDst_;
-
 
         /**
-         * Default constructor
+         * Default constructor. Not really useful because of no good way to initialize point vector references...
          */
-        //        TranslationRefiner();
+        TranslationRefiner();
 
         /**
          * Constructor thought for use with ARS rot + transl estimation: translates of @param transl each point in pointsSrc point set
          * that supposedly has been already rotated before using ConsensusTranslationEstimator
          */
         TranslationRefiner(VectorVector2& ptsSrc, VectorVector2& ptsDst, const Eigen::Translation2d& transl);
+
+        /**
+         * Analogous of above constructor with transl, just this time with rotation only
+         */
+        TranslationRefiner(VectorVector2& ptsSrc, VectorVector2& ptsDst, const Eigen::Rotation2Dd& rot);
+
 
         /**
          * More generic constructor, that applies a full transformation according to @param transf
@@ -63,6 +65,12 @@ namespace ars {
          *  - computed transformation changes below a certain threshold from one iteration to the next
          */
         void icp(Eigen::Affine2d& transfOut);
+
+        /**
+         * Simple solving of Procrustes problem on 2 point sets where pointsSrc_[i] is given as associated
+         * to pointsDst_[i], and the size of the two is the same
+         */
+        void icpNoAssoc(Eigen::Affine2d & transfOut);
 
         /**
          * Setter for maxIterations_ private member
@@ -91,11 +99,21 @@ namespace ars {
 
     private:
         /**
-         * Method used inside associate() to compute/re-compute the associations
-         * Returns the number of new associations
+         * Transform each point in pointsSrc set according to lastTransf_ member
+         */
+        void transformPtsSrc();
+
+        /**
+         * Method used inside associate() to compute the associations for the first time
+         * Returns the number of good associations found
          */
         int computeAssociations();
 
+        /**
+         * Method used inside associate() to update the associations in steps of ICP after the first
+         * Returns the number of new associations
+         */
+        int updateAssociations();
 
         /**
          * Associate each translated point, according to initial/current guess, to closest point in dst
@@ -106,14 +124,15 @@ namespace ars {
         /**
          * Solve Procrustes problem finding the most appropriate matrix that links @param pointsSrc and @param pointsDst
          * point sets, based on associations computed at previous step.
-         * Saves the result affine matrix in reference @param transf
+         * Saves the result affine matrix in function member transf
          */
-        void computeProcrustes(Eigen::Affine2d& transf);
+        void computeProcrustes();
+
 
         /*
          * Private Members
          */
-        Eigen::Affine2d lastTransf_;
+        Eigen::Affine2d transf_; //serves also as initial guess
 
         int maxIterations_;
         double stopThresh_;
@@ -124,10 +143,12 @@ namespace ars {
         VectorVector2 &pointsDst_;
 
         int numNewAssocLast_;
+        int numRealAssoc_;
         using IndicesPair = std::pair<int, int>;
         using IndicesPairVec = std::vector<IndicesPair>;
         IndicesPairVec associations_;
         double minNewAssocPerc_;
+
     };
 }
 

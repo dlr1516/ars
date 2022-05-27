@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     std::cout << std::endl << "Creating model with 10000 points ..." << std::endl;
     std::cout << "Creating template by shifting model by (2,1) ..." << std::endl;
     int32_t k = 0;
-    for (double x = -2; x < 2; x += 0.04) {
+    for (double x = -2; x < 2; x += 0.0004) {
         double y = 5 * x * exp(-x * x);
         ars::Vector2 ptM(x, y);
         modelPts.push_back(ptM);
@@ -49,12 +49,12 @@ int main(int argc, char **argv) {
     }
 
     // version with Eigen
-    Eigen::Affine2d transf;
-    transf.setIdentity();
-
-    ars::TranslationRefiner translRefiner(modelPts, templatePts, transf);
-    translRefiner.icp(transf);
-    std::cout << "transf:" << std::endl << transf.matrix() << std::endl;
+    Eigen::Affine2d initialGuess;
+    initialGuess.setIdentity();
+    ars::TranslationRefiner translRefiner(modelPts, templatePts, initialGuess);
+    Eigen::Affine2d transfOut;
+    translRefiner.icpNoAssoc(transfOut);
+    std::cout << "transf:" << std::endl << transfOut.matrix() << std::endl;
 
 
     return 0;
