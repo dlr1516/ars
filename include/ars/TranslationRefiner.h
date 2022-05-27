@@ -1,13 +1,20 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/cppFiles/file.h to edit this template
- */
-
-/* 
- * File:   TranslationRefiner.h
- * Author: rimlab
+/**
+ * ARS - Angular Radon Spectrum 
+ * Copyright (C) 2017-2020 Dario Lodi Rizzini
+ *               2021- Dario Lodi Rizzini, Ernesto Fontana
  *
- * Created on May 26, 2022, 5:06 PM
+ * ARS is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * ARS is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef ARS_TRANSLATION_REFINER_H
@@ -74,7 +81,7 @@ namespace ars {
          * is less than @param aDistTh
          */
         void setAssocDistTh(double aDistTh = 0.1);
-        
+
         /**
          * Setter for the minimum percentage of associations that has to be changed from previous associating iteration
          * is less than @param aDistTh
@@ -101,11 +108,13 @@ namespace ars {
          * point sets, based on associations computed at previous step.
          * Saves the result affine matrix in reference @param transf
          */
-        void computeProcrustes(Eigen::Affine2d & transf);
-        
-        //private members
+        void computeProcrustes(Eigen::Affine2d& transf);
+
+        /*
+         * Private Members
+         */
         Eigen::Affine2d lastTransf_;
-        
+
         int maxIterations_;
         double stopThresh_;
 
