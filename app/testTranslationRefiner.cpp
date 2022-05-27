@@ -30,10 +30,11 @@ int main(int argc, char **argv) {
     }
 
     // version with Eigen
-    ars::TranslationRefiner translRefiner;
     Eigen::Affine2d transf;
     transf.setIdentity();
-    translRefiner.computeProcrustes(modelPts, templatePts, transf);
+
+    ars::TranslationRefiner translRefiner(modelPts, templatePts, transf);
+    translRefiner.computeProcrustes(transf);
     std::cout << "transf:" << std::endl << transf.matrix() << std::endl;
 
 

@@ -1,36 +1,98 @@
 #include <ars/TranslationRefiner.h>
 
 namespace ars {
-    
-    TranslationRefiner::TranslationRefiner(){
-    }
-    
-    
-    TranslationRefiner::~TranslationRefiner(){
+
+    //    TranslationRefiner::TranslationRefiner() : pointsSrc_(std::vector<Vector2>), pointsDst_(std::vector<Vector2>) {
+    //    }
+
+    TranslationRefiner::TranslationRefiner(VectorVector2& ptsSrc, VectorVector2& ptsDst, const Eigen::Translation2d& transl) :
+    pointsSrc_(ptsSrc), pointsDst_(ptsDst) {
+
+        Eigen::Affine2d transf;
+        transf.setIdentity();
+        transf.translation() = transl.translation();
+
+        lastTransf = transf;
+        for (Vector2& pt : pointsSrc_)
+            pt += transl.translation();
+
     }
 
+    TranslationRefiner::TranslationRefiner(VectorVector2& ptsSrc, VectorVector2& ptsDst, const Eigen::Affine2d& transf) :
+    pointsSrc_(ptsSrc), pointsDst_(ptsDst) {
 
-    void TranslationRefiner::associate() {
-        std::cout << "" << std::endl;
+        lastTransf = transf;
+        for (Vector2& pt : pointsSrc_)
+            pt = transf * pt;
     }
 
-    void TranslationRefiner::computeProcrustes(const ars::VectorVector2 &pointsSrc, const ars::VectorVector2 &pointsDst, Eigen::Affine2d &transf) {
+    TranslationRefiner::~TranslationRefiner() {
+    }
+
+    int TranslationRefiner::computeAssociations() {
+        if (associations_.size() > 0) //TODO: maybe this if() can be moved elsewhere
+            associations_.clear();
+
+        const int ptsSrcSz = pointsSrc_.size();
+        const int ptsDstSz = pointsDst_.size();
+        int newAssociations = 0;
+        for (int i = 0; i < ptsSrcSz; ++i) {
+            //            bool associated = false;
+            double distBest = std::numeric_limits<double>::max();
+            int correspIdx = -1;
+            for (int j = 0; j < ptsDstSz; ++j) {
+                //TODO maybe: compute centroids directly here
+
+                double distancePtToPt = (pointsDst_.at(j) - pointsSrc_.at(i)).squaredNorm();
+                if (distancePtToPt >= assocDistTh_)
+                    continue;
+                if (distancePtToPt < distBest) {
+                    //                    associated = true;
+                    distBest = distancePtToPt;
+                    correspIdx = j;
+                }
+            }
+            if (correspIdx != -1) {
+                newAssociations++;
+                IndicesPair p(i, correspIdx);
+                associations_.push_back(p); //TODO: pushback is good just for first time computing associations!! This should be done in the else{} of associate()
+            }
+        }
+        return newAssociations;
+    }
+
+    bool TranslationRefiner::associate(int iteration) {
+        std::cout << "Translation Refiner: associate" << std::endl;
+
+        if (iteration == 0 || associations_.empty()) {
+            numNewAssocLast_ = computeAssociations();
+            return true;
+        } else {
+            numNewAssocLast_ = computeAssociations();
+            if (numNewAssocLast_ / associations_.size() < minNewAssocPerc_) //non-varying associations stopping condition
+                return false;
+            return true;
+        }
+
+    }
+
+    void TranslationRefiner::computeProcrustes(Eigen::Affine2d &transf) {
         // Procustes
         ars::Vector2 meanSrc, meanDst;
         Eigen::MatrixXd S = Eigen::MatrixXd::Zero(2, 2);
-        int n = std::min(pointsSrc.size(), pointsDst.size()); // works for now, counting on dummy examples not to have fake correspondences
+        int n = std::min(pointsSrc_.size(), pointsDst_.size()); // works for now, counting on dummy examples not to have fake correspondences
         int numAssociations = 0;
-        int sizeDst = pointsDst.size();
+        int sizeDst = pointsDst_.size();
         meanSrc = ars::Vector2::Zero(2, 1);
         meanDst = ars::Vector2::Zero(2, 1);
         for (int i = 0; i < n; ++i) {
-            // if (pointsDst[i].associated) {
-            meanSrc += pointsSrc[i];
-            meanDst += pointsDst[i];
+            // if (pointsDst_[i].associated) {
+            meanSrc += pointsSrc_[i];
+            meanDst += pointsDst_[i];
             numAssociations++;
             // }
         }
-        std::cout << "numAssociations " << numAssociations << std::endl;
+        //        std::cout << "numAssociations " << numAssociations << std::endl;
         if (numAssociations != 0) {
             meanSrc = meanSrc * 1.0f / numAssociations;
             meanDst = meanDst * 1.0f / numAssociations;
@@ -39,12 +101,12 @@ namespace ars {
         }
 
         for (int i = 0; i < n && i < sizeDst; ++i) {
-            // if (!pointsDst[i].associated)
+            // if (!pointsDst_[i].associated)
             // continue;
-            S += (pointsSrc[i] - meanSrc) * (pointsDst[i] - meanDst).transpose();
+            S += (pointsSrc_[i] - meanSrc) * (pointsDst_[i] - meanDst).transpose();
         }
-        std::cout << "S before SVD" << std::endl
-                << S << std::endl;
+        //        std::cout << "S before SVD" << std::endl
+        //                << S << std::endl;
 
         Eigen::JacobiSVD<Eigen::MatrixXd> svd(S, Eigen::ComputeThinU | Eigen::ComputeThinV);
         float d = (svd.matrixV() * svd.matrixU().transpose()).determinant();
@@ -56,12 +118,12 @@ namespace ars {
         I(1, 1) = d;
         Eigen::MatrixXd R = svd.matrixV() * I * svd.matrixU().transpose();
 
-        std::cout << "S after SVD" << std::endl
-                << S << std::endl;
-        std::cout << "U after SVD" << std::endl
-                << S << std::endl;
-        std::cout << "V after SVD" << std::endl
-                << S << std::endl;
+        //        std::cout << "S after SVD" << std::endl
+        //                << S << std::endl;
+        //        std::cout << "U after SVD" << std::endl
+        //                << S << std::endl;
+        //        std::cout << "V after SVD" << std::endl
+        //                << S << std::endl;
 
         ars::Vector2 transl = ars::Vector2::Zero(2, 1);
         transl += meanDst - R * meanSrc;
@@ -72,7 +134,15 @@ namespace ars {
     }
 
     void TranslationRefiner::icp() {
-        std::cout << "" << std::endl;
+        std::cout << "Translation Refiner: ICP" << std::endl;
+        double dist = std::numeric_limits<double>::max();
+        //TODO: transf pointsSrc points (appropriately) before each iteration of ICP
+        for (int i = 0; (i < maxIterations_) && (dist < stopThresh_); ++i) {
+            if (associate(i))
+                computeProcrustes(lastTransf);
+            else
+                break;
+        }
     }
 
     void TranslationRefiner::setMaxIterations(int numMaxIter) {
@@ -82,6 +152,11 @@ namespace ars {
     void TranslationRefiner::setStopThresh(double th) {
         stopThresh_ = th;
     }
+
+    void TranslationRefiner::setAssocDistTh(double aDistTh) {
+        assocDistTh_ = aDistTh;
+    }
+
 
 
 
