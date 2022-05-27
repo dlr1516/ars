@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
     transf.setIdentity();
 
     ars::TranslationRefiner translRefiner(modelPts, templatePts, transf);
-    translRefiner.computeProcrustes(transf);
+    translRefiner.icp(transf);
     std::cout << "transf:" << std::endl << transf.matrix() << std::endl;
 
 

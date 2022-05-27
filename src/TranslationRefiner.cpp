@@ -12,7 +12,7 @@ namespace ars {
         transf.setIdentity();
         transf.translation() = transl.translation();
 
-        lastTransf = transf;
+        lastTransf_ = transf;
         for (Vector2& pt : pointsSrc_)
             pt += transl.translation();
 
@@ -21,7 +21,7 @@ namespace ars {
     TranslationRefiner::TranslationRefiner(VectorVector2& ptsSrc, VectorVector2& ptsDst, const Eigen::Affine2d& transf) :
     pointsSrc_(ptsSrc), pointsDst_(ptsDst) {
 
-        lastTransf = transf;
+        lastTransf_ = transf;
         for (Vector2& pt : pointsSrc_)
             pt = transf * pt;
     }
@@ -55,7 +55,7 @@ namespace ars {
             if (correspIdx != -1) {
                 newAssociations++;
                 IndicesPair p(i, correspIdx);
-                associations_.push_back(p); //TODO: pushback is good just for first time computing associations!! This should be done in the else{} of associate()
+                associations_.push_back(p); //TODO: pushback is good just for first time computing associations!! Need to implement the else{} of associate()
             }
         }
         return newAssociations;
@@ -73,10 +73,11 @@ namespace ars {
                 return false;
             return true;
         }
-
     }
 
     void TranslationRefiner::computeProcrustes(Eigen::Affine2d &transf) {
+        //TODO: revise these (specifically associated points handling) steps
+
         // Procustes
         ars::Vector2 meanSrc, meanDst;
         Eigen::MatrixXd S = Eigen::MatrixXd::Zero(2, 2);
@@ -133,16 +134,17 @@ namespace ars {
         transf.makeAffine();
     }
 
-    void TranslationRefiner::icp() {
+    void TranslationRefiner::icp(Eigen::Affine2d& transfOut) {
         std::cout << "Translation Refiner: ICP" << std::endl;
         double dist = std::numeric_limits<double>::max();
         //TODO: transf pointsSrc points (appropriately) before each iteration of ICP
         for (int i = 0; (i < maxIterations_) && (dist < stopThresh_); ++i) {
-            if (associate(i))
-                computeProcrustes(lastTransf);
-            else
+            if (associate(i)) {
+                computeProcrustes(lastTransf_);
+            } else
                 break;
         }
+        transfOut = lastTransf_;
     }
 
     void TranslationRefiner::setMaxIterations(int numMaxIter) {

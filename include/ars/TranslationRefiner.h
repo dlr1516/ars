@@ -50,32 +50,12 @@ namespace ars {
         virtual ~TranslationRefiner();
 
         /**
-         * Method used inside associate() to compute/re-compute the associations
-         * Returns the number of new associations
-         */
-        int computeAssociations();
-
-
-        /**
-         * Associate each translated point, according to initial/current guess, to closest point in dst
-         * @return True when proceeding with Procrusted (associations have varied substantially enough); False otherwise
-         */
-        bool associate(int iteration);
-
-        /**
-         * Solve Procrustes problem finding the most appropriate matrix that links @param pointsSrc and @param pointsDst
-         * point sets, based on associations computed at previous step.
-         * Saves the result affine matrix in reference @param transf
-         */
-        void computeProcrustes(Eigen::Affine2d & transf);
-
-        /**
          * Iterates association and Procrustes problem solving until stopping condition is reached
          * 2 stopping conditions are implemented: 
          *  - max number of iterations
          *  - computed transformation changes below a certain threshold from one iteration to the next
          */
-        void icp();
+        void icp(Eigen::Affine2d& transfOut);
 
         /**
          * Setter for maxIterations_ private member
@@ -103,7 +83,28 @@ namespace ars {
 
 
     private:
-        Eigen::Affine2d lastTransf;
+        /**
+         * Method used inside associate() to compute/re-compute the associations
+         * Returns the number of new associations
+         */
+        int computeAssociations();
+
+
+        /**
+         * Associate each translated point, according to initial/current guess, to closest point in dst
+         * @return True when proceeding with Procrusted (associations have varied substantially enough); False otherwise
+         */
+        bool associate(int iteration);
+
+        /**
+         * Solve Procrustes problem finding the most appropriate matrix that links @param pointsSrc and @param pointsDst
+         * point sets, based on associations computed at previous step.
+         * Saves the result affine matrix in reference @param transf
+         */
+        void computeProcrustes(Eigen::Affine2d & transf);
+        
+        //private members
+        Eigen::Affine2d lastTransf_;
         
         int maxIterations_;
         double stopThresh_;
