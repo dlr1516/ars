@@ -17,8 +17,6 @@
  * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-
 #include <ars/ars2d.h>
 #include <ars/ParamMap.h>
 #include <ars/Profiler.h>
@@ -28,7 +26,7 @@ double mod180(double angle) {
     return (angle - floor(angle / M_PI) * M_PI);
 }
 
-//essential version of mpeg7 images dataset files reader/writer
+//essential version of mpeg7 images dataset files reader/writer class
 namespace ArsImgTests {
 
     class PointReaderWriter {
@@ -244,10 +242,9 @@ namespace ArsImgTests {
             return affMat;
         }
 
-    };
+    }; //end of class PointReaderWriter
 
-
-}
+} //end of namespace ArsImgTests
 
 int main(int argc, char **argv) {
     ars::AngularRadonSpectrum2d arsSrc;
