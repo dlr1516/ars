@@ -1,11 +1,10 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 project(ars)
 add_definitions(-std=c++0x)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_BUILD_TYPE Release)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Set the output directory for the build executables and libraries
 SET(ars_RUNTIME_OUTPUT_DIRECTORY ${ars_SOURCE_DIR}/bin CACHE PATH "Target for the binaries")
@@ -50,6 +49,7 @@ add_library(ars
   src/MortonSort.cpp
   src/ParamMap.cpp
   src/Profiler.cpp
+  src/TranslationRefiner.cpp
 )
 
 add_executable(testFunctions app/testFunctions.cpp )
@@ -72,6 +72,9 @@ target_link_libraries(testGaussianMixtureEstimator ${ars_LINK_LIBS} ars)
 
 add_executable(testConsensusTranslationEstimator app/testConsensusTranslationEstimator.cpp)
 target_link_libraries(testConsensusTranslationEstimator ${ars_LINK_LIBS} ars)
+
+add_executable(testTranslationRefiner app/testTranslationRefiner.cpp)
+target_link_libraries(testTranslationRefiner ${ars_LINK_LIBS} ars)
 
 #add_executable(testMortonOrderedPoints app/testMortonOrderedPoints.cpp)
 #target_link_libraries(testMortonOrderedPoints ${ars_LINK_LIBS} ars)
