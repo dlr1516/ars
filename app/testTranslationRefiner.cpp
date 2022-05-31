@@ -79,7 +79,7 @@ namespace ArsImgTests
             num_rand = points.size();
         }
 
-        virtual ~PointReaderWriter()
+        ~PointReaderWriter()
         {
         }
 
@@ -330,8 +330,8 @@ int main(int argc, char **argv)
     ars::Vector2 translTrue, translOut;
     // icp
     int icpMaxIterations;
-    double icpMatDistTh;
-    double icpNewAssocPercTh;
+    double icpMatDistStopTh;
+    double icpNewAssocRatioTh;
 
     params.read(argc, argv);
     params.getParam<std::string>("cfg", filenameCfg, "");
@@ -365,8 +365,8 @@ int main(int argc, char **argv)
     params.getParam<bool>("adaptiveTranslGrid", adaptiveTranslGrid, true);
 
     params.getParam<int>("icpMaxIterations", icpMaxIterations, 5);
-    params.getParam<double>("icpMatDistTh", icpMatDistTh, 0.001);
-    params.getParam<double>("icpNewAssocPercTh", icpNewAssocPercTh, 0.001);
+    params.getParam<double>("icpMatDistStopTh", icpMatDistStopTh, 0.001);
+    params.getParam<double>("icpNewAssocRatioTh", icpNewAssocRatioTh, 1/100);
 
     std::cout << "\nParameter values:\n";
     params.write(std::cout);
@@ -522,7 +522,8 @@ int main(int argc, char **argv)
     initialGuess.translation() = translInitGuess;
     initialGuess.makeAffine();
 
-    std::cout << "rot initial guess (ArsTec output): " << 180.0 / M_PI * rotArs << std::endl;
+    std::cout << std::endl
+              << "rot initial guess (ArsTec output): " << 180.0 / M_PI * rotArs << std::endl;
     std::cout << "transl initial guess (ArsTec output): " << translInitGuess.transpose() << std::endl;
 
     ars::VectorVector2 ptsSrc = pointsSrc.points();
@@ -530,8 +531,8 @@ int main(int argc, char **argv)
 
     ars::TranslationRefiner translRefiner(ptsSrc, ptsDst, initialGuess);
     translRefiner.setMaxIterations(icpMaxIterations);
-    translRefiner.setStopMatDistTh(icpMatDistTh);
-    translRefiner.setMinNewAssocPerc(icpNewAssocPercTh);
+    translRefiner.setStopMatDistTh(icpMatDistStopTh);
+    translRefiner.setMinNewAssocRatio(icpNewAssocRatioTh);
 
     Eigen::Affine2d transfOut;
     translRefiner.icp(transfOut);
@@ -541,35 +542,21 @@ int main(int argc, char **argv)
     double rotAcos = transfOut.matrix()(0, 0);
     double rotAsin = transfOut.matrix()(1, 0);
 
-    std::cout << "rot refined: acos " << 180.0 / M_PI * (std::acos(rotAcos)) << " asin " << 180.0 / M_PI * (std::asin(rotAsin)) << std::endl;
+    std::cout << std::endl
+              << "rot refined: acos " << 180.0 / M_PI * (std::acos(rotAcos)) << " asin " << 180.0 / M_PI * (std::asin(rotAsin)) << std::endl;
     std::cout << "transl refined " << transfOut.translation().transpose() << std::endl;
 
     // END OF ARS ICP
 
-    // Computes the rotated points, centroid, affine transf matrix between src and dst
-    // ArsImgTests::PointReaderWriter pointsRot(pointsSrc.points());
-    // ars::Vector2 centroidSrc = pointsSrc.computeCentroid();
-    // ars::Vector2 centroidDst = pointsDst.computeCentroid();
-    // Eigen::Affine2d rotSrcDst = ArsImgTests::PointReaderWriter::coordToTransform(0.0, 0.0, rotArs);
-    // Eigen::Translation2d translSrcDst(centroidDst - rotSrcDst * centroidSrc);
-    // Eigen::Affine2d transfSrcDst = rotSrcDst * translSrcDst;
+    rotTrue = pointsDst.getRotTheta() - pointsSrc.getRotTheta();
+    std::cout << std::endl
+              << "rotTrue[deg] \t" << (180.0 / M_PI * rotTrue) << " \t" << (180.0 / M_PI * mod180(rotTrue)) << std::endl;
 
-    // //    std::cout << "centroidSrc " << centroidSrc.transpose() << "\n"
-    // //            << "rotSrcDst\n" << rotSrcDst.matrix() << "\n"
-    // //            << "translation: [" << translSrcDst.transpose() << "] rotation[deg] " << (180.0 / M_PI * rotArs) << "\n";
-    // std::cout << "centroidSrc " << centroidSrc(0) << " \t" << centroidSrc(1) << "\n"
-    //           << "centroidDst " << centroidDst(0) << " \t" << centroidDst(1) << "\n"
-    //           << "rotSrcDst\n"
-    //           << rotSrcDst.matrix() << "\n"
-    //           << "translation: [" << translSrcDst.x() << " \t" << translSrcDst.y() << "] rotation[deg] " << (180.0 / M_PI * rotArs) << "\n";
-
-    // pointsRot.applyTransform(transfSrcDst);
-
-    // rotTrue = pointsDst.getRotTheta() - pointsSrc.getRotTheta();
-    // std::cout << "\n***\npointsDst.getrotTheta() [deg]" << (180 / M_PI * pointsDst.getRotTheta())
-    //           << ", pointsSrc.getrotTheta() [deg] " << (180.0 / M_PI * pointsSrc.getRotTheta()) << "\n";
-    // std::cout << "rotTrue[deg] \t" << (180.0 / M_PI * rotTrue) << " \t" << (180.0 / M_PI * mod180(rotTrue)) << std::endl;
-    // std::cout << "rotArs[deg] \t" << (180.0 / M_PI * rotArs) << " \t" << (180.0 / M_PI * mod180(rotArs)) << std::endl;
+    Eigen::Affine2d transfSrcToDst = pointsDst.getTransform() * pointsSrc.getTransform().inverse();
+    // std::cout << "diff transform" << std::endl
+    //           << transfSrcToDst.matrix() << std::endl;
+    translTrue << transfSrcToDst.translation();
+    std::cout << "translTrue[m] \t" << translTrue.transpose() << std::endl;
 
     return 0;
 }

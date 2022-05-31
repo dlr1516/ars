@@ -70,11 +70,11 @@ namespace ars
         std::cout << "Translation Refiner: ICP" << std::endl;
         double dist = std::numeric_limits<double>::max();
 
-        // for (int i = 0; (i < maxIterations_) && (dist < stopMatDistTh_); ++i)
-        for (int i = 0; (i < maxIterations_) ; ++i)
+        transformPtsSrc(); // transformations are computed incrementally
+        for (int i = 0; i < maxIterations_; ++i)
         {
+            std::cout << "ICP iteration # " << i << std::endl;
             //            if (i != 0) //maybe needed when points passed as input (through constructor) are alerady transformed
-            transformPtsSrc();
 
             if (associate(i))
             {
@@ -84,12 +84,26 @@ namespace ars
 
                 dist = (lastTransf.matrix() - transf_.matrix()).norm();
                 if (dist < stopMatDistTh_)
+                {
+                    std::cout << "icp: VERY LIMITED CHANGE IN TRANSF -> STOPPING" << std::endl;
+                    transfOut = transf_;
                     break;
+                }
             }
             else
+            {
+                std::cout << "icp: ASSOCIATIONS BARELY CHANGE -> STOPPING" << std::endl;
+                transfOut = transf_;
                 break;
+            }
+
+            if (i == maxIterations_ - 1)
+            {
+                std::cout << "icp: MAX NUM ITERATIONS REACHED -> STOPPING" << std::endl;
+                transfOut = transf_;
+                break;
+            }
         }
-        transfOut = transf_;
     }
 
     void TranslationRefiner::icpNoAssoc(Eigen::Affine2d &transfOut)
@@ -172,24 +186,26 @@ namespace ars
         stopMatDistTh_ = th;
     }
 
-    void TranslationRefiner::setMinNewAssocPerc(double perc)
+    void TranslationRefiner::setMinNewAssocRatio(double perc)
     {
-        minNewAssocPerc_ = perc;
+        minNewAssocRatio_ = perc;
     }
 
     // PRIVATE TranslationRefiner members
 
     void TranslationRefiner::transformPtsSrc()
     {
+        // std::cout << "applying transf " << std::endl
+        //           << transf_.matrix() << std::endl;
+
         for (Vector2 &pt : pointsSrc_)
             pt = transf_ * pt;
     }
 
-    void TranslationRefiner::transformPtsSrc(const Eigen::Affine2d &transf)
+    void TranslationRefiner::transformPtsSrcAfterProcrustes(const Eigen::Affine2d &transf)
     {
-        transf_ = transf;
-        for (Vector2 &pt : pointsSrc_)
-            pt = transf_ * pt;
+        transf_ = transf * transf_;
+        transformPtsSrc();
     }
 
     int TranslationRefiner::computeAssociations()
@@ -209,19 +225,23 @@ namespace ars
             {
                 // TODO maybe: compute centroids directly here
 
-                double distancePtToPt = (pointsDst_.at(j) - pointsSrc_.at(i)).squaredNorm();
-                if (distancePtToPt >= assocDistTh_)
+                double distPtToPt = (pointsDst_.at(j) - pointsSrc_.at(i)).squaredNorm();
+                if (distPtToPt >= assocDistTh_)
                     continue;
-                if (distancePtToPt < distBest)
+                const double samePtDistTh = 0.001;
+                if (distPtToPt < distBest && distPtToPt > samePtDistTh)
                 {
                     //                    associated = true;
-                    distBest = distancePtToPt;
+                    distBest = distPtToPt;
                     correspIdx = j;
                 }
             }
 
             IndicesPair p(i, correspIdx);
             associations_.push_back(p);
+            // std::cout << "just computed association " << i << " from point " << pointsSrc_.at(i).transpose() << " to point " << pointsDst_.at(correspIdx).transpose()
+            //           << std::endl
+            //           << p.first << " " << p.second << std::endl;
 
             if (correspIdx != -1)
             { // establishing associations vector "real" size (size without counting bad associations)
@@ -235,8 +255,8 @@ namespace ars
     {
         int newAssociations = 0;
 
-        const int currAssocSz = associations_.size();
-        for (int i = 0; i < currAssocSz; ++i)
+        const int numAssoc = associations_.size();
+        for (int i = 0; i < numAssoc; ++i)
         {
             const int idxSrc = associations_[i].first;
             const int idxDst = associations_[i].second; // TODO maybe: if idxDst == -1 -> go next straight away
@@ -254,7 +274,8 @@ namespace ars
 
                 if (distPtToPt >= assocDistTh_)
                     continue;
-                if (distPtToPt < distBest)
+                const double samePtDistTh = 0.001;
+                if (distPtToPt < distBest && distPtToPt > samePtDistTh)
                 {
                     //                    associated = true;
                     distBest = distPtToPt;
@@ -278,14 +299,19 @@ namespace ars
 
         if (iteration == 0 || associations_.empty())
         {
-            numRealAssoc_ = computeAssociations();
-            numNewAssocLast_ = numRealAssoc_;
+            numRealAssoc_ = computeAssociations(); // numRealAssoc_ won't change anymore
+            numNewAssoc_ = numRealAssoc_;
             return true;
         }
         else
         {
-            numNewAssocLast_ = updateAssociations();
-            if (numNewAssocLast_ / numRealAssoc_ < minNewAssocPerc_) // non-varying associations stopping condition
+            numNewAssoc_ = updateAssociations();
+            std::cout << "new associations: " << numNewAssoc_ << " out of " << numRealAssoc_ << " total associations" << std::endl;
+            const double newAssocRatio = numNewAssoc_ / numRealAssoc_;
+            std::cout << "ratio: " << newAssocRatio << std::endl;
+            std::cout << "min ratio: " << minNewAssocRatio_ << std::endl;
+
+            if (newAssocRatio < minNewAssocRatio_) // non-varying associations stopping condition
                 return false;
             return true;
         }
@@ -303,6 +329,9 @@ namespace ars
 
         const int n = associations_.size();
 
+        if (n == 0)
+            return;
+
         meanSrc = Vector2::Zero(2, 1);
         meanDst = Vector2::Zero(2, 1);
         for (int i = 0; i < n; ++i)
@@ -317,18 +346,8 @@ namespace ars
             const Vector2 ptSrc = pointsSrc_.at(srcIdx);
             const Vector2 ptDst = pointsDst_.at(dstIdx);
 
-            meanSrc += ptSrc;
-            meanDst += ptDst;
-        }
-
-        if (n != 0)
-        {
-            meanSrc = meanSrc * 1.0f / n;
-            meanDst = meanDst * 1.0f / n;
-        }
-        else
-        {
-            return;
+            meanSrc += ptSrc * 1.0f / n;
+            meanDst += ptDst * 1.0f / n;
         }
 
         for (int i = 0; i < n; ++i)
@@ -372,7 +391,12 @@ namespace ars
         transf.translation() = (meanDst - R * meanSrc);
         transf.makeAffine();
 
-        transf_ = transf;
+        transformPtsSrcAfterProcrustes(transf);
+
+        transf_ = transf * transf_;
+
+        // std::cout << "computed new transf (procrustes output): " << std::endl
+        //           << transf_.matrix() << std::endl;
     }
 
     void TranslationRefiner::setAssocDistTh(double aDistTh)

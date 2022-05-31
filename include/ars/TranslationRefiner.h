@@ -83,13 +83,13 @@ namespace ars
          * Setter for stopMatDistTh_ private member
          * Needed for stopping condition
          */
-        void setStopMatDistTh(double th = 0.1);
+        void setStopMatDistTh(double th);
 
         /**
          * Setter for the minimum percentage of associations that has to be changed from previous associating iteration
          * is less than @param aDistTh
          */
-        void setMinNewAssocPerc(double perc = 0.1);
+        void setMinNewAssocRatio(double ratio);
 
     private:
         /**
@@ -101,7 +101,7 @@ namespace ars
          * Transform each point in pointsSrc set according to @param transf member
          * after setting transf_ member equal to @param transf
          */
-        void transformPtsSrc(const Eigen::Affine2d &transf);
+        void transformPtsSrcAfterProcrustes(const Eigen::Affine2d &transf);
 
         /**
          * Method used inside associate() to compute the associations for the first time
@@ -139,20 +139,23 @@ namespace ars
          */
         Eigen::Affine2d transf_; // serves also as initial guess
 
+        //stopping conditions thresholds
         int maxIterations_;
         double stopMatDistTh_;
+        double minNewAssocRatio_;
 
+        //associated pts cannot have distance > than assocDistTh_
         double assocDistTh_;
 
         VectorVector2 &pointsSrc_;
         VectorVector2 &pointsDst_;
 
-        int numNewAssocLast_;
+
+        int numNewAssoc_;
         int numRealAssoc_;
         using IndicesPair = std::pair<int, int>;
         using IndicesPairVec = std::vector<IndicesPair>;
         IndicesPairVec associations_;
-        double minNewAssocPerc_;
     };
 }
 
