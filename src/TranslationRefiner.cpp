@@ -83,27 +83,28 @@ namespace ars
                 computeProcrustes();
 
                 dist = (lastTransf.matrix() - transf_.matrix()).norm();
+                std::cout << "dist between matrices: " << dist << std::endl;
                 if (dist < stopMatDistTh_)
                 {
+                    //This is called also at iteration # 0; this means that ICP stops after first
+                    //iteration if initial guess was good enough
                     std::cout << "icp: VERY LIMITED CHANGE IN TRANSF -> STOPPING" << std::endl;
-                    transfOut = transf_;
                     break;
                 }
             }
             else
             {
                 std::cout << "icp: ASSOCIATIONS BARELY CHANGE -> STOPPING" << std::endl;
-                transfOut = transf_;
                 break;
             }
 
             if (i == maxIterations_ - 1)
             {
                 std::cout << "icp: MAX NUM ITERATIONS REACHED -> STOPPING" << std::endl;
-                transfOut = transf_;
                 break;
             }
         }
+        transfOut = transf_;
     }
 
     void TranslationRefiner::icpNoAssoc(Eigen::Affine2d &transfOut)
@@ -308,8 +309,8 @@ namespace ars
             numNewAssoc_ = updateAssociations();
             std::cout << "new associations: " << numNewAssoc_ << " out of " << numRealAssoc_ << " total associations" << std::endl;
             const double newAssocRatio = numNewAssoc_ / numRealAssoc_;
-            std::cout << "ratio: " << newAssocRatio << std::endl;
-            std::cout << "min ratio: " << minNewAssocRatio_ << std::endl;
+            // std::cout << "ratio: " << newAssocRatio << std::endl;
+            // std::cout << "min ratio: " << minNewAssocRatio_ << std::endl;
 
             if (newAssocRatio < minNewAssocRatio_) // non-varying associations stopping condition
                 return false;
@@ -319,6 +320,9 @@ namespace ars
 
     void TranslationRefiner::computeProcrustes()
     {
+        if (numNewAssoc_ == 0) // should already be granted that this if is useless from associate() return value
+            return;
+
         std::cout << "TranslationRefiner::computeProcrustes()" << std::endl;
         Eigen::Affine2d transf;
         // TODO: revise these steps (specifically: associated points handling)
@@ -391,12 +395,10 @@ namespace ars
         transf.translation() = (meanDst - R * meanSrc);
         transf.makeAffine();
 
-        transformPtsSrcAfterProcrustes(transf);
-
-        transf_ = transf * transf_;
-
         // std::cout << "computed new transf (procrustes output): " << std::endl
-        //           << transf_.matrix() << std::endl;
+        //           << (transf * transf_).matrix() << std::endl;
+
+        transformPtsSrcAfterProcrustes(transf);
     }
 
     void TranslationRefiner::setAssocDistTh(double aDistTh)

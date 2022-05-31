@@ -365,8 +365,8 @@ int main(int argc, char **argv)
     params.getParam<bool>("adaptiveTranslGrid", adaptiveTranslGrid, true);
 
     params.getParam<int>("icpMaxIterations", icpMaxIterations, 5);
-    params.getParam<double>("icpMatDistStopTh", icpMatDistStopTh, 0.001);
-    params.getParam<double>("icpNewAssocRatioTh", icpNewAssocRatioTh, 1/100);
+    params.getParam<double>("icpMatDistStopTh", icpMatDistStopTh, 3.0);
+    params.getParam<double>("icpNewAssocRatioTh", icpNewAssocRatioTh, 0.1);
 
     std::cout << "\nParameter values:\n";
     params.write(std::cout);
