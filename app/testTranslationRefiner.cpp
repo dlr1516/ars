@@ -328,12 +328,10 @@ int main(int argc, char **argv)
     bool adaptiveTranslGrid;
     ars::Vector2 translGt;
     ars::Vector2 translTrue, translOut;
-    // The variables below are for I/O related functionalities (plot, etc.) that are highly Eigen-based and are present in the CPU-only ArsImgTests...
-    // Maybe implement them later
-    //     double sampleRes, sampleAng;
-    //     int sampleNum;
-    //     bool saveOn;
-    //     bool saveCov;
+    // icp
+    int icpMaxIterations;
+    double icpMatDistTh;
+    double icpNewAssocPercTh;
 
     params.read(argc, argv);
     params.getParam<std::string>("cfg", filenameCfg, "");
@@ -365,6 +363,10 @@ int main(int argc, char **argv)
     // params.getParam<bool>("plotGrid", plotGrid, false);
     // params.getParam<bool>("plotOutput", plotOutput, false);
     params.getParam<bool>("adaptiveTranslGrid", adaptiveTranslGrid, true);
+
+    params.getParam<int>("icpMaxIterations", icpMaxIterations, 5);
+    params.getParam<double>("icpMatDistTh", icpMatDistTh, 0.001);
+    params.getParam<double>("icpNewAssocPercTh", icpNewAssocPercTh, 0.001);
 
     std::cout << "\nParameter values:\n";
     params.write(std::cout);
@@ -404,7 +406,6 @@ int main(int argc, char **argv)
 
             coeffsSrc = arsSrc.coefficients();
         }
-
         {
             ars::ScopedTimer timer("ars.insertPoints()");
             arsDst.insertIsotropicGaussians(pointsDst.points(), arsSigma);
@@ -485,7 +486,7 @@ int main(int argc, char **argv)
                 if (translEstim.getScore(translCandidates[0]) > bestScore)
                 {
                     bestScore = translEstim.getScore(translCandidates[0]);
-                    translOut = translCandidates[0];
+                    translInitGuess = translCandidates[0];
                     rotArs = r;
                 }
                 for (auto &pt : translCandidates)
@@ -496,14 +497,14 @@ int main(int argc, char **argv)
 
                 // if (tp.plotOutput)
                 // {
-                //     pointsSrc.applyTransform(translOut(0), translOut(1), 0.0);
+                //     pointsSrc.applyTransform(translInitGuess(0), translInitGuess(1), 0.0);
                 //     pointsSrc.save("pointsSrcFinal.txt");
-                //     pointsSrc.applyTransform(-translOut(0), -translOut(1), 0.0);
+                //     pointsSrc.applyTransform(-translInitGuess(0), -translInitGuess(1), 0.0);
                 // }
             }
             else if (bestScore == 0)
             {
-                translOut << 0.0f, 0.0f;
+                translInitGuess << 0.0f, 0.0f;
                 std::cerr << "No candidates found!" << std::endl;
             }
             pointsSrc.applyTransform(0.0, 0.0, -r);
@@ -528,6 +529,10 @@ int main(int argc, char **argv)
     ars::VectorVector2 ptsDst = pointsDst.points();
 
     ars::TranslationRefiner translRefiner(ptsSrc, ptsDst, initialGuess);
+    translRefiner.setMaxIterations(icpMaxIterations);
+    translRefiner.setStopMatDistTh(icpMatDistTh);
+    translRefiner.setMinNewAssocPerc(icpNewAssocPercTh);
+
     Eigen::Affine2d transfOut;
     translRefiner.icp(transfOut);
     translOut(0) = transfOut.matrix()(0, 2);
@@ -537,7 +542,7 @@ int main(int argc, char **argv)
     double rotAsin = transfOut.matrix()(1, 0);
 
     std::cout << "rot refined: acos " << 180.0 / M_PI * (std::acos(rotAcos)) << " asin " << 180.0 / M_PI * (std::asin(rotAsin)) << std::endl;
-    std::cout << "transl refined " << transfOut.translation() << std::endl;
+    std::cout << "transl refined " << transfOut.translation().transpose() << std::endl;
 
     // END OF ARS ICP
 

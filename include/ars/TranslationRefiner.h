@@ -1,5 +1,5 @@
 /**
- * ARS - Angular Radon Spectrum 
+ * ARS - Angular Radon Spectrum
  * Copyright (C) 2017-2020 Dario Lodi Rizzini
  *               2021- Dario Lodi Rizzini, Ernesto Fontana
  *
@@ -7,7 +7,7 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * ARS is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -23,13 +23,14 @@
 #include <ars/definitions.h>
 #include <Eigen/Dense>
 
-namespace ars {
+namespace ars
+{
 
     //    template <size_t Dim, typename Scalar = double>
 
-    class TranslationRefiner {
+    class TranslationRefiner
+    {
     public:
-
         /**
          * Default constructor. Not really useful because of no good way to initialize point vector references...
          */
@@ -39,19 +40,18 @@ namespace ars {
          * Constructor thought for use with ARS rot + transl estimation: translates of @param transl each point in pointsSrc point set
          * that supposedly has been already rotated before using ConsensusTranslationEstimator
          */
-        TranslationRefiner(VectorVector2& ptsSrc, VectorVector2& ptsDst, const Eigen::Translation2d& transl);
+        TranslationRefiner(VectorVector2 &ptsSrc, VectorVector2 &ptsDst, const Eigen::Translation2d &transl);
 
         /**
          * Analogous of above constructor with transl, just this time with rotation only
          */
-        TranslationRefiner(VectorVector2& ptsSrc, VectorVector2& ptsDst, const Eigen::Rotation2Dd& rot);
-
+        TranslationRefiner(VectorVector2 &ptsSrc, VectorVector2 &ptsDst, const Eigen::Rotation2Dd &rot);
 
         /**
          * More generic constructor, that applies a full transformation according to @param transf
          * to ptsSrc
          */
-        TranslationRefiner(VectorVector2& ptsSrc, VectorVector2& ptsDst, const Eigen::Affine2d& transf);
+        TranslationRefiner(VectorVector2 &ptsSrc, VectorVector2 &ptsDst, const Eigen::Affine2d &transf);
 
         /**
          * Default constructor
@@ -60,17 +60,18 @@ namespace ars {
 
         /**
          * Iterates association and Procrustes problem solving until stopping condition is reached
-         * 2 stopping conditions are implemented: 
+         * 3 stopping conditions are implemented:
          *  - max number of iterations
          *  - computed transformation changes below a certain threshold from one iteration to the next
+         *  - associations from one iteration to the next don't vary substantially
          */
-        void icp(Eigen::Affine2d& transfOut);
+        void icp(Eigen::Affine2d &transfOut);
 
         /**
          * Simple solving of Procrustes problem on 2 point sets where pointsSrc_[i] is given as associated
          * to pointsDst_[i], and the size of the two is the same
          */
-        void icpNoAssoc(Eigen::Affine2d & transfOut);
+        void icpNoAssoc(Eigen::Affine2d &transfOut);
 
         /**
          * Setter for maxIterations_ private member
@@ -79,16 +80,10 @@ namespace ars {
         void setMaxIterations(int numMaxIter);
 
         /**
-         * Setter for stopThresh_ private member
+         * Setter for stopMatDistTh_ private member
          * Needed for stopping condition
          */
-        void setStopThresh(double th);
-
-        /**
-         * Setter for association distance threshold: associations are considered only when distance between points
-         * is less than @param aDistTh
-         */
-        void setAssocDistTh(double aDistTh = 0.1);
+        void setStopMatDistTh(double th = 0.1);
 
         /**
          * Setter for the minimum percentage of associations that has to be changed from previous associating iteration
@@ -96,12 +91,17 @@ namespace ars {
          */
         void setMinNewAssocPerc(double perc = 0.1);
 
-
     private:
         /**
-         * Transform each point in pointsSrc set according to lastTransf_ member
+         * Transform each point in pointsSrc set according to transf_ member
          */
         void transformPtsSrc();
+
+        /**
+         * Transform each point in pointsSrc set according to @param transf member
+         * after setting transf_ member equal to @param transf
+         */
+        void transformPtsSrc(const Eigen::Affine2d &transf);
 
         /**
          * Method used inside associate() to compute the associations for the first time
@@ -128,14 +128,19 @@ namespace ars {
          */
         void computeProcrustes();
 
+        /**
+         * Setter for association distance threshold: associations are considered only when distance between points
+         * is less than @param aDistTh
+         */
+        void setAssocDistTh(double aDistTh = 10);
 
         /*
          * Private Members
          */
-        Eigen::Affine2d transf_; //serves also as initial guess
+        Eigen::Affine2d transf_; // serves also as initial guess
 
         int maxIterations_;
-        double stopThresh_;
+        double stopMatDistTh_;
 
         double assocDistTh_;
 
@@ -148,9 +153,7 @@ namespace ars {
         using IndicesPairVec = std::vector<IndicesPair>;
         IndicesPairVec associations_;
         double minNewAssocPerc_;
-
     };
 }
 
 #endif /* ARS_TRANSLATION_REFINER_H */
-
