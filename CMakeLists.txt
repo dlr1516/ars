@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(ars)
 add_definitions(-std=c++0x)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_BUILD_TYPE Release)
@@ -73,6 +73,9 @@ target_link_libraries(testGaussianMixtureEstimator ${ars_LINK_LIBS} ars)
 add_executable(testConsensusTranslationEstimator app/testConsensusTranslationEstimator.cpp)
 target_link_libraries(testConsensusTranslationEstimator ${ars_LINK_LIBS} ars)
 
+add_executable(testProcrustes app/testProcrustes.cpp)
+target_link_libraries(testProcrustes ${ars_LINK_LIBS} ars)
+
 add_executable(testTranslationRefiner app/testTranslationRefiner.cpp)
 target_link_libraries(testTranslationRefiner ${ars_LINK_LIBS} ars)
 
@@ -96,4 +99,3 @@ INSTALL(FILES ${headers_3rdparty} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ar
 FILE(GLOB cmake_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/arsConfig.cmake")
 message(STATUS "cmake_script " ${cmake_script})
 INSTALL(FILES ${cmake_script} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/ars/)
-
