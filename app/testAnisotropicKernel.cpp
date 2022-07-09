@@ -52,13 +52,18 @@ int main(int argc, char** argv) {
     varianceValRaw.resize(plotStep + 1);
     varianceValCos.resize(plotStep + 1);
 
-
     mean1 << 1.0, 0.5;
-    mean2 << -1.0, 3.0;
-    covar1 << 1.7, -0.4,
-            -0.4, 0.8;
-    covar2 << 0.9, 0.2,
-            0.2, 2.1;
+    mean2 << 1.4, 6.7;
+    covar1 <<  4.1947, -0.7193,
+              -0.7193,  2.8053;
+    covar2 <<  4.2526,  1.0049,
+               1.0049,  5.1474;
+//    mean1 << 1.0, 0.5;
+//    mean2 << -1.0, 3.0;
+//    covar1 << 1.7, -0.4,
+//            -0.4, 0.8;
+//    covar2 << 0.9, 0.2,
+//            0.2, 2.1;
     mean12 = mean2 - mean1;
     covar12 = covar1 + covar2;
 
@@ -70,6 +75,13 @@ int main(int argc, char** argv) {
     ak.setFourierOrder(arsOrder);
     ak.init(mean1, covar1, mean2, covar2);
     ak.computeFourier(fourierCoeffsAnisot);
+    
+    std::cout << "anisotropic kernel parameters:\n"
+      << "  muMod: " << ak.getMuModule() << ", "
+      << "muAng: " << ak.getMuPhase() << "[rad] " << (180.0/M_PI*ak.getMuPhase()) << "[deg]\n"
+      << "  sigmaMod " << ak.getVarianceModule() << ", "
+      << "sigmaDif " << ak.getVariancePerc() << ", "
+      << "sigmaAng " << ak.getVariancePhase() << "[rad] " << (180.0/M_PI*ak.getVariancePhase()) << "[deg]\n";
 
     std::cout << "Fourier coefficients:\n";
     for (int f = 0; f < arsOrder; ++f) {

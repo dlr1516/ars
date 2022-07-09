@@ -44,6 +44,7 @@ The software depends on the following external libraries
 
 - Boost (submodule lexical_cast)
 - Eigen 3.0 
+- ROFL (https://github.com/dlr1516/rofl)
 
 Other dependencies are placed in directory thirdparty. 
 Some examples require the external application "gnuplot" to display 
