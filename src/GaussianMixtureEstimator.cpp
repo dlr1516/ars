@@ -19,6 +19,7 @@
 #include <ars/GaussianMixtureEstimator.h>
 #include <vector>
 #include <deque>
+#include <iterator>
 #include <signal.h>
 
 #include <ars/utils.h>
@@ -548,18 +549,23 @@ namespace ars {
             intervals.pop_front();
             level = data_.computeLevel(intervalCur.first, intervalCur.second);
             if (intervalCur.second != intervalCur.first) {
-                //			ARS_VARIABLE4(intervalCur.first->index.transpose(),
-                //					(intervalCur.second - 1)->index.transpose(), level,
-                //					levelMax_);
+//                ARS_VAR4(intervalCur.first->index.transpose(), (intervalCur.second - 1)->index.transpose(), level, levelMax_);
+//                ARS_VAR1(std::distance(intervalCur.first, intervalCur.second));
+//                for (auto it = intervalCur.first; it != intervalCur.second; ++it) {
+//                  std::cout << "  [" << it->value.transpose() << "] -> index [" << it->index.transpose() << "] pos " << it->pos << "\n";
+//                }
             }
-            if (level <= levelMax_ && estimateGaussianISE(intervalCur.first, intervalCur.second, g.mean, g.covar, g.weight)) {
+            if (level <= levelMax_ && (level == 0 || estimateGaussianISE(intervalCur.first, intervalCur.second, g.mean, g.covar, g.weight))) {
+//                ARS_PRINT("insert gaussian in [" << g.mean.transpose() << "]");
                 gaussians_.push_front(g);
             } else {
                 mid = data_.findSplit(intervalCur.first, intervalCur.second);
-                //			ARS_PRINT(
-                //					"splitting into\n" << "  ([" << intervalCur.first->index.transpose() << "], [" << mid->index.transpose() << "])\n" << "  ([" << mid->index.transpose() << "], [" << (intervalCur.second-1)->index.transpose() << "])");
+//                ARS_PRINT("splitting into\n" << "  ([" << intervalCur.first->index.transpose() << "], [" << mid->index.transpose() << "])\n" 
+//                   << "  ([" << mid->index.transpose() << "], [" << (intervalCur.second-1)->index.transpose() << "])");
                 if (mid != intervalCur.first && mid != intervalCur.second) {
+                    ARS_ASSERT(std::distance(intervalCur.first, mid) >= 0);
                     intervals.push_back(std::make_pair(intervalCur.first, mid));
+                    ARS_ASSERT(std::distance(mid, intervalCur.second) >= 0);
                     intervals.push_back(std::make_pair(mid, intervalCur.second));
                 }
             }
@@ -708,6 +714,7 @@ namespace ars {
             mean += it->value;
             num++;
         }
+        ARS_ASSERT(num > 0);
         mean /= num;
 
 
@@ -770,6 +777,7 @@ namespace ars {
             return true;
             //            std::cin.get();
         }
+        //ARS_VAR4(num, mean.transpose(), nise, iseThres_);
 
         //        std::cout << "--------------\n\n\n" << std::endl;
 

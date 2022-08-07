@@ -192,6 +192,7 @@ class MortonOctree {
         }
         mortonSplit(first->index, last->index, low, mid, upp);
         itemMid.index = mid;
+        //ARS_VAR5(first->index.transpose(), last->index.transpose(), low.transpose(), mid.transpose(), upp.transpose());
         auto it = std::lower_bound(items_.begin(), items_.end(), itemMid,
                                    [&](const Item& i1, const Item& i2) -> bool {
                                        return mortonCmpInt(i1.index, i2.index);

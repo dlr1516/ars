@@ -1,6 +1,6 @@
 /**
  * ARS - Angular Radon Spectrum 
- * Copyright (C) 2017 Dario Lodi Rizzini.
+ * Copyright (C) 2017 Dario Lodi Rizzini. 
  *           (C) 2021 Dario Lodi Rizzini, Ernesto Fontana.
  *
  * ARS is free software: you can redistribute it and/or modify
