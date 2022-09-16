@@ -61,7 +61,7 @@
 
 #define ARS_ASSERT_VAR3(COND,X1,X2,X3) \
    if (!(COND)) { std::cerr << __FILE__ << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; \
-   ARS_VAR2(X1,X2,X3); exit(-1); }
+   ARS_VAR3(X1,X2,X3); exit(-1); }
 
 #define ARS_ASSERT_VAR4(COND,X1,X2,X3,X4) \
    if (!(COND)) { std::cerr << __FILE__ << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; \
