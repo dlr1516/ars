@@ -93,6 +93,14 @@ namespace ars {
     
     using VectorMatrix2 = std::vector<Matrix2, Eigen::aligned_allocator<Matrix2> >;
     
+    using Vector3 = Eigen::Vector3d;
+
+    using VectorVector3 = std::vector<Vector3, Eigen::aligned_allocator<Vector3> >;
+
+    using Matrix3 = Eigen::Matrix3d;
+    
+    using VectorMatrix3 = std::vector<Matrix3, Eigen::aligned_allocator<Matrix3> >;
+    
 #else 
     
     using Vector2 = Eigen::Vector2d;
@@ -102,6 +110,14 @@ namespace ars {
     using Matrix2 = Eigen::Matrix2d;
     
     using VectorMatrix2 = std::vector<Matrix2>;
+    
+    using Vector3 = Eigen::Vector3d;
+
+    using VectorVector3 = std::vector<Vector3>;
+
+    using Matrix3 = Eigen::Matrix3d;
+    
+    using VectorMatrix3 = std::vector<Matrix3>;
     
 #endif
 
