@@ -9,6 +9,7 @@ void plotGrid(const ars::ConsensusTranslationEstimator2d::Grid& grid, const ars:
 int main(int argc, char** argv) {
     ars::ConsensusTranslationEstimator2d translEstim;
     ars::VectorVector2 pointsSrc, pointsDst, translCandidates;
+    std::vector<ars::ConsensusTranslationEstimator2d::Indices> indicesMax;
     ars::Vector2 translMin, translGt, p;
     double translRes;
     typename ars::ConsensusTranslationEstimator2d::Indices gridSize, gridWin;
@@ -61,7 +62,7 @@ int main(int argc, char** argv) {
     plotGrid(translEstim.getGrid(), translMin, translRes, "consensus_transl_grid.plot", 1.0);
 
     std::cout << "Computing maxima:\n";
-    translEstim.computeMaxima(translCandidates);
+    translEstim.computeMaxima(translCandidates, indicesMax);
 
     std::cout << "Estimated translation values:\n";
     for (auto& pt : translCandidates) {
