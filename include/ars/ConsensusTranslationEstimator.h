@@ -73,12 +73,12 @@ namespace ars
         /**
          * Default constructor.
          */
-        ConsensusTranslationEstimator() : grid_(), translMin_(Point::Zero()), translRes_(1.0), peakFinder_()
+        ConsensusTranslationEstimator() : grid_(), gridIndices_(Dim), translMin_(Point::Zero()), translRes_(1.0), peakFinder_()
         {
         }
 
         ConsensusTranslationEstimator(const Point &translMin, const Scalar &translRes, const Indices &gridSize)
-            : grid_(), translMin_(translMin), translRes_(translRes), peakFinder_()
+            : grid_(), gridIndices_(Dim), translMin_(translMin), translRes_(translRes), peakFinder_()
         {
             grid_.initBounds(gridSize);
             peakFinder_.setDomain(gridSize);
@@ -102,10 +102,10 @@ namespace ars
 
             if (gridIndices_.empty())
                 return;
-            for (int i = 0; i < gridIndices_.size(); ++i)
+            for (int i = 0; i < Dim; ++i)
                 if (!gridIndices_[i].empty())
                     gridIndices_[i].clear();
-            gridIndices_.clear();
+            // gridIndices_.clear();
         }
 
         void setNonMaximaWindowDim(const Indices &dim)
@@ -154,11 +154,11 @@ namespace ars
                 init(translMin_, translRes_, gridSize);
             }
 
-            gridIndices_.resize(grid_.size());
+            gridIndices_.resize(grid_.size()); // FIXME!
 
-            for (int i=0; i<pointsSrc.size(); ++i)
+            for (int i = 0; i < pointsSrc.size(); ++i)
             {
-                for (int j=0; j<pointsDst.size(); ++j)
+                for (int j = 0; j < pointsDst.size(); ++j)
                 {
                     Point ps = pointsSrc[i];
                     Point pd = pointsDst[i];
@@ -168,8 +168,8 @@ namespace ars
                     if (grid_.inside(indices))
                     {
                         grid_.value(indices)++;
-                        
-                        gridIndices_[grid_.value(indices)].push_back(std::pair<int,int>(i, j));
+
+                        gridIndices_[grid_.getPos(indices)].push_back(std::pair<int, int>(i, j));
                     }
                 }
             }
@@ -192,8 +192,8 @@ namespace ars
             //            }
         }
 
-        void computeMaxima(VectorPoint &translMax, std::vector<Indices>& indicesMax)
-        {            
+        void computeMaxima(VectorPoint &translMax, std::vector<Indices> &indicesMax)
+        {
             computeMaxima(indicesMax);
             translMax.clear();
             translMax.reserve(indicesMax.size());
@@ -241,9 +241,14 @@ namespace ars
             return grid_;
         }
 
+        const std::vector<std::vector<std::pair<Index, Index>>> &getGridIndices() const
+        {
+            return gridIndices_;
+        }
+
     private:
         Grid grid_;
-        std::vector<std::vector<std::pair<int, int>>> gridIndices_;
+        std::vector<std::vector<std::pair<Index, Index>>> gridIndices_; // TODO: make gridIndices_ explicitly of type rofl::Grid<pair>
         Point translMin_;
         Scalar translRes_;
         PeakFinder peakFinder_;
