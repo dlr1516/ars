@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include <ars/definitions.h>
+#include <ars/utils.h>
 
 #include <Eigen/Dense>
 #include <Eigen/SVD>

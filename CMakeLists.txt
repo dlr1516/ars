@@ -77,8 +77,11 @@ target_link_libraries(testConsensusTranslationEstimator ${ars_LINK_LIBS} ars)
 add_executable(testProcrustes app/testProcrustes.cpp)
 target_link_libraries(testProcrustes ${ars_LINK_LIBS} ars)
 
-add_executable(testProcrustesUmeyama app/testProcrustesUmeyama.cpp)
-target_link_libraries(testProcrustesUmeyama ${ars_LINK_LIBS} ars)
+add_executable(testProcrustesUmeyama2d app/testProcrustesUmeyama2d.cpp)
+target_link_libraries(testProcrustesUmeyama2d ${ars_LINK_LIBS} ars)
+
+add_executable(testProcrustesUmeyama3d app/testProcrustesUmeyama3d.cpp)
+target_link_libraries(testProcrustesUmeyama3d ${ars_LINK_LIBS} ars)
 
 add_executable(testTranslationRefiner app/testTranslationRefiner.cpp)
 target_link_libraries(testTranslationRefiner ${ars_LINK_LIBS} ars)

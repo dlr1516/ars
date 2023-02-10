@@ -1,10 +1,8 @@
 #include <iostream>
 
-// #include ""
+#include <ars/ProcrustesUmeyama.h>
 
-#include "ars/ProcrustesUmeyama.h"
-
-// % 3D setup
+// % 3D setup - MATLAB CODE
 // a = [1 1 1; 3 4 5; 10 8 6; 2 4 7; 7 1 2; -14 -5 16]';
 // b = zeros(size(a));
 // rotz_true = 30; % deg
@@ -14,31 +12,13 @@
 // end
 // disp(b);
 // d = 3;
-
-// %umeyama paper setup
-// % a = [0 0; 1 0 ; 0 2]';
-// % b = [0 0; -1 0; 0 2]';
-// % d = 2;
-
 // rigid_out = procrustes_umeyama(a,b,d);
 // disp("transf_out");
 // disp(rigid_out.A)
 
-void create_rotation_matrix(Eigen::Affine3d &rotM, double ax, double ay, double az)
-{
-    Eigen::Affine3d rx =
-        Eigen::Affine3d(Eigen::AngleAxisd(ax, Eigen::Vector3d(1, 0, 0)));
-    Eigen::Affine3d ry =
-        Eigen::Affine3d(Eigen::AngleAxisd(ay, Eigen::Vector3d(0, 1, 0)));
-    Eigen::Affine3d rz =
-        Eigen::Affine3d(Eigen::AngleAxisd(az, Eigen::Vector3d(0, 0, 1)));
-    rotM = rz * ry * rx;
-}
 
 int main(int argc, char **argv)
 {
-
-    // START OF 3D TEST
     ars::VectorVector3 ptsA, ptsB;
     int dim = 3;
     Eigen::Affine3d transf;
@@ -72,7 +52,7 @@ int main(int argc, char **argv)
     ptsA.push_back(eA);
     ptsA.push_back(fA);
     Eigen::Affine3d transfTrue;
-    create_rotation_matrix(transfTrue, 0, 0, 30 * M_PI / 180.0);
+    ars::createRotationMatrix(transfTrue, 0, 0, 30 * M_PI / 180.0);
     transfTrue.translation() = Eigen::Vector3d(-1,-1,-1);
     std::cout << "Applying transformation transfTrue:" << std::endl
               << transfTrue.matrix() << std::endl;
@@ -82,32 +62,7 @@ int main(int argc, char **argv)
         ptsB.push_back(Eigen::Vector3d(ptsAiTransf(0), ptsAiTransf(1), ptsAiTransf(2)));
     }
     procrustesUmeyama3d(transf, ptsA, ptsB);
-    // END OF 3D TEST
-
-    // START OF 2D TEST
-    // pcl::PointCloud<pcl::PointXY>::Ptr ptsA(new pcl::PointCloud<pcl::PointXY>), ptsB(new pcl::PointCloud<pcl::PointXY>);
-    // int dim = 2;
-    // Eigen::Affine2d transf;
-    // pcl::PointXY aA;
-    // aA.x = 0.0; aA.y = 0.0;
-    // ptsA->push_back(aA);
-    // pcl::PointXY bA;
-    // bA.x = 1.0; bA.y = 0.0;
-    // ptsA->push_back(bA);
-    // pcl::PointXY cA;
-    // cA.x = 0.0; cA.y = 2.0;
-    // ptsA->push_back(cA);
-    // pcl::PointXY aB;
-    // aB.x = 0.0; aB.y = 0.0;
-    // ptsB->push_back(aB);
-    // pcl::PointXY bB;
-    // bB.x = -1.0; bB.y = 0.0;
-    // ptsB->push_back(bB);
-    // pcl::PointXY cB;
-    // cB.x = 0.0; cB.y = 2.0;
-    // ptsB->push_back(cB);
-    // procrustesUmeyama2d(transf, ptsA, ptsB);
-    // END OF 2D TEST
+        
 
     std::cout << "transfOut" << std::endl
               << transf.matrix() << std::endl;
