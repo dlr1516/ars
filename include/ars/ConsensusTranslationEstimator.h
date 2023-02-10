@@ -157,6 +157,7 @@ namespace ars
             gridIndices_.resize(grid_.size()); // FIXME!
 
             int counterMax = 0;
+            Indices indicesMax;
             for (int i = 0; i < pointsSrc.size(); ++i)
             {
                 for (int j = 0; j < pointsDst.size(); ++j)
@@ -169,13 +170,17 @@ namespace ars
                     if (grid_.inside(indices))
                     {
                         grid_.value(indices)++;
-                        if (grid_.value(indices) > counterMax) counterMax = grid_.value(indices);
+                        if (grid_.value(indices) > counterMax)
+                        {
+                            counterMax = grid_.value(indices);
+                            indicesMax = indices;
+                        }
 
                         gridIndices_[grid_.getPos(indices)].push_back(std::pair<int, int>(i, j));
                     }
                 }
             }
-            ARS_VAR1(counterMax); 
+            ARS_VAR3(counterMax, indicesMax[0], indicesMax[1]);
             Counter thres = std::min(pointsSrc.size(), pointsDst.size()) / 2;
             peakFinder_.enableFilterPeakMin(true, thres);
         }

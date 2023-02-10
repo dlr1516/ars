@@ -49,6 +49,7 @@ add_library(ars
   src/MortonSort.cpp
   src/ParamMap.cpp
   src/Profiler.cpp
+  src/ProcrustesUmeyama.cpp
   src/TranslationRefiner.cpp
 )
 
@@ -75,6 +76,9 @@ target_link_libraries(testConsensusTranslationEstimator ${ars_LINK_LIBS} ars)
 
 add_executable(testProcrustes app/testProcrustes.cpp)
 target_link_libraries(testProcrustes ${ars_LINK_LIBS} ars)
+
+add_executable(testProcrustesUmeyama app/testProcrustesUmeyama.cpp)
+target_link_libraries(testProcrustesUmeyama ${ars_LINK_LIBS} ars)
 
 add_executable(testTranslationRefiner app/testTranslationRefiner.cpp)
 target_link_libraries(testTranslationRefiner ${ars_LINK_LIBS} ars)
