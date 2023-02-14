@@ -83,6 +83,9 @@ target_link_libraries(testProcrustesUmeyama2d ${ars_LINK_LIBS} ars)
 add_executable(testProcrustesUmeyama3d app/testProcrustesUmeyama3d.cpp)
 target_link_libraries(testProcrustesUmeyama3d ${ars_LINK_LIBS} ars)
 
+add_executable(testBBTranslation app/testBBTranslation.cpp)
+target_link_libraries(testBBTranslation ${ars_LINK_LIBS} ars)
+
 add_executable(testTranslationRefiner app/testTranslationRefiner.cpp)
 target_link_libraries(testTranslationRefiner ${ars_LINK_LIBS} ars)
 
