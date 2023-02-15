@@ -54,13 +54,22 @@ void Box::computeBounds(const VectorVector2& ptsSrc,
                 distLowerMin = distLower;
             }
             distUpper = (ptsDst[id] - boxMid).squaredNorm();
+            ARS_VAR4(boxMid.transpose(), ptsDst[id].transpose(), distUpper,
+                     distUpperMin);
             if (distUpper < distUpperMin) {
                 distUpperMin = distUpper;
             }
         }
         lower_ += distLowerMin;
         upper_ += distUpperMin;
+        ARS_VAR4(distLowerMin, distUpperMin, lower_, upper_);
     }
+}
+
+std::ostream& operator<<(std::ostream& out, const Box& box) {
+    out << "min [" << box.min_.transpose() << "] max [" << box.min_.transpose()
+        << "] lower " << box.lower_ << " upper " << box.upper_;
+    return out;
 }
 
 BBTranslation::BBTranslation() {}
@@ -78,10 +87,13 @@ void BBTranslation::compute() {
     std::priority_queue<Box, std::vector<Box>, decltype(cmp)> prioqueue(cmp);
 
     scoreTol = 0.05;  // TODO: allow setting the value of scoreTol
-    prioqueue.push(Box(translMin_, translMax_, ptsSrc_, ptsDst_));
+    Box boxCur(translMin_, translMax_, ptsSrc_, ptsDst_);
+    prioqueue.push(boxCur);
     scoreOpt = prioqueue.top().upper_;
+    translOpt = 0.5 * (boxCur.min_ + boxCur.max_);
+    ARS_VAR2(boxCur, scoreOpt);
     while (!prioqueue.empty()) {
-        Box boxCur = prioqueue.top();
+        boxCur = prioqueue.top();
         prioqueue.pop();
 
         if (boxCur.upper_ - scoreOpt <= scoreTol * scoreOpt) {
