@@ -7,90 +7,73 @@
 
 #include <Eigen/Dense>
 
-namespace ars
-{
+namespace ars {
 
-    double distancePointBox(const Vector2& p, const Vector2 &boxMin, const Vector2 &boxMax);
+double distancePointBox(const Vector2& p,
+                        const Vector2& boxMin,
+                        const Vector2& boxMax);
 
-    struct Box
-    {
-        Vector2 min_;
-        Vector2 max_;
-        double lower_;
-        double upper_;
+struct Box {
+    Vector2 min_;
+    Vector2 max_;
+    double lower_;
+    double upper_;
 
-        Box(const Vector2 &min, const Vector2 &max, const VectorVector2 &ptsSrc, const VectorVector2 &ptsDst)
-        {
-            double dist, distMin, distUpper, distUpperMin;
-            Vector2 boxMin, boxMax, boxMid;
-            min_ = min;
-            max_ = max;
-            lower_ = 0.0;
-            upper_ = 0.0;
-            for (int is = 0; is < ptsSrc.size(); ++is)
-            {
-                distMin = 1e+6;
-                distUpperMin = 1e+6;
-                boxMin = ptsSrc[is] + min_; 
-                boxMax = ptsSrc[is] + max_;
-                boxMid = ptsSrc[is] + 0.5 * (max_ + min_); 
-                for (int id = 0; id < ptsDst.size(); ++id)
-                {
-                    dist = distancePointBox(ptsDst[id],boxMin,boxMax);
-                    if (dist < distMin) {
-                        distMin = dist;
-                    }
-                    distUpper = (ptsDst[id] - boxMid).squaredNorm();
-                    if (distUpper < distUpperMin) {
-                        distUpperMin = distUpper;
-                    }
-                }
-                lower_ += distMin;
-                upper_ += distUpperMin; 
-            }
-        }
-    };
+    Box(const Vector2& min, const Vector2& max);
 
-    class BBTranslation
-    {
-    public:
-        /**
-         * @brief Default constructor for a new BBTranslation object
-         */
-        BBTranslation();
+    Box(const Vector2& min,
+        const Vector2& max,
+        const VectorVector2& ptsSrc,
+        const VectorVector2& ptsDst);
 
-        /**
-         * @brief Default destructor for BBTranslation objects
-         */
-        virtual ~BBTranslation();
+    virtual ~Box();
 
-        /**
-         * @brief Main method
-         */
-        void compute();
+    void computeBounds(const VectorVector2& ptsSrc,
+                       const VectorVector2& ptsDst);
+};
 
-        /**
-         * @brief Set points src
-         */
-        void setPtsSrc(const ars::VectorVector2 &pts);
+class BBTranslation {
+   public:
+    /**
+     * @brief Default constructor for a new BBTranslation object
+     */
+    BBTranslation();
 
-        /**
-         * @brief Set points dst
-         */
-        void setPtsDst(const ars::VectorVector2 &pts);
+    /**
+     * @brief Default destructor for BBTranslation objects
+     */
+    virtual ~BBTranslation();
 
-        /**
-         * @brief Set pts src and dst
-         */
-        void setPts(const ars::VectorVector2 &ptsS, const ars::VectorVector2 &ptsD);
+    /**
+     * @brief Main method
+     */
+    void compute();
 
-    private:
-        ars::Vector2 translMin_;
-        ars::Vector2 translMax_;
+    void setTranslMinMax(const ars::Vector2& translMin,
+                         const ars::Vector2& translMax);
 
-        ars::VectorVector2 ptsSrc_;
-        ars::VectorVector2 ptsDst_;
-    };
-}
+    /**
+     * @brief Set points src
+     */
+    void setPtsSrc(const ars::VectorVector2& pts);
+
+    /**
+     * @brief Set points dst
+     */
+    void setPtsDst(const ars::VectorVector2& pts);
+
+    /**
+     * @brief Set pts src and dst
+     */
+    void setPts(const ars::VectorVector2& ptsS, const ars::VectorVector2& ptsD);
+
+   private:
+    ars::Vector2 translMin_;
+    ars::Vector2 translMax_;
+
+    ars::VectorVector2 ptsSrc_;
+    ars::VectorVector2 ptsDst_;
+};
+}  // namespace ars
 
 #endif /*ARS_BBTRANSLATION_H_*/

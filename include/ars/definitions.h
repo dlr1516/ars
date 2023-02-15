@@ -19,64 +19,67 @@
 #define ARS_DEFINITIONS_H
 
 #include <iostream>
+#include <filesystem>
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
 
-#define ARS_PRINT(MSG) std::cout << __FILE__ << "," << __LINE__ << ": " << MSG << std::endl;
+#define ARS_FILENAME(STR) std::filesystem::path(STR).filename().string()
 
-#define ARS_ERROR(MSG) std::cerr << __FILE__ << "," << __LINE__ << ": " << MSG << std::endl;
+#define ARS_PRINT(MSG) std::cout << ARS_FILENAME(__FILE__) << "," << __LINE__ << ": " << MSG << std::endl;
 
-#define ARS_VAR1(X1) std::cout << __FILE__ << "," << __LINE__ << ": " << (#X1) << " " << (X1) << std::endl;
+#define ARS_ERROR(MSG) std::cerr << ARS_FILENAME(__FILE__) << "," << __LINE__ << ": " << MSG << std::endl;
 
-#define ARS_VAR2(X1,X2) std::cout << __FILE__ << "," << __LINE__ << ": " << (#X1) << " " << (X1) \
+#define ARS_VAR1(X1) std::cout << ARS_FILENAME(__FILE__) << "," << __LINE__ << ": " << (#X1) << " " << (X1) << std::endl;
+
+#define ARS_VAR2(X1,X2) std::cout << ARS_FILENAME(__FILE__) << "," << __LINE__ << ": " << (#X1) << " " << (X1) \
    << ", " << (#X2) << " " << (X2) << std::endl;
 
-#define ARS_VAR3(X1,X2,X3) std::cout << __FILE__ << "," << __LINE__ << ": " << (#X1) << " " << (X1) \
+#define ARS_VAR3(X1,X2,X3) std::cout << ARS_FILENAME(__FILE__) << "," << __LINE__ << ": " << (#X1) << " " << (X1) \
    << ", " << (#X2) << " " << (X2) << ", " << (#X3) << " " << (X3) << std::endl;
 
-#define ARS_VAR4(X1,X2,X3,X4) std::cout << __FILE__ << "," << __LINE__ << ": " << (#X1) << " " << (X1) \
+#define ARS_VAR4(X1,X2,X3,X4) std::cout << ARS_FILENAME(__FILE__) << "," << __LINE__ << ": " << (#X1) << " " << (X1) \
    << ", " << (#X2) << " " << (X2) << ", " << (#X3) << " " << (X3) << ", " << (#X4) << " " << (X4) << std::endl;
 
-#define ARS_VAR5(X1,X2,X3,X4,X5) std::cout << __FILE__ << "," << __LINE__ << ": " << (#X1) << " " << (X1) \
+#define ARS_VAR5(X1,X2,X3,X4,X5) std::cout << ARS_FILENAME(__FILE__) << "," << __LINE__ << ": " << (#X1) << " " << (X1) \
    << ", " << (#X2) << " " << (X2) << ", " << (#X3) << " " << (X3) << ", " << (#X4) << " " << (X4) \
    << ", " << (#X5) << " " << (X5) << std::endl;
 
-#define ARS_VAR6(X1,X2,X3,X4,X5,X6) std::cout << __FILE__ << "," << __LINE__ << ": " << (#X1) << " " << (X1) \
+#define ARS_VAR6(X1,X2,X3,X4,X5,X6) std::cout << ARS_FILENAME(__FILE__) << "," << __LINE__ << ": " << (#X1) << " " << (X1) \
    << ", " << (#X2) << " " << (X2) << ", " << (#X3) << " " << (X3) << ", " << (#X4) << " " << (X4) \
    << ", " << (#X5) << " " << (X5) << ", " << (#X6) << " " << (X6) << std::endl;
 
-#define ARS_VAR7(X1,X2,X3,X4,X5,X6,X7) std::cout << __FILE__ << "," << __LINE__ << ": " << (#X1) << " " << (X1) \
+#define ARS_VAR7(X1,X2,X3,X4,X5,X6,X7) std::cout << ARS_FILENAME(__FILE__) << "," << __LINE__ << ": " << (#X1) << " " << (X1) \
    << ", " << (#X2) << " " << (X2) << ", " << (#X3) << " " << (X3) << ", " << (#X4) << " " << (X4) \
    << ", " << (#X5) << " " << (X5) << ", " << (#X6) << " " << (X6) << ", " << (#X7) << " " << (X7) << std::endl;
 
-#define ARS_ASSERT(COND) if (!(COND)) { std::cerr << __FILE__ << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; exit(-1); }
+#define ARS_ASSERT(COND) if (!(COND)) { std::cerr << ARS_FILENAME(__FILE__) << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; exit(-1); }
 
 #define ARS_ASSERT_VAR1(COND,X1) \
-   if (!(COND)) { std::cerr << __FILE__ << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; \
+   if (!(COND)) { std::cerr << ARS_FILENAME(__FILE__) << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; \
    ARS_VAR1(X1); exit(-1); }
 
 #define ARS_ASSERT_VAR2(COND,X1,X2) \
-   if (!(COND)) { std::cerr << __FILE__ << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; \
+   if (!(COND)) { std::cerr << ARS_FILENAME(__FILE__) << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; \
    ARS_VAR2(X1,X2); exit(-1); }
 
 #define ARS_ASSERT_VAR3(COND,X1,X2,X3) \
-   if (!(COND)) { std::cerr << __FILE__ << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; \
+   if (!(COND)) { std::cerr << ARS_FILENAME(__FILE__) << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; \
    ARS_VAR3(X1,X2,X3); exit(-1); }
 
 #define ARS_ASSERT_VAR4(COND,X1,X2,X3,X4) \
-   if (!(COND)) { std::cerr << __FILE__ << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; \
+   if (!(COND)) { std::cerr << ARS_FILENAME(__FILE__) << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; \
    ARS_VAR4(X1,X2,X3,X4); exit(-1); }
 
 #define ARS_ASSERT_VAR5(COND,X1,X2,X3,X4,X5) \
-   if (!(COND)) { std::cerr << __FILE__ << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; \
+   if (!(COND)) { std::cerr << ARS_FILENAME(__FILE__) << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; \
    ARS_VAR5(X1,X2,X3,X4,X5); exit(-1); }
 
 #define ARS_ASSERT_VAR6(COND,X1,X2,X3,X4,X5,X6) \
-   if (!(COND)) { std::cerr << __FILE__ << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; \
+   if (!(COND)) { std::cerr << ARS_FILENAME(__FILE__) << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; \
    ARS_VAR6(X1,X2,X3,X4,X5,X6); exit(-1); }
 
 #define ARS_ASSERT_VAR7(COND,X1,X2,X3,X4,X5,X6,X7) \
-   if (!(COND)) { std::cerr << __FILE__ << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; \
+   if (!(COND)) { std::cerr << ARS_FILENAME(__FILE__) << "," << __LINE__ << ": assertion failed on " << #COND << std::endl; \
    ARS_VAR7(X1,X2,X3,X4,X5,X6,X7); exit(-1); }
 
 namespace ars {

@@ -28,7 +28,8 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 # rofl
 find_package(rofl REQUIRED)
 include_directories(${rofl_INCLUDE_DIR})
-if (${rofl_FOUND})
+
+if(${rofl_FOUND})
   list(APPEND ${rofl_LIBRARIES})
 endif()
 
@@ -40,12 +41,14 @@ add_library(ars
   src/ArsKernelAnisotropic2d.cpp
   src/ArsKernelIsotropic2d.cpp
   src/BBOptimizer1d.cpp
+  src/BBTranslation.cpp
   src/ConsensusTranslationEstimator.cpp
   src/DisjointSet.cpp
   src/GaussianMixtureEstimator.cpp
   src/HistogramCircularCorrelation.cpp
   src/HoughSpectrum.cpp
-  #src/MortonOrderedPoints2d.cpp
+
+  # src/MortonOrderedPoints2d.cpp
   src/MortonSort.cpp
   src/ParamMap.cpp
   src/Profiler.cpp
@@ -53,10 +56,10 @@ add_library(ars
   src/TranslationRefiner.cpp
 )
 
-add_executable(testFunctions app/testFunctions.cpp )
+add_executable(testFunctions app/testFunctions.cpp)
 target_link_libraries(testFunctions ${ars_LINK_LIBS} ars)
 
-add_executable(testIsotropicArs app/testIsotropicArs.cpp )
+add_executable(testIsotropicArs app/testIsotropicArs.cpp)
 target_link_libraries(testIsotropicArs ${ars_LINK_LIBS} ars)
 
 add_executable(testAnisotropicArs app/testAnisotropicArs.cpp)
@@ -89,11 +92,11 @@ target_link_libraries(testBBTranslation ${ars_LINK_LIBS} ars)
 add_executable(testTranslationRefiner app/testTranslationRefiner.cpp)
 target_link_libraries(testTranslationRefiner ${ars_LINK_LIBS} ars)
 
-#add_executable(testMortonOrderedPoints app/testMortonOrderedPoints.cpp)
-#target_link_libraries(testMortonOrderedPoints ${ars_LINK_LIBS} ars)
+# add_executable(testMortonOrderedPoints app/testMortonOrderedPoints.cpp)
+# target_link_libraries(testMortonOrderedPoints ${ars_LINK_LIBS} ars)
 
 # Option "make install": copy binaries
-INSTALL(TARGETS ars 
+INSTALL(TARGETS ars
   RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
   LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
   ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
@@ -109,7 +112,6 @@ INSTALL(FILES ${headers_3rdparty} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ar
 FILE(GLOB cmake_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/arsConfig.cmake")
 message(STATUS "cmake_script " ${cmake_script})
 INSTALL(FILES ${cmake_script} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/ars/)
-
 
 # uninstall target
 if(NOT TARGET uninstall)
