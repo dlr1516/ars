@@ -32,8 +32,13 @@ struct Box {
                        const VectorVector2& ptsDst);
 };
 
+std::ostream& operator<<(std::ostream& out, const Box& box);
+
 class BBTranslation {
    public:
+    static constexpr int DIM = 2;
+    static constexpr int SPLIT_NUM = (1 << DIM);
+
     /**
      * @brief Default constructor for a new BBTranslation object
      */

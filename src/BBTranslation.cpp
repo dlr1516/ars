@@ -53,21 +53,21 @@ void Box::computeBounds(const VectorVector2& ptsSrc,
             if (distLower < distLowerMin) {
                 distLowerMin = distLower;
             }
-            distUpper = (ptsDst[id] - boxMid).squaredNorm();
-            ARS_VAR4(boxMid.transpose(), ptsDst[id].transpose(), distUpper,
-                     distUpperMin);
+            distUpper = (ptsDst[id] - (ptsSrc[is] + boxMid)).squaredNorm();
+            // ARS_VAR5(boxMid.transpose(), ptsSrc[is].transpose(),
+            //          ptsDst[id].transpose(), distUpper, distUpperMin);
             if (distUpper < distUpperMin) {
                 distUpperMin = distUpper;
             }
         }
         lower_ += distLowerMin;
         upper_ += distUpperMin;
-        ARS_VAR4(distLowerMin, distUpperMin, lower_, upper_);
+        // ARS_VAR4(distLowerMin, distUpperMin, lower_, upper_);
     }
 }
 
 std::ostream& operator<<(std::ostream& out, const Box& box) {
-    out << "min [" << box.min_.transpose() << "] max [" << box.min_.transpose()
+    out << "min [" << box.min_.transpose() << "] max [" << box.max_.transpose()
         << "] lower " << box.lower_ << " upper " << box.upper_;
     return out;
 }
@@ -80,6 +80,7 @@ void BBTranslation::compute() {
     Vector2 boxSplitMin, boxSplitMax;
     Vector2 translOpt;
     double scoreOpt, scoreTol;
+    int iterNum;
 
     auto cmp = [](const Box& box1, const Box& box2) {
         return box1.upper_ < box2.upper_;
@@ -92,22 +93,32 @@ void BBTranslation::compute() {
     scoreOpt = prioqueue.top().upper_;
     translOpt = 0.5 * (boxCur.min_ + boxCur.max_);
     ARS_VAR2(boxCur, scoreOpt);
-    while (!prioqueue.empty()) {
+    iterNum = 0;
+    while (!prioqueue.empty() && iterNum < 100) {
         boxCur = prioqueue.top();
         prioqueue.pop();
 
-        if (boxCur.upper_ - scoreOpt <= scoreTol * scoreOpt) {
+        std::cout << "\n---\niteration " << iterNum << " queue size "
+                  << prioqueue.size() << std::endl;
+        ARS_PRINT("boxCur " << boxCur << ", score optimum " << scoreOpt);
+        // ARS_VAR4(boxCur.upper_, boxCur.lower_, scoreTol * scoreOpt,
+        //          boxCur.upper_ - boxCur.lower_ <= scoreTol * scoreOpt);
+        if (boxCur.upper_ - boxCur.lower_ <= scoreTol * scoreOpt) {
+            ARS_PRINT("STOP");
             break;
         }
 
         if (boxCur.upper_ < scoreOpt) {
             scoreOpt = boxCur.upper_;
             translOpt = 0.5 * (boxCur.min_ + boxCur.max_);
+            ARS_PRINT("UPDATE optimum " << scoreOpt << " in "
+                                        << translOpt.transpose());
         }
 
         // Splits the current box into 2^DIM parts
-        for (int j = 0; j < (1 >> 2); ++j) {
-            for (int d = 0; d < 2; ++d) {
+        for (int j = 0; j < SPLIT_NUM; ++j) {
+            for (int d = 0; d < DIM; ++d) {
+                // ARS_VAR4(j, d, (1 << d), j & (1 << d));
                 if (j & (1 << d)) {
                     boxSplitMin(d) = 0.5 * (boxCur.min_(d) + boxCur.max_(d));
                     boxSplitMax(d) = boxCur.max_(d);
@@ -115,12 +126,15 @@ void BBTranslation::compute() {
                     boxSplitMin(d) = boxCur.min_(d);
                     boxSplitMax(d) = 0.5 * (boxCur.min_(d) + boxCur.max_(d));
                 }
+                // ARS_VAR2(boxSplitMin(d), boxSplitMax(d));
             }
             Box boxNew(boxSplitMin, boxSplitMax, ptsSrc_, ptsDst_);
+            ARS_VAR1(boxNew);
             if (boxNew.lower_ < scoreOpt) {
                 prioqueue.push(boxNew);
             }
         }
+        iterNum++;
     }
 }
 
@@ -128,6 +142,7 @@ void BBTranslation::setTranslMinMax(const ars::Vector2& translMin,
                                     const ars::Vector2& translMax) {
     translMin_ = translMin;
     translMax_ = translMax;
+    ARS_VAR2(translMin_.transpose(), translMax_.transpose())
 }
 
 void BBTranslation::setPtsSrc(const ars::VectorVector2& pts) {
