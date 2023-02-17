@@ -28,18 +28,20 @@ namespace ars
         return dist;
     }
 
-    Box::Box(const Vector2 &min, const Vector2 &max)
-        : min_(min), max_(max), lower_(0.0), upper_(0.0) {}
+    Box::Box(const Vector2 &min, const Vector2 &max, const double eps)
+        : min_(min), max_(max), lower_(0.0), upper_(0.0), eps_(eps) {}
 
     Box::Box(const Vector2 &min,
              const Vector2 &max,
              const VectorVector2 &ptsSrc,
-             const VectorVector2 &ptsDst)
+             const VectorVector2 &ptsDst,
+             const double eps)
     {
         double dist, distMin, distUpper, distUpperMin;
         Vector2 boxMin, boxMax, boxMid;
         min_ = min;
         max_ = max;
+        eps_ = eps;
         // computeBoundsNaive(ptsSrc, ptsDst);
         computeBoundsInlier(ptsSrc, ptsDst);
     }
@@ -84,7 +86,6 @@ namespace ars
     void Box::computeBoundsInlier(const VectorVector2 &ptsSrc,
                                   const VectorVector2 &ptsDst)
     {
-        const double eps = 0.1;
         Vector2 mid = 0.5 * (min_ + max_);
         Vector2 srcTransl;
         double dist, len;
@@ -104,12 +105,12 @@ namespace ars
             {
                 // dist = (ptsDst[id] - srcTransl).norm();
                 dist = (ptsDst[id] - srcTransl).cwiseAbs().maxCoeff(); // Infinity norm
-                // ARS_VAR4(ptsDst[id].transpose(), dist, dist < eps, dist < eps + len);
-                if (dist < eps)
+                // ARS_VAR4(ptsDst[id].transpose(), dist, dist < eps_, dist < eps_ + len);
+                if (dist < eps_)
                 {
                     inlierFoundUpper = true;
                 }
-                if (dist < eps + len)
+                if (dist < eps_ + len)
                 {
                     inlierFoundLower = true;
                 }
@@ -128,14 +129,14 @@ namespace ars
         return out;
     }
 
-    BBTranslation::BBTranslation() : res_(0.2) {}
+    BBTranslation::BBTranslation() : res_(0.1), eps_(0.1), numMaxIter_(1000) {}
 
     BBTranslation::~BBTranslation() {}
 
-    void BBTranslation::compute()
+    void BBTranslation::compute(Vector2 &translOpt)
     {
         Vector2 boxSplitMin, boxSplitMax;
-        Vector2 translOpt;
+
         double scoreOpt, scoreTol;
         int iterNum;
 
@@ -146,13 +147,13 @@ namespace ars
         std::priority_queue<Box, std::vector<Box>, decltype(cmp)> prioqueue(cmp);
 
         scoreTol = 0.05; // TODO: allow setting the value of scoreTol
-        Box boxCur(translMin_, translMax_, ptsSrc_, ptsDst_);
+        Box boxCur(translMin_, translMax_, ptsSrc_, ptsDst_, eps_);
         prioqueue.push(boxCur);
         scoreOpt = prioqueue.top().upper_;
         translOpt = 0.5 * (boxCur.min_ + boxCur.max_);
         ARS_VAR2(boxCur, scoreOpt);
         iterNum = 0;
-        while (!prioqueue.empty() && iterNum < 100000)
+        while (!prioqueue.empty() && iterNum < numMaxIter_)
         {
             boxCur = prioqueue.top();
             prioqueue.pop();
@@ -188,7 +189,7 @@ namespace ars
                         }
                         // ARS_VAR2(boxSplitMin(d), boxSplitMax(d));
                     }
-                    Box boxNew(boxSplitMin, boxSplitMax, ptsSrc_, ptsDst_);
+                    Box boxNew(boxSplitMin, boxSplitMax, ptsSrc_, ptsDst_, eps_);
                     ARS_VAR1(boxNew);
 
                     if (boxNew.upper_ < scoreOpt)
@@ -238,6 +239,14 @@ namespace ars
     {
         ptsSrc_ = ptsS;
         ptsDst_ = ptsD;
+    }
+
+    void BBTranslation::setEps(const double eps) {
+        eps_ = eps;
+    }
+
+    void BBTranslation::setNumMaxIterations(const int nmi) {
+        numMaxIter_ = nmi;
     }
 
 } // namespace ars

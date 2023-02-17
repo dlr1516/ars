@@ -21,13 +21,15 @@ namespace ars
         Vector2 max_;
         double lower_;
         double upper_;
+        double eps_;
 
-        Box(const Vector2 &min, const Vector2 &max);
+        Box(const Vector2 &min, const Vector2 &max, const double eps);
 
         Box(const Vector2 &min,
             const Vector2 &max,
             const VectorVector2 &ptsSrc,
-            const VectorVector2 &ptsDst);
+            const VectorVector2 &ptsDst,
+            const double eps);
 
         virtual ~Box();
 
@@ -35,7 +37,7 @@ namespace ars
                                 const VectorVector2 &ptsDst);
 
         void computeBoundsInlier(const VectorVector2 &ptsSrc,
-                                const VectorVector2 &ptsDst);
+                                 const VectorVector2 &ptsDst);
     };
 
     std::ostream &operator<<(std::ostream &out, const Box &box);
@@ -59,7 +61,7 @@ namespace ars
         /**
          * @brief Main method
          */
-        void compute();
+        void compute(Vector2 &translOpt);
 
         /**
          * @brief Set the interval search of translation
@@ -68,7 +70,7 @@ namespace ars
                              const ars::Vector2 &translMax);
 
         /**
-         * @brief Set minimum box size 
+         * @brief Set minimum box size
          */
         void setResolution(const double r);
 
@@ -87,6 +89,16 @@ namespace ars
          */
         void setPts(const ars::VectorVector2 &ptsS, const ars::VectorVector2 &ptsD);
 
+        /**
+         * @brief Set epsilon param for lower bound computation
+         */
+        void setEps(const double eps);
+
+        /**
+         * @brief Set max number of iteration before B&B alg stops 
+         */
+        void setNumMaxIterations(const int nmi);
+
     private:
         ars::Vector2 translMin_;
         ars::Vector2 translMax_;
@@ -95,6 +107,9 @@ namespace ars
         ars::VectorVector2 ptsDst_;
 
         double res_;
+        double eps_;
+
+        int numMaxIter_;
     };
 } // namespace ars
 
