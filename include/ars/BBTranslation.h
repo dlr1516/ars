@@ -6,79 +6,96 @@
 #include <queue>
 
 #include <Eigen/Dense>
+#include <Eigen/Core>
 
-namespace ars {
+namespace ars
+{
 
-double distancePointBox(const Vector2& p,
-                        const Vector2& boxMin,
-                        const Vector2& boxMax);
+    double distancePointBox(const Vector2 &p,
+                            const Vector2 &boxMin,
+                            const Vector2 &boxMax);
 
-struct Box {
-    Vector2 min_;
-    Vector2 max_;
-    double lower_;
-    double upper_;
+    struct Box
+    {
+        Vector2 min_;
+        Vector2 max_;
+        double lower_;
+        double upper_;
 
-    Box(const Vector2& min, const Vector2& max);
+        Box(const Vector2 &min, const Vector2 &max);
 
-    Box(const Vector2& min,
-        const Vector2& max,
-        const VectorVector2& ptsSrc,
-        const VectorVector2& ptsDst);
+        Box(const Vector2 &min,
+            const Vector2 &max,
+            const VectorVector2 &ptsSrc,
+            const VectorVector2 &ptsDst);
 
-    virtual ~Box();
+        virtual ~Box();
 
-    void computeBounds(const VectorVector2& ptsSrc,
-                       const VectorVector2& ptsDst);
-};
+        void computeBoundsNaive(const VectorVector2 &ptsSrc,
+                                const VectorVector2 &ptsDst);
 
-std::ostream& operator<<(std::ostream& out, const Box& box);
+        void computeBoundsInlier(const VectorVector2 &ptsSrc,
+                                const VectorVector2 &ptsDst);
+    };
 
-class BBTranslation {
-   public:
-    static constexpr int DIM = 2;
-    static constexpr int SPLIT_NUM = (1 << DIM);
+    std::ostream &operator<<(std::ostream &out, const Box &box);
 
-    /**
-     * @brief Default constructor for a new BBTranslation object
-     */
-    BBTranslation();
+    class BBTranslation
+    {
+    public:
+        static constexpr int DIM = 2;
+        static constexpr int SPLIT_NUM = (1 << DIM);
 
-    /**
-     * @brief Default destructor for BBTranslation objects
-     */
-    virtual ~BBTranslation();
+        /**
+         * @brief Default constructor for a new BBTranslation object
+         */
+        BBTranslation();
 
-    /**
-     * @brief Main method
-     */
-    void compute();
+        /**
+         * @brief Default destructor for BBTranslation objects
+         */
+        virtual ~BBTranslation();
 
-    void setTranslMinMax(const ars::Vector2& translMin,
-                         const ars::Vector2& translMax);
+        /**
+         * @brief Main method
+         */
+        void compute();
 
-    /**
-     * @brief Set points src
-     */
-    void setPtsSrc(const ars::VectorVector2& pts);
+        /**
+         * @brief Set the interval search of translation
+         */
+        void setTranslMinMax(const ars::Vector2 &translMin,
+                             const ars::Vector2 &translMax);
 
-    /**
-     * @brief Set points dst
-     */
-    void setPtsDst(const ars::VectorVector2& pts);
+        /**
+         * @brief Set minimum box size 
+         */
+        void setResolution(const double r);
 
-    /**
-     * @brief Set pts src and dst
-     */
-    void setPts(const ars::VectorVector2& ptsS, const ars::VectorVector2& ptsD);
+        /**
+         * @brief Set points src
+         */
+        void setPtsSrc(const ars::VectorVector2 &pts);
 
-   private:
-    ars::Vector2 translMin_;
-    ars::Vector2 translMax_;
+        /**
+         * @brief Set points dst
+         */
+        void setPtsDst(const ars::VectorVector2 &pts);
 
-    ars::VectorVector2 ptsSrc_;
-    ars::VectorVector2 ptsDst_;
-};
-}  // namespace ars
+        /**
+         * @brief Set pts src and dst
+         */
+        void setPts(const ars::VectorVector2 &ptsS, const ars::VectorVector2 &ptsD);
+
+    private:
+        ars::Vector2 translMin_;
+        ars::Vector2 translMax_;
+
+        ars::VectorVector2 ptsSrc_;
+        ars::VectorVector2 ptsDst_;
+
+        double res_;
+    };
+} // namespace ars
 
 #endif /*ARS_BBTRANSLATION_H_*/
