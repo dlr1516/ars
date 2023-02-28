@@ -114,6 +114,22 @@ namespace ars {
         }
     }
 
+    double computeAutocorrelation(const std::vector<double>& fourier) {
+        if (fourier.size() % 2 != 0) {
+            std::cerr << __FILE__ << "," << __LINE__ << ": the number of ARSF coefficients must be even: fourier size is " << fourier.size() << std::endl; 
+            return 0.0;
+        }
+        int n = (fourier.size() / 2) - 1;
+
+        // Computes the coefficients
+        double corr = 0.0;
+        for (int k = 0; k <= n; ++k) {
+            corr += fourier[2*k]*fourier[2*k] + fourier[2*k+1]*fourier[2*k+1];
+        }
+        corr *= 0.5;
+        return corr;
+    }
+
     // --------------------------------------------------------
     // ARS 2D CLASS
     // --------------------------------------------------------

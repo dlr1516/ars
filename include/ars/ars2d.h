@@ -39,6 +39,11 @@ namespace ars {
      */
     void computeFourierCorr(const std::vector<double>& fourierSrc, const std::vector<double>& fourierDst, std::vector<double>& fourierCor);
 
+    /** Computes and returns the autocorrelation of Fourier series. 
+    */
+    double computeAutocorrelation(const std::vector<double>& fourier);
+
+
     // --------------------------------------------------------
     // ARS 2D CLASS
     // --------------------------------------------------------
