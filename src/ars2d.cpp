@@ -192,7 +192,7 @@ namespace ars {
     void AngularRadonSpectrum2d::normalizeCoefficients() {
         double normConst = normCorr();
         for (int k = 0; k < coeffs_.size(); ++k) {
-            coeffs_[k] = coeffs_[k] / normConst;
+            coeffs_[k] = coeffs_[k] / sqrt(normConst);
         }
     }
 
