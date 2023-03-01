@@ -126,6 +126,12 @@ namespace ars {
          */
         void setCoefficients(const std::vector<double>& coeffs);
 
+        /**
+         * @brief Normalize coefficients. 
+         * 
+         */
+        void normalizeCoefficients();
+
         /** * Inserts the given points and computes all the data about point pairs and 
          * computes the coefficients of the Fourier series representing the ARS 
          * of the point set.

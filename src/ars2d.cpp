@@ -189,6 +189,13 @@ namespace ars {
         coeffs_ = coeffs;
     }
 
+    void AngularRadonSpectrum2d::normalizeCoefficients() {
+        double normConst = normCorr();
+        for (int k = 0; k < coeffs_.size(); ++k) {
+            coeffs_[k] = coeffs_[k] / normConst;
+        }
+    }
+
     void AngularRadonSpectrum2d::insertIsotropicGaussians(const VectorVector2& means, double sigma) {
         int kernelNum = means.size();
         double w = 1.0 / (kernelNum * kernelNum);
