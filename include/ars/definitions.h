@@ -91,6 +91,14 @@ namespace ars {
     
     using VectorMatrix2 = std::vector<Matrix2>;
 
+    using Vector3 = Eigen::Vector3d;
+
+    using VectorVector3 = std::vector<Vector3>;
+
+    using Matrix3 = Eigen::Matrix3d;
+    
+    using VectorMatrix3 = std::vector<Matrix3>;
+
 } // end of namespace
 
 #endif /* ARS_DEFINITIONS_H */
