@@ -160,3 +160,4 @@ namespace ars
 }
 
 #endif /* ARS_TRANSLATION_REFINER_H */
+

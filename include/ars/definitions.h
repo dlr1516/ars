@@ -22,6 +22,8 @@
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
 
+#define ARS_FILENAME(STR) std::filesystem::path(STR).filename().string()
+
 #define ARS_PRINT(MSG) std::cout << __FILE__ << "," << __LINE__ << ": " << MSG << std::endl;
 
 #define ARS_ERROR(MSG) std::cerr << __FILE__ << "," << __LINE__ << ": " << MSG << std::endl;
@@ -92,4 +94,3 @@ namespace ars {
 } // end of namespace
 
 #endif /* ARS_DEFINITIONS_H */
-

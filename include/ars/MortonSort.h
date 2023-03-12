@@ -20,11 +20,11 @@ namespace ars {
     int32_t nlz32(uint32_t x);
 
     int64_t nlz64(uint64_t x);
-    
+
     // ---------------------------------------------------------------
     // FLOOR/CEIL LOW POWER 2
     // ---------------------------------------------------------------
-    
+
     /**
      * Returns the larger power of 2 less than the given argument.
      * Example: flp2(5) = 2^2.
@@ -492,33 +492,32 @@ namespace ars {
             upp = std::numeric_limits<I>::max();
             mid = (upp + low) / 2;
         }
-        return (int)level;
+        return (int) level;
     }
 
     template <typename I, int Dim>
     void mortonSplit(const Eigen::Matrix<I, Dim, 1>& v1, const Eigen::Matrix<I, Dim, 1>& v2,
             Eigen::Matrix<I, Dim, 1>& low, Eigen::Matrix<I, Dim, 1>& mid, Eigen::Matrix<I, Dim, 1>& upp) {
         int dimSplit, levelSplit, level;
-        
+
         dimSplit = 0;
         levelSplit = intervalPow2(v1(0), v2(0), low(0), mid(0), upp(0));
-//        ARS_VARIABLE2(dimSplit, levelSplit);
+        //        ARS_VARIABLE2(dimSplit, levelSplit);
         for (int d = 1; d < Dim; ++d) {
             level = intervalPow2(v1(d), v2(d), low(d), mid(d), upp(d));
-//            ARS_VARIABLE3(d, level, levelSplit);
+            //            ARS_VARIABLE3(d, level, levelSplit);
             if (level > levelSplit) {
                 mid(dimSplit) = low(dimSplit);
                 dimSplit = d;
                 levelSplit = level;
-            }
-            else {
-                    mid(d) = low(d);
+            } else {
+                mid(d) = low(d);
             }
         }
-//        ARS_PRINT("split on dimension " << dimSplit << ", levelSplit " << levelSplit);
-//        for (int d = 0; d < Dim; ++d) {
-//            ARS_VARIABLE6(d, v1(d), v2(d), low(d), mid(d), upp(d));
-//        }
+        //        ARS_PRINT("split on dimension " << dimSplit << ", levelSplit " << levelSplit);
+        //        for (int d = 0; d < Dim; ++d) {
+        //            ARS_VARIABLE6(d, v1(d), v2(d), low(d), mid(d), upp(d));
+        //        }
     }
 
 }

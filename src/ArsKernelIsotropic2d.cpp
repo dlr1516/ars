@@ -85,10 +85,6 @@ namespace ars {
             //updateARSF2CoeffRecursDownLUT(lambda, ux * ux - uy*uy, 2.0 * ux * uy, 1.0, arsfOrder_, pnebiLut_, coeffs_);
             updateARSF2CoeffRecursDownLUT(lambdaSqNorm_, phi_, w, nFourier, pnebiLut_, coeffs);
         }
-        else {
-            std::cerr << "Unrecognized Compute Mode!" << std::endl;
-            ARS_ASSERT(0);
-        }
     }
 
     // ----------------------------------------------------
