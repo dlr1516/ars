@@ -40,6 +40,7 @@ add_library(ars
   src/ArsKernelAnisotropic2d.cpp
   src/ArsKernelIsotropic2d.cpp
   src/BBOptimizer1d.cpp
+  src/BBTranslation.cpp
   src/ConsensusTranslationEstimator.cpp
   src/DisjointSet.cpp
   src/GaussianMixtureEstimator.cpp
@@ -48,6 +49,7 @@ add_library(ars
   #src/MortonOrderedPoints2d.cpp
   src/MortonSort.cpp
   src/ParamMap.cpp
+  #src/ProcrustesUmeyama.cpp
   src/Profiler.cpp
   src/TranslationRefiner.cpp
 )
