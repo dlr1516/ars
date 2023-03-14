@@ -159,6 +159,29 @@ double computeAutocorrelation(const std::vector<double>& fourier) {
     return corr;
 }
 
+void computeFourierShift(const std::vector<double>& fourierIn,
+                         double angle,
+                         std::vector<double>& fourierOut) {
+    double ct, st;
+    if (fourierIn.size() % 2 != 0) {
+        std::cerr << __FILE__ << "," << __LINE__
+                  << ": the number of ARSF coefficients must be even: fourier "
+                     "size is "
+                  << fourierIn.size() << std::endl;
+        return;
+    }
+    int n = (fourierIn.size() / 2) - 1;
+    fourierOut.resize(fourierIn.size());
+
+    for (int k = 0; k <= n; ++k) {
+        ct = cos(2 * k * angle);
+        st = sin(2 * k * angle);
+        fourierOut[2 * k] = fourierIn[2 * k] * ct + fourierIn[2 * k + 1] * st;
+        fourierOut[2 * k + 1] =
+            -fourierIn[2 * k] * st + fourierIn[2 * k + 1] * ct;
+    }
+}
+
 // --------------------------------------------------------
 // ARS 2D CLASS
 // --------------------------------------------------------
