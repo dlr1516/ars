@@ -44,6 +44,7 @@ The software depends on the following external libraries
 
 - Boost (submodule lexical_cast)
 - Eigen 3.0 
+- ROFL (https://github.com/dlr1516/rofl)
 
 Other dependencies are placed in directory thirdparty. 
 Some examples require the external application "gnuplot" to display 
@@ -75,12 +76,27 @@ After compiling library ars, run the command:
 The command "sudo" is required only if ${CMAKE_INSTALL_PREFIX} 
 is a system diretory managed by administrator user root.
 Such command copies:
-- header files of ${ars_ROOT}/include/ars to
-   ${CMAKE_INSTALL_PREFIX}/include/ars/
-- library files ${ars_ROOT}/lib/libars.a to
-   ${CMAKE_INSTALL_PREFIX}/lib/
-- cmake script ${ars_ROOT}/cmake_modules/arsConfig.cmake to
-   ${CMAKE_INSTALL_PREFIX}/share/ars/
+
+1. header files of
+> \${ars_ROOT}/include/ars
+
+&ensp; to 
+  
+> \${CMAKE_INSTALL_PREFIX}/include/ars/ 
+
+2. library files
+> \${ars_ROOT}/lib/libars.a
+
+&ensp; to 
+
+> \${CMAKE_INSTALL_PREFIX}/lib/
+
+3. cmake script
+> \${ars_ROOT}/cmake_modules/arsConfig.cmake
+
+&ensp; to 
+
+> \${CMAKE_INSTALL_PREFIX}/share/ars/
 
 
 HOW TO USE LIBRARY ars IN YOUR PROJECT
