@@ -34,7 +34,7 @@ DOI [10.1016/j.patcog.2018.07.017](https://doi.org/10.1016/j.patcog.2018.07.017)
 ````
 
 or the most relevant associated publications by visiting: 
-http://rimlab.ce.unipr.it/
+https://rimlab.ce.unipr.it/
 
 
 DEPENDENCIES
