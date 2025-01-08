@@ -62,13 +62,8 @@ namespace ars
         using Indices = typename Grid::Indices;
         using PeakFinder = rofl::PeakFinderD<Dim, Counter, Index, std::greater<Index>>;
 
-#if __cplusplus < 201703L
-        using Point = Eigen::Matrix<Scalar, Dim, 1>;
-        using VectorPoint = std::vector<Point, Eigen::aligned_allocator<Point>>;
-#else
         using Point = Eigen::Matrix<Scalar, Dim, 1>;
         using VectorPoint = std::vector<Point>;
-#endif
 
         /**
          * Default constructor.

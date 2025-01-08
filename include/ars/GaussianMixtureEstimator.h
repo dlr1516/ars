@@ -1,13 +1,13 @@
 /**
- * ARS - Angular Radon Spectrum 
- * Copyright (C) 2017 Dario Lodi Rizzini. 
+ * ARS - Angular Radon Spectrum
+ * Copyright (C) 2017 Dario Lodi Rizzini.
  *           (C) 2021 Dario Lodi Rizzini, Ernesto Fontana.
  *
  * ARS is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * ARS is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -28,7 +28,8 @@
 #include <ars/DisjointSet.h>
 #include <boost/math/distributions/chi_squared.hpp>
 
-namespace ars {
+namespace ars
+{
 
     //-----------------------------------------------------
     // GaussianMixtureEstimator
@@ -39,30 +40,28 @@ namespace ars {
      * of Gaussian Mixture Models (GMMs) that compute the Gaussian parameters
      * (mean vectors, covariance matrices, weights, etc.) from observed samples.
      */
-    class GaussianMixtureEstimator {
+    class GaussianMixtureEstimator
+    {
     public:
-
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        struct Gaussian {
+        struct Gaussian
+        {
             EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
             Vector2 mean;
             Matrix2 covar;
             double weight;
 
-            double eval(const Vector2 &v) const {
+            double eval(const Vector2 &v) const
+            {
                 double k = 1.0 / sqrt(2.0 * M_PI * covar.determinant());
                 double arg = (v - mean).transpose() * covar.inverse() * (v - mean);
                 return k * exp(-0.5 * arg);
             }
         };
 
-#if __cplusplus < 201703L        
-        using VectorGaussian = std::deque<Gaussian, Eigen::aligned_allocator<Gaussian> >;
-#else
-         using VectorGaussian = std::deque<Gaussian>;
-#endif 
+        using VectorGaussian = std::deque<Gaussian>;
 
         /**
          * Default constructor.
@@ -96,14 +95,14 @@ namespace ars {
          * @param i the index of the distribution/hypothesis
          * @return the mean vector
          */
-        const Vector2& mean(int i) const;
+        const Vector2 &mean(int i) const;
 
         /**
          * Returns the estimated covariance of i-th Gaussian distribution in the mixture.
          * @param i the index of the distribution/hypothesis
          * @return the covariance matrix
          */
-        const Matrix2& covariance(int i) const;
+        const Matrix2 &covariance(int i) const;
 
         /**
          * Returns the estimated weight of i-th Gaussian distribution in the mixture,
@@ -117,7 +116,7 @@ namespace ars {
          * Returns a const reference to the vector of gaussians.
          * @return
          */
-        const VectorGaussian& gaussians() const;
+        const VectorGaussian &gaussians() const;
 
         /**
          * Exports the Gaussian mixture parameters, i.e. means, covariances and weights,
@@ -127,7 +126,7 @@ namespace ars {
          * @param weights std::vector of weights
          */
         void exportGaussians(VectorVector2 &means, VectorMatrix2 &covariances,
-                std::vector<double> &weights) const;
+                             std::vector<double> &weights) const;
 
         /**
          * Executes Expectation Maximization (EM) updating the Gaussian
@@ -148,13 +147,14 @@ namespace ars {
     // GaussianMixtureEstimatorScan
     //-----------------------------------------------------
 
-    class GaussianMixtureEstimatorScan : public GaussianMixtureEstimator {
+    class GaussianMixtureEstimatorScan : public GaussianMixtureEstimator
+    {
     public:
-
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        //using IndexInterval = std::pair<int, int>;
-        struct IndexInterval {
+        // using IndexInterval = std::pair<int, int>;
+        struct IndexInterval
+        {
             int first;
             int last;
             int num;
@@ -174,7 +174,8 @@ namespace ars {
          * Sets the threshold above which a gap between consecutive points is detected.
          * @param dg the distance gap threshold
          */
-        void setDistanceGap(double dg) {
+        void setDistanceGap(double dg)
+        {
             distanceGap_ = dg;
         }
 
@@ -182,7 +183,8 @@ namespace ars {
          * Sets the splitting distance for segment detection
          * @param ds the distance threshold to split
          */
-        void setDistanceSplit(double ds) {
+        void setDistanceSplit(double ds)
+        {
             distanceSplit_ = ds;
         }
 
@@ -190,7 +192,8 @@ namespace ars {
          * Sets the minimum value of standard deviation of Gaussians.
          * @param sm the minimum standard deviation
          */
-        void setSigmaMin(double sm) {
+        void setSigmaMin(double sm)
+        {
             sigmaMin_ = sm;
         }
 
@@ -204,7 +207,8 @@ namespace ars {
          * Returns the i-th interval.
          * @param i
          */
-        const IndexInterval& interval(int i) const {
+        const IndexInterval &interval(int i) const
+        {
             ARS_ASSERT(0 <= i && i < intervals_.size());
             return intervals_.at(i);
         }
@@ -226,7 +230,7 @@ namespace ars {
          * @param distMax the distance of the farthest point from the line
          */
         void findFarthest(const VectorVector2 &points, int first, int last,
-                int &farthest, double &distMax) const;
+                          int &farthest, double &distMax) const;
 
         /**
          * Computes the Gaussian mean and covariance matrix of points in interval
@@ -238,7 +242,7 @@ namespace ars {
          * @param covar the covariance matrix
          */
         void estimateGaussianFromPoints(const VectorVector2 &points, int first,
-                int last, Vector2 &mean, Matrix2 &covar) const;
+                                        int last, Vector2 &mean, Matrix2 &covar) const;
 
         /**
          * Computes the Gaussian distribution, i.e. its parameters, assuming the input points
@@ -251,15 +255,15 @@ namespace ars {
          * @param covar the covariance matrix
          */
         void estimateGaussianFromSegment(const VectorVector2 &points, int first,
-                int last, Vector2 &mean, Matrix2 &covar) const;
-
+                                         int last, Vector2 &mean, Matrix2 &covar) const;
     };
 
     //-----------------------------------------------------
     // GaussianMixtureEstimatorMeanShift
     //-----------------------------------------------------
 
-    class GaussianMixtureEstimatorMeanShift : public GaussianMixtureEstimator {
+    class GaussianMixtureEstimatorMeanShift : public GaussianMixtureEstimator
+    {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -285,7 +289,8 @@ namespace ars {
          * Sets the minimum value of standard deviation of Gaussians.
          * @param sm the minimum standard deviation
          */
-        void setSigmaMin(double sm) {
+        void setSigmaMin(double sm)
+        {
             sigmaMin_ = sm;
         }
 
@@ -297,7 +302,8 @@ namespace ars {
          *
          * @param cd the value of cluster distance
          */
-        void setClusterDistance(double cd) {
+        void setClusterDistance(double cd)
+        {
             clusterDist_ = cd;
         }
 
@@ -308,7 +314,8 @@ namespace ars {
          * are less than meanShiftTol_.
          * @param mst
          */
-        void setMeanShiftTol(double mst) {
+        void setMeanShiftTol(double mst)
+        {
             meanShiftTol_ = mst;
         }
 
@@ -316,7 +323,8 @@ namespace ars {
          * Sets the maximum number of iterations of mean-shift clustering algorithm.
          * @param inmax
          */
-        void setIterationNumMax(int inmax) {
+        void setIterationNumMax(int inmax)
+        {
             iterationNumMax_ = inmax;
         }
 
@@ -334,8 +342,8 @@ namespace ars {
         int iterationNumMax_;
 
         void updateMeans(const VectorVector2 &meansCurr, VectorVector2 &meansNext,
-                DisjointSet &clusterLabels,
-                std::vector<double> &clusterIntraDistMax) const;
+                         DisjointSet &clusterLabels,
+                         std::vector<double> &clusterIntraDistMax) const;
     };
 
     //-----------------------------------------------------
@@ -350,7 +358,8 @@ namespace ars {
      * ECCV 2018.
      *
      */
-    class GaussianMixtureEstimatorHierarchical : public GaussianMixtureEstimator {
+    class GaussianMixtureEstimatorHierarchical : public GaussianMixtureEstimator
+    {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
@@ -387,7 +396,7 @@ namespace ars {
         void setChiConfidence(double conf);
 
         void setIseThreshold(double iseTh);
-        
+
         void setCellSizeMax(double s);
 
         /**
@@ -406,17 +415,15 @@ namespace ars {
         int levelMax_;
 
         bool estimateGaussianFromPoints(const ConstIterator &beg,
-                const ConstIterator &end, Vector2 &mean, Matrix2 &covar, double &w) const;
+                                        const ConstIterator &end, Vector2 &mean, Matrix2 &covar, double &w) const;
 
         bool estimateGaussianFromSegment(const ConstIterator &beg,
-                const ConstIterator &end, Vector2 &mean, Matrix2 &covar, double &w) const;
+                                         const ConstIterator &end, Vector2 &mean, Matrix2 &covar, double &w) const;
 
         bool estimateGaussianISE(const ConstIterator &beg, const ConstIterator &end, Vector2 &mean,
-                Matrix2 &covar, double &wMerged) const;
-
+                                 Matrix2 &covar, double &wMerged) const;
     };
 
 } // end of namespace
 
 #endif /* GAUSSIANMIXTUREESTIMATOR_H */
-

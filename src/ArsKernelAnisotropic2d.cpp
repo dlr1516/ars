@@ -54,6 +54,9 @@ namespace ars {
 		// Diagonalizes sigma12
 		diagonalize(sigma12, lmin, lmax, sigmaAng_);
 
+		ARS_ASSERT_VAR1(std::isfinite(lmin) && lmin > 0, lmin)
+		ARS_ASSERT_VAR1(std::isfinite(lmax) && lmax > 0, lmax)
+
 		//        a = 0.5 * (sigma12(1, 1) - sigma12(0, 0));
 		//        b = 0.5 * (sigma12(0, 1) + sigma12(1, 0));
 		//        ARS_VARIABLE2(a, b);
