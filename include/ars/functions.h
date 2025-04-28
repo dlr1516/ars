@@ -47,7 +47,7 @@ void fastCosSin(double x, double& c, double& s);
 /**
  * Computes atan() using a polynomial approximation on interval [-1,1]. See:
  *
- *  Abramowitz, Stegun, "Handbook of Mathematical Functions", 1965
+ *  Abramowitz, Stegun, "Handbook of Mathematical Functions", 1965 - (4.4.41)
  *
  * @param x the argument that must be in interval [-1.0, 1.0]
  * @return the value of atan

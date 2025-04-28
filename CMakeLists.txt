@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(ars)
-#add_definitions(-std=c++0x)
+
+# add_definitions(-std=c++0x)
 set(CMAKE_CXX_FLAGS='-std=c++17')
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -41,6 +42,7 @@ add_library(ars
   src/utils.cpp
   src/ArsKernelAnisotropic2d.cpp
   src/ArsKernelIsotropic2d.cpp
+  src/ArsGraph.cpp
   src/BBOptimizer1d.cpp
   src/BBTranslation.cpp
   src/ConsensusTranslationEstimator.cpp
