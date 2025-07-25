@@ -82,28 +82,6 @@ class ArsGraph {
     size_t fourierOrder_;
 };
 
-// --------------------------------------------------------
-// ARS GRAPH STATE
-// --------------------------------------------------------
-
-class ArsGraphState {
-   public:
-    using Self = ArsGraphState;
-    using Ptr = std::shared_ptr<Self>;
-    using ArsGraphPtr = ArsGraph::Ptr;
-
-    ArsGraphState();
-
-    virtual ~ArsGraphState();
-
-    double stateLower(size_t i);
-
-    double stateUpper(size_t i);
-
-   private:
-    ArsGraphPtr graph_;
-};
-
 }  // namespace ars
 
 #endif

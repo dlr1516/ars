@@ -288,8 +288,17 @@ void AngularRadonSpectrum2d::insertIsotropicGaussians(
         for (int j = i + 1; j < kernelNum; ++j) {
             ars::ScopedTimer timer("ArsKernelIsotropic2d::computeFourier()");
             // std::cout << "i "  << i << " j " << j << std::endl;
+            //ARS_VAR4(i, j, means[i].transpose(), means[j].transpose());
             isotropicKer_.init(means[i], means[j], sigma);
             isotropicKer_.updateFourier(arsfOrder_, coeffs_, w);
+            
+            std::vector<double> localCoeffs;
+            isotropicKer_.computeFourier(arsfOrder_, localCoeffs);
+            //ARS_PRINT("fourier coeffs " << i << " " << j << ": ");
+            //for (auto c : localCoeffs) {
+            //  std::cout << c << " ";
+            //}
+            //std::cout << std::endl; 
             //                dx = means[i].x() - means[j].x();
             //                dy = means[i].y() - means[j].y();
             //                sigma2 = 2.0 * sigma * sigma;

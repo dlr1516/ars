@@ -47,6 +47,7 @@ namespace ars {
         phi_ = atan2(dy, dx);
         sigmaValSq_ = sigma1 * sigma1 + sigma2 * sigma2;
         lambdaSqNorm_ = 0.25 * (dx * dx + dy * dy) / sigmaValSq_;
+        //ARS_VAR3(phi_, sigmaValSq_, lambdaSqNorm_);
     }
 
     void ArsKernelIsotropic2d::initPnebiLut(int n, double tol) {
