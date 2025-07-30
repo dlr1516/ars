@@ -77,4 +77,12 @@ int ArsGraph::addEdge(int isrc, int idst, double weight) {
     return ((int)edges_.size() - 1);
 }
 
+const std::vector<ArsGraph::Node>& ArsGraph::nodes() const {
+    return nodes_;
+}
+
+const std::vector<ArsGraph::Edge>& ArsGraph::edges() const {
+    return edges_;
+}
+
 }  // namespace ars

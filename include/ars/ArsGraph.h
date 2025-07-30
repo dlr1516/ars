@@ -76,6 +76,10 @@ class ArsGraph {
 
     int addEdge(int isrc, int idst, double weight);
 
+    const std::vector<Node>& nodes() const;
+
+    const std::vector<Edge>& edges() const;
+
    private:
     std::vector<Node> nodes_;
     std::vector<Edge> edges_;
