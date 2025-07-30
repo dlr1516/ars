@@ -93,11 +93,13 @@ void ArsGraphIntervalFull::split(int idx,
     intervLower = std::make_shared<ArsGraphIntervalFull>();
     intervUpper = std::make_shared<ArsGraphIntervalFull>();
 
+    double thetaMid = 0.5 * (nodeLowers_[idx] + nodeUppers_[idx]);
     intervLower->nodeLowers_ = nodeLowers_;
     intervLower->nodeUppers_ = nodeUppers_;
-
-    intervLower->nodeLowers_ = nodeLowers_;
-    intervLower->nodeUppers_ = nodeUppers_;
+    intervLower->nodeUppers_[idx] = thetaMid;
+    intervUpper->nodeLowers_ = nodeLowers_;
+    intervUpper->nodeUppers_ = nodeUppers_;
+    intervUpper->nodeUppers_[idx] = thetaMid;
 }
 
 };  // namespace ars
