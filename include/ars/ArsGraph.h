@@ -37,6 +37,7 @@ class ArsGraph {
 
     struct Node {
         std::vector<double> coeffs;
+        std::vector<int> incidents; 
     };
 
     struct Edge {

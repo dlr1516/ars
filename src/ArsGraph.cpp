@@ -74,6 +74,9 @@ int ArsGraph::addEdge(int isrc, int idst, double weight) {
     computeFourierCorr(nodes_[isrc].coeffs, nodes_[idst].coeffs, edge.coeffs);
     edges_.push_back(edge);
 
+    nodes_[isrc].incidents.push_back((int)edges_.size() - 1);
+    nodes_[idst].incidents.push_back((int)edges_.size() - 1);
+
     return ((int)edges_.size() - 1);
 }
 

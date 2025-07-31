@@ -15,8 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with ARS.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ARSGRAPH_H
-#define ARSGRAPH_H
+#ifndef ARSGRAPHINTERVAL_H
+#define ARSGRAPHINTERVAL_H
 
 #include <memory>
 #include <vector>
@@ -53,8 +53,6 @@ class ArsGraphInterval {
 
     void split(size_t i, Ptr intervLow, Ptr intervUpp);
 
-    virtual void getEdgeBounds(int edgeId, double& lower, double& upper) = 0;
-
    private:
     ArsGraphPtr graph_;
 };
@@ -74,19 +72,19 @@ class ArsGraphIntervalFull : public ArsGraphInterval {
 
     ArsGraphIntervalFull(ArsGraphPtr& graph);
 
-    virtual ~ArsGraphIntervalFull();
+    ~ArsGraphIntervalFull();
 
     void init(ArsGraphPtr& graph);
 
-    virtual double stateLower(size_t i);
+    double stateLower(size_t i);
 
-    virtual double stateUpper(size_t i);
+    double stateUpper(size_t i);
 
-    virtual void getEdgeBounds(double& lower, double& upper);
+    void getEdgeBounds(double& lower, double& upper);
 
-    virtual void split(int idx,
-                       ArsGraphInterval::Ptr intervLower,
-                       ArsGraphInterval::Ptr intervUpper);
+    void split(int idx,
+                       ArsGraphIntervalFull::Ptr intervLower,
+                       ArsGraphIntervalFull::Ptr intervUpper);
 
    private:
     ArsGraphPtr graph_;

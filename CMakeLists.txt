@@ -43,6 +43,7 @@ add_library(ars
   src/ArsKernelAnisotropic2d.cpp
   src/ArsKernelIsotropic2d.cpp
   src/ArsGraph.cpp
+  src/ArsGraphInterval.cpp
   src/BBOptimizer1d.cpp
   src/BBTranslation.cpp
   src/ConsensusTranslationEstimator.cpp
