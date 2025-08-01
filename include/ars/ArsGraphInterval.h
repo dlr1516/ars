@@ -35,7 +35,7 @@ class ArsGraphInterval {
    public:
     using Self = ArsGraphInterval;
     using Ptr = std::shared_ptr<Self>;
-    using ArsGraphPtr = typename ArsGraph::Ptr;
+    using ArsGraphPtr = ArsGraph::Ptr;
 
     ArsGraphInterval();
 
@@ -53,7 +53,7 @@ class ArsGraphInterval {
 
     void split(size_t i, Ptr intervLow, Ptr intervUpp);
 
-   private:
+   protected:
     ArsGraphPtr graph_;
 };
 
@@ -66,28 +66,31 @@ class ArsGraphIntervalFull : public ArsGraphInterval {
     using Base = ArsGraphInterval;
     using Self = ArsGraphIntervalFull;
     using Ptr = std::shared_ptr<Self>;
-    using ArsGraphPtr = typename ArsGraph::Ptr;
+    using ArsGraphPtr = ArsGraph::Ptr;
 
     ArsGraphIntervalFull();
 
     ArsGraphIntervalFull(ArsGraphPtr& graph);
 
-    ~ArsGraphIntervalFull();
+    virtual ~ArsGraphIntervalFull();
 
-    void init(ArsGraphPtr& graph);
+    virtual void init(ArsGraphPtr& graph);
 
-    double stateLower(size_t i);
+    virtual double stateLower(size_t i);
 
-    double stateUpper(size_t i);
+    virtual double stateUpper(size_t i);
 
-    void getEdgeBounds(double& lower, double& upper);
+    virtual double edgeLower(size_t i);
 
-    void split(int idx,
-                       ArsGraphIntervalFull::Ptr intervLower,
-                       ArsGraphIntervalFull::Ptr intervUpper);
+    virtual double edgeUpper(size_t i);
+
+    virtual void getEdgeBounds(double& lower, double& upper);
+
+    virtual void split(int idx,
+                       ArsGraphIntervalFull::Ptr& intervLower,
+                       ArsGraphIntervalFull::Ptr& intervUpper);
 
    private:
-    ArsGraphPtr graph_;
     std::vector<double> nodeLowers_;
     std::vector<double> nodeUppers_;
     std::vector<double> edgeLowers_;

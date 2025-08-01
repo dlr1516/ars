@@ -45,7 +45,7 @@ void ArsGraph::setFourierOrder(size_t order) {
 }
 
 int ArsGraph::addNode(const std::vector<double>& coeffs) {
-    if (coeffs.size() == 2 * fourierOrder_) {
+    if (coeffs.size() == 2 * (fourierOrder_ + 1)) {
         Node node;
         node.coeffs = coeffs;
         nodes_.push_back(node);

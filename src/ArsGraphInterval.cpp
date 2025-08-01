@@ -27,7 +27,7 @@ size_t ArsGraphInterval::getEdgeNum() const {
         ARS_ERROR("interval not initialized");
         return 0;
     }
-    return graph_->getNodeNum();
+    return graph_->getEdgeNum();
 }
 
 // ------------------------------------------------------------------
@@ -44,8 +44,8 @@ ArsGraphIntervalFull::~ArsGraphIntervalFull() {}
 void ArsGraphIntervalFull::init(ArsGraphPtr& graph) {
     graph_ = graph;
 
-    size_t nodeNum = this->getNodeNum();
-    size_t edgeNum = this->getEdgeNum();
+    size_t nodeNum = getNodeNum();
+    size_t edgeNum = getEdgeNum();
 
     // Initializes node lower and upper values
     nodeLowers_.resize(nodeNum);
@@ -79,6 +79,16 @@ double ArsGraphIntervalFull::stateUpper(size_t i) {
     return nodeUppers_[i];
 }
 
+double ArsGraphIntervalFull::edgeLower(size_t i) {
+    // TODO: check overflow of i
+    return edgeLowers_[i];
+}
+
+double ArsGraphIntervalFull::edgeUpper(size_t i) {
+    // TODO: check overflow of i
+    return edgeUppers_[i];
+}
+
 void ArsGraphIntervalFull::getEdgeBounds(double& lower, double& upper) {
     int edgeNum = edgeLowers_.size();
     lower = 0.0;
@@ -90,13 +100,13 @@ void ArsGraphIntervalFull::getEdgeBounds(double& lower, double& upper) {
 }
 
 void ArsGraphIntervalFull::split(int idx,
-                                 ArsGraphIntervalFull::Ptr intervLower,
-                                 ArsGraphIntervalFull::Ptr intervUpper) {
+                                 ArsGraphIntervalFull::Ptr& intervLower,
+                                 ArsGraphIntervalFull::Ptr& intervUpper) {
 
     ARS_ASSERT_VAR1(idx != 0, idx);
 
-    intervLower = std::make_shared<ArsGraphIntervalFull>();
-    intervUpper = std::make_shared<ArsGraphIntervalFull>();
+    intervLower = std::make_shared<ArsGraphIntervalFull>(ArsGraphIntervalFull(graph_));
+    intervUpper = std::make_shared<ArsGraphIntervalFull>(ArsGraphIntervalFull(graph_));
 
     double thetaMid = 0.5 * (nodeLowers_[idx] + nodeUppers_[idx]);
     intervLower->nodeLowers_ = nodeLowers_; 
@@ -104,7 +114,7 @@ void ArsGraphIntervalFull::split(int idx,
     intervLower->nodeUppers_[idx] = thetaMid;
     intervUpper->nodeLowers_ = nodeLowers_;
     intervUpper->nodeUppers_ = nodeUppers_;
-    intervUpper->nodeUppers_[idx] = thetaMid;
+    intervUpper->nodeLowers_[idx] = thetaMid;
 
     intervLower->edgeLowers_ = edgeLowers_;
     intervLower->edgeUppers_ = edgeUppers_;
@@ -115,11 +125,15 @@ void ArsGraphIntervalFull::split(int idx,
         const ArsGraph::Edge& edge = graph_->edges()[eidx];
         int isrc = edge.isrc;
         int idst = edge.idst;
-        double thetaMin = nodeLowers_[idst] - nodeUppers_[isrc];
-        double thetaMax = nodeUppers_[idst] - nodeLowers_[isrc];
-        ars::findLUFourier(edge.coeffs, intervLower->nodeLowers_[idx], intervUpper->nodeLowers_[idx], 
+
+        double thetaMin = intervLower->nodeLowers_[idst] - intervLower->nodeUppers_[isrc];
+        double thetaMax = intervLower->nodeUppers_[idst] - intervLower->nodeLowers_[isrc];
+        ars::findLUFourier(edge.coeffs, thetaMin, thetaMax, 
             intervLower->edgeLowers_[eidx], intervLower->edgeUppers_[eidx]);
-        ars::findLUFourier(edge.coeffs, intervUpper->nodeLowers_[idx], intervUpper->nodeUppers_[idx], 
+        
+        thetaMin = intervUpper->nodeLowers_[idst] - intervUpper->nodeUppers_[isrc];
+        thetaMax = intervUpper->nodeUppers_[idst] - intervUpper->nodeLowers_[isrc];
+        ars::findLUFourier(edge.coeffs, thetaMin, thetaMax, 
             intervUpper->edgeLowers_[eidx], intervUpper->edgeUppers_[eidx]);
     }  
 }

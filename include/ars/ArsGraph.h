@@ -75,7 +75,7 @@ class ArsGraph {
 
     int addNode(const std::vector<double>& coeffs);
 
-    int addEdge(int isrc, int idst, double weight);
+    int addEdge(int isrc, int idst, double weight = 1.0);
 
     const std::vector<Node>& nodes() const;
 
