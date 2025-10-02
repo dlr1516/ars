@@ -51,6 +51,14 @@ class ArsGraphInterval {
 
     virtual double stateUpper(size_t i) = 0;
 
+    virtual std::vector<double> getNodesLower() const = 0;
+
+    virtual std::vector<double> getNodesUpper() const = 0;
+
+    virtual double getLower() const = 0;
+
+    virtual double getUpper() const = 0;
+
     void split(size_t i, Ptr intervLow, Ptr intervUpp);
 
    protected:
@@ -80,9 +88,17 @@ class ArsGraphIntervalFull : public ArsGraphInterval {
 
     virtual double stateUpper(size_t i);
 
+    virtual std::vector<double> getNodesLower() const;
+
+    virtual std::vector<double> getNodesUpper() const;
+
     virtual double edgeLower(size_t i);
 
     virtual double edgeUpper(size_t i);
+
+    virtual double getLower() const;
+
+    virtual double getUpper() const;
 
     virtual void getEdgeBounds(double& lower, double& upper);
 
@@ -95,6 +111,8 @@ class ArsGraphIntervalFull : public ArsGraphInterval {
     std::vector<double> nodeUppers_;
     std::vector<double> edgeLowers_;
     std::vector<double> edgeUppers_;
+    double lower_;
+    double upper_;
 };
 
 // --------------------------------------------------------

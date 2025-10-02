@@ -44,6 +44,7 @@ add_library(ars
   src/ArsKernelIsotropic2d.cpp
   src/ArsGraph.cpp
   src/ArsGraphInterval.cpp
+  src/ArsGraphSolver.cpp
   src/BBOptimizer1d.cpp
   src/BBTranslation.cpp
   src/ConsensusTranslationEstimator.cpp
