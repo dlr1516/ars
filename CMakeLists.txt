@@ -100,6 +100,9 @@ target_link_libraries(testTranslationRefiner ${ars_LINK_LIBS} ars)
 add_executable(testArsGraphSplit app/testArsGraphSplit.cpp)
 target_link_libraries(testArsGraphSplit ${ars_LINK_LIBS} ars)
 
+add_executable(testArsGraphSolver app/testArsGraphSolver.cpp)
+target_link_libraries(testArsGraphSolver ${ars_LINK_LIBS} ars)
+
 # add_executable(testMortonOrderedPoints app/testMortonOrderedPoints.cpp)
 # target_link_libraries(testMortonOrderedPoints ${ars_LINK_LIBS} ars)
 
