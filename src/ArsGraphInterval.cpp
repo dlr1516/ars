@@ -1,5 +1,4 @@
 #include <ars/ArsGraphInterval.h>
-
 #include <cmath>
 
 namespace ars {
@@ -30,14 +29,19 @@ size_t ArsGraphInterval::getEdgeNum() const {
     return graph_->getEdgeNum();
 }
 
+void ArsGraphInterval::setGraph(ArsGraphPtr& graph){
+    graph_ = graph;
+}
+
 // ------------------------------------------------------------------
 // ARS GRAPH INTERVALL FULL
 // ------------------------------------------------------------------
 
-ArsGraphIntervalFull::ArsGraphIntervalFull() : ArsGraphInterval() {}
+ArsGraphIntervalFull::ArsGraphIntervalFull() 
+    : ArsGraphInterval(), upper_(NAN), lower_(NAN) {}
 
 ArsGraphIntervalFull::ArsGraphIntervalFull(ArsGraphPtr& graph)
-    : ArsGraphInterval(graph) {}
+    : ArsGraphInterval(graph), upper_(NAN), lower_(NAN) {}
 
 ArsGraphIntervalFull::~ArsGraphIntervalFull() {}
 
@@ -67,24 +71,43 @@ void ArsGraphIntervalFull::init(ArsGraphPtr& graph) {
         ars::findLUFourier(edge.coeffs, thetaMin, thetaMax, edgeLowers_[j],
                            edgeUppers_[j]);
     }
+    computeEdgeBounds();
 }
 
-double ArsGraphIntervalFull::stateLower(size_t i) {
+double ArsGraphIntervalFull::nodeLower(size_t i) {
     // TODO: check overflow of i
     return nodeLowers_[i];
 }
 
-double ArsGraphIntervalFull::stateUpper(size_t i) {
+void ArsGraphIntervalFull::setNodeLower(size_t idx, double val) {
+    nodeLowers_[idx] = val;
+}
+
+double ArsGraphIntervalFull::nodeUpper(size_t i)
+{
     // TODO: check overflow of i
     return nodeUppers_[i];
 }
 
-std::vector<double> ArsGraphIntervalFull::getNodesLower() const {
+void ArsGraphIntervalFull::setNodeUpper(size_t idx, double val) {
+    nodeUppers_[idx] = val;
+}
+
+std::vector<double> ArsGraphIntervalFull::getNodesLower() const
+{
     return nodeLowers_;
+}
+
+void ArsGraphIntervalFull::setNodesLower(std::vector<double> vals) {
+    nodeLowers_ = vals;
 }
 
 std::vector<double> ArsGraphIntervalFull::getNodesUpper() const {
     return nodeUppers_;
+}
+
+void ArsGraphIntervalFull::setNodesUpper(std::vector<double> vals) {
+    nodeUppers_ = vals;
 }
 
 double ArsGraphIntervalFull::edgeLower(size_t i) {
@@ -92,76 +115,117 @@ double ArsGraphIntervalFull::edgeLower(size_t i) {
     return edgeLowers_[i];
 }
 
+void ArsGraphIntervalFull::setEdgeLower(size_t idx, double val) {
+    edgeLowers_[idx] = val;
+}
+
 double ArsGraphIntervalFull::edgeUpper(size_t i) {
     // TODO: check overflow of i
     return edgeUppers_[i];
 }
 
-double ArsGraphIntervalFull::getLower() const {
+void ArsGraphIntervalFull::setEdgeUpper(size_t idx, double val) {
+    edgeUppers_[idx] = val;
+}
+
+std::vector<double> ArsGraphIntervalFull::getEdgesLower() const {
+    return edgeLowers_;
+}
+
+void ArsGraphIntervalFull::setEdgesLower(std::vector<double> vals) {
+    edgeLowers_ = vals;
+}
+
+std::vector<double> ArsGraphIntervalFull::getEdgesUpper() const {
+    return edgeUppers_;
+}
+
+void ArsGraphIntervalFull::setEdgesUpper(std::vector<double> vals) {
+    edgeUppers_ = vals;
+}
+
+double ArsGraphIntervalFull::getLowerBound() {
+    if(std::isnan(lower_)){
+        computeEdgeBounds();
+    }
     return lower_;
 }
 
-double ArsGraphIntervalFull::getUpper() const {
-    return lower_;
+double ArsGraphIntervalFull::getUpperBound() {
+    if(std::isnan(upper_)){
+        computeEdgeBounds();
+    }
+    return upper_;
 }
 
 void ArsGraphIntervalFull::getEdgeBounds(double& lower, double& upper) {
+    if(std::isnan(lower_) || std::isnan(upper_)){
+        computeEdgeBounds();
+    }
+    lower = lower_;
+    upper = upper_;
+}
+
+void ArsGraphIntervalFull::computeEdgeBounds() {
     int edgeNum = edgeLowers_.size();
-    lower = 0.0;
-    upper = 0.0;
-    for (int j = 0; j < edgeNum; ++j) {
-        lower += edgeLowers_[j];
-        upper += edgeUppers_[j];
+    lower_ = 0.0;
+    upper_ = 0.0;
+    for (int i = 0; i < edgeNum; ++i) {
+        lower_ += edgeLowers_[i];
+        upper_ += edgeUppers_[i];
     }
 }
 
-void ArsGraphIntervalFull::split(int idx,
-                                 ArsGraphIntervalFull::Ptr& intervLower,
-                                 ArsGraphIntervalFull::Ptr& intervUpper) {
+void ArsGraphIntervalFull::split(size_t idx,
+                                 ArsGraphInterval::Ptr intervLower,
+                                 ArsGraphInterval::Ptr intervUpper) {
     ARS_ASSERT_VAR1(idx != 0, idx);
 
-    intervLower =
+    /*intervLower =
         std::make_shared<ArsGraphIntervalFull>(ArsGraphIntervalFull(graph_));
     intervUpper =
-        std::make_shared<ArsGraphIntervalFull>(ArsGraphIntervalFull(graph_));
+        std::make_shared<ArsGraphIntervalFull>(ArsGraphIntervalFull(graph_));*/
+    intervLower->setGraph(graph_);
+    intervUpper->setGraph(graph_);
 
     double thetaMid = 0.5 * (nodeLowers_[idx] + nodeUppers_[idx]);
-    intervLower->nodeLowers_ = nodeLowers_;
-    intervLower->nodeUppers_ = nodeUppers_;
-    intervLower->nodeUppers_[idx] = thetaMid;
-    intervUpper->nodeLowers_ = nodeLowers_;
-    intervUpper->nodeUppers_ = nodeUppers_;
-    intervUpper->nodeLowers_[idx] = thetaMid;
+    intervLower->setNodesLower(nodeLowers_);
+    intervLower->setNodesUpper(nodeUppers_);
+    intervLower->setNodeUpper(idx, thetaMid);
 
-    intervLower->edgeLowers_ = edgeLowers_;
-    intervLower->edgeUppers_ = edgeUppers_;
-    intervUpper->edgeLowers_ = edgeLowers_;
-    intervUpper->edgeUppers_ = edgeUppers_;
+    intervUpper->setNodesLower(nodeLowers_);
+    intervUpper->setNodesUpper(nodeUppers_);
+    intervUpper->setNodeLower(idx, thetaMid);
+
+    intervLower->setEdgesLower(edgeLowers_);
+    intervLower->setEdgesUpper(edgeUppers_);
+    intervUpper->setEdgesLower(edgeLowers_);
+    intervUpper->setEdgesUpper(edgeUppers_);
 
     for (int eidx : graph_->nodes()[idx].incidents) {
         const ArsGraph::Edge& edge = graph_->edges()[eidx];
         int isrc = edge.isrc;
         int idst = edge.idst;
+        double edgeLower, edgeUpper;
 
         double thetaMin =
-            intervLower->nodeLowers_[idst] - intervLower->nodeUppers_[isrc];
+            intervLower->nodeLower(idst) - intervLower->nodeUpper(isrc);
         double thetaMax =
-            intervLower->nodeUppers_[idst] - intervLower->nodeLowers_[isrc];
+            intervLower->nodeUpper(idst) - intervLower->nodeLower(isrc);
         ars::findLUFourier(edge.coeffs, thetaMin, thetaMax,
-                           intervLower->edgeLowers_[eidx],
-                           intervLower->edgeUppers_[eidx]);
+                           edgeLower, edgeUpper);
+        intervLower->setEdgeLower(eidx, edgeLower);
+        intervLower->setEdgeUpper(eidx, edgeUpper);
 
         thetaMin =
-            intervUpper->nodeLowers_[idst] - intervUpper->nodeUppers_[isrc];
+            intervUpper->nodeLower(idst) - intervUpper->nodeUpper(isrc);
         thetaMax =
-            intervUpper->nodeUppers_[idst] - intervUpper->nodeLowers_[isrc];
+            intervUpper->nodeUpper(idst) - intervUpper->nodeLower(isrc);
         ars::findLUFourier(edge.coeffs, thetaMin, thetaMax,
-                           intervUpper->edgeLowers_[eidx],
-                           intervUpper->edgeUppers_[eidx]);
+                           edgeLower, edgeUpper);
+        intervUpper->setEdgeLower(eidx, edgeLower);
+        intervUpper->setEdgeUpper(eidx, edgeUpper);
     }
-
-    intervLower->getEdgeBounds(intervLower->lower_, intervLower->upper_);
-    intervUpper->getEdgeBounds(intervUpper->lower_, intervUpper->upper_);
 }
 
 };  // namespace ars

@@ -22,8 +22,18 @@ class ArsGraphSolver {
     struct UpperBoundLess {
         bool operator()(ArsGraphIntervalPtr& ib0,
                         ArsGraphIntervalPtr& ib1) const {
-            return (ib0->getUpper() < ib1->getUpper());
+            return (ib0->getUpperBound() < ib1->getUpperBound());
         }
+    };
+
+    struct NodeInterval {
+        int idx;
+        double xLower;
+        double xUpper;
+        double xWidth;
+
+        NodeInterval(double xL, double xU, double xW) 
+            : xLower(xL), xUpper(xU), xWidth(xW) {}
     };
 
     using LeastUpperBoundFirstQueue =
@@ -32,17 +42,19 @@ class ArsGraphSolver {
                             UpperBoundLess>;
 
     struct Solution {
-        std::vector<double> angleLower;
-        std::vector<double> angleUpper;
+        std::vector<double> anglesLower;
+        std::vector<double> anglesUpper;
     };
 
     ArsGraphSolver();
 
     ArsGraphSolver(ArsGraphPtr& graph);
+    ArsGraphSolver(ArsGraphPtr& graph, double xtol);
 
     virtual ~ArsGraphSolver();
 
     void setGraph(ArsGraphPtr& graph);
+    void setXTol(double xtol);
 
     bool solve(std::vector<double>& solution, double& cost);
 
@@ -51,6 +63,9 @@ class ArsGraphSolver {
     double lower_;
     double upper_;
     Solution solution_;
+    double xtol_;
+
+    bool checkInterval(ArsGraphIntervalPtr interval, std::vector<NodeInterval>& validIndices);
 };
 
 }  // namespace ars

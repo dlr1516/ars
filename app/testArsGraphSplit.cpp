@@ -50,8 +50,8 @@ int main(int argc, char** argv){
 
     std::cout << "State before split: " << endl;
     for(int i = 0; i < clouds.size(); i++){
-        std::cout << "node " << i << ": lower theta " << interval->stateLower(i) << 
-            " upper theta " << interval->stateUpper(i) << endl; 
+        std::cout << "node " << i << ": lower theta " << interval->nodeLower(i) << 
+            " upper theta " << interval->nodeUpper(i) << endl; 
     }
     for(int i = 0; i < edges.size(); i++){
         std::cout << "edge " << edges[i][0]  << "-" << edges[i][1] << ": lower fourier " << 
@@ -62,16 +62,16 @@ int main(int argc, char** argv){
     for(int i = 1; i < clouds.size(); i++){
         std::cout << "split on node " << i << endl;
 
-        ars::ArsGraphIntervalFull::Ptr intervLower;
-        ars::ArsGraphIntervalFull::Ptr intervUpper;
+        ars::ArsGraphIntervalFull::Ptr intervLower(new ars::ArsGraphIntervalFull);
+        ars::ArsGraphIntervalFull::Ptr intervUpper(new ars::ArsGraphIntervalFull);
         interval->split(i, intervLower, intervUpper);
         std::cout << "nodes: " << std::endl;
         for(int j = 0; j < clouds.size(); j++){
-            std::cout << "node " << j <<": lower: " << "lower theta " << intervLower->stateLower(j) << 
-                " upper theta " << intervLower->stateUpper(j) << endl; 
+            std::cout << "node " << j <<": lower: " << "lower theta " << intervLower->nodeLower(j) << 
+                " upper theta " << intervLower->nodeUpper(j) << endl; 
 
-            std::cout << "node " << j <<": upper: " << "lower theta " << intervUpper->stateLower(j) << 
-                " upper theta " << intervUpper->stateUpper(j) << endl; 
+            std::cout << "node " << j <<": upper: " << "lower theta " << intervUpper->nodeLower(j) << 
+                " upper theta " << intervUpper->nodeUpper(j) << endl; 
         }
         std::cout << "edges: " << endl;
         for(int j = 0; j < edges.size(); j++){
