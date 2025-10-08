@@ -22,14 +22,15 @@ void ArsGraphSolver::setXTol(double xtol){
 
 bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost) {
     LeastUpperBoundFirstQueue queue;
-    ArsGraphIntervalFull::Ptr initial =
-        std::make_shared<ArsGraphIntervalFull>(graph_);
+    ArsGraphIntervalFull::Ptr initial(new ArsGraphIntervalFull(graph_));
+    solution.clear();
 
     initial->init(graph_);
-
     queue.push(initial);
     lower_ = initial->getLowerBound();
     upper_ = initial->getUpperBound();
+    solution_.anglesLower = initial->getNodesLower();
+    solution_.anglesUpper = initial->getNodesUpper();
 
     while (!queue.empty()) {
         ArsGraphIntervalPtr curr = queue.top();
@@ -43,8 +44,8 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost) {
             }
             std::vector<NodeInterval> validNodes;
             if(!checkInterval(curr, validNodes)){
-                ars::ArsGraphIntervalFull::Ptr intervLower;
-                ars::ArsGraphIntervalFull::Ptr intervUpper;
+                ars::ArsGraphIntervalFull::Ptr intervLower(new ars::ArsGraphIntervalFull);
+                ars::ArsGraphIntervalFull::Ptr intervUpper(new ars::ArsGraphIntervalFull);
 
                 int node = validNodes[0].idx;
                 for(int i = 1; i < validNodes.size(); i++){
@@ -60,6 +61,11 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost) {
             }
         }
     }
+    for(int i = 0; i < solution_.anglesLower.size(); i++){
+        double angleLower = solution_.anglesLower[i];
+        double angleUpper = solution_.anglesUpper[i];
+        solution.push_back((angleLower + angleUpper)/2);
+    }
     cost = lower_;
     return true;
 }
@@ -67,12 +73,12 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost) {
 bool ArsGraphSolver::checkInterval(ArsGraphIntervalPtr interval, std::vector<NodeInterval>& validNodes){
     validNodes.clear();
 
-    for(int i = 1; i < interval->getNodeNum(); i++){
+    for(size_t i = 1; i < interval->getNodeNum(); i++){
         double xLower = interval->nodeLower(i);
         double xUpper = interval->nodeUpper(i);
         double xWidth = xUpper - xLower;
         if(xWidth > xtol_){
-            validNodes.push_back(NodeInterval(xLower, xUpper, xWidth));
+            validNodes.push_back(NodeInterval(i, xLower, xUpper, xWidth));
         }
     }
     return validNodes.empty();

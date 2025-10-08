@@ -27,13 +27,13 @@ class ArsGraphSolver {
     };
 
     struct NodeInterval {
-        int idx;
+        size_t idx;
         double xLower;
         double xUpper;
         double xWidth;
 
-        NodeInterval(double xL, double xU, double xW) 
-            : xLower(xL), xUpper(xU), xWidth(xW) {}
+        NodeInterval(size_t idx, double xL, double xU, double xW) 
+            : idx(idx), xLower(xL), xUpper(xU), xWidth(xW) {}
     };
 
     using LeastUpperBoundFirstQueue =
