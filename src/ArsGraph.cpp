@@ -88,4 +88,18 @@ const std::vector<ArsGraph::Edge>& ArsGraph::edges() const {
     return edges_;
 }
 
-}  // namespace ars
+size_t ArsGraph::size() const{
+    size_t sizeNodes = 0;
+    for(auto& elem : nodes_){
+        sizeNodes += elem.coeffs.size()*sizeof(elem.coeffs.front())
+            + elem.incidents.size()*sizeof(elem.incidents.front());
+    }
+    size_t sizeEdges = 0;
+    for(auto& elem : edges_){
+        sizeEdges += sizeof(elem.idst) + sizeof(elem.isrc) + sizeof(elem.weight) 
+            + elem.coeffs.size()*sizeof(elem.coeffs.front());
+    }
+    size_t sizeOrder = sizeof(fourierOrder_);
+    return sizeNodes + sizeEdges + sizeOrder;
+}
+} // namespace ars

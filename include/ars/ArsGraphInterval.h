@@ -57,13 +57,13 @@ class ArsGraphInterval {
 
     virtual void setNodeUpper(size_t idx, double val) = 0;
 
-    virtual std::vector<double> getNodesLower() const = 0;
+    virtual std::vector<double> getNodeLowers() const = 0;
 
-    virtual void setNodesLower(std::vector<double> vals) = 0;
+    virtual void setNodeLowers(std::vector<double>& vals) = 0;
 
-    virtual std::vector<double> getNodesUpper() const = 0;
+    virtual std::vector<double> getNodeUppers() const = 0;
 
-    virtual void setNodesUpper(std::vector<double> vals) = 0;
+    virtual void setNodeUppers(std::vector<double>& vals) = 0;
 
     virtual double edgeLower(size_t i) = 0;
 
@@ -73,19 +73,21 @@ class ArsGraphInterval {
 
     virtual void setEdgeUpper(size_t idx, double val) = 0;
 
-    virtual std::vector<double> getEdgesLower() const = 0;
+    virtual std::vector<double> getEdgeLowers() const = 0;
 
-    virtual void setEdgesLower(std::vector<double> vals) = 0;
+    virtual void setEdgeLowers(std::vector<double>& vals) = 0;
 
-    virtual std::vector<double> getEdgesUpper() const = 0;
+    virtual std::vector<double> getEdgeUppers() const = 0;
 
-    virtual void setEdgesUpper(std::vector<double> vals) = 0;
+    virtual void setEdgeUppers(std::vector<double>& vals) = 0;
 
     virtual double getLowerBound() = 0;
 
     virtual double getUpperBound() = 0;
 
     virtual void split(size_t idx, Ptr intervLower, Ptr intervUpper) = 0;
+
+    virtual size_t size() const = 0;
 
    protected:
     ArsGraphPtr graph_;
@@ -118,13 +120,13 @@ class ArsGraphIntervalFull : public ArsGraphInterval {
 
     virtual void setNodeUpper(size_t idx, double val);
 
-    virtual std::vector<double> getNodesLower() const;
+    virtual std::vector<double> getNodeLowers() const;
 
-    virtual void setNodesLower(std::vector<double> vals);
+    virtual void setNodeLowers(std::vector<double>& vals);
 
-    virtual std::vector<double> getNodesUpper() const;
+    virtual std::vector<double> getNodeUppers() const;
 
-    virtual void setNodesUpper(std::vector<double> vals);
+    virtual void setNodeUppers(std::vector<double>& vals);
 
     virtual double edgeLower(size_t i);
 
@@ -134,13 +136,13 @@ class ArsGraphIntervalFull : public ArsGraphInterval {
 
     virtual void setEdgeUpper(size_t idx, double val);
 
-    virtual std::vector<double> getEdgesLower() const;
+    virtual std::vector<double> getEdgeLowers() const;
 
-    virtual void setEdgesLower(std::vector<double> vals);
+    virtual void setEdgeLowers(std::vector<double>& vals);
 
-    virtual std::vector<double> getEdgesUpper() const;
+    virtual std::vector<double> getEdgeUppers() const;
 
-    virtual void setEdgesUpper(std::vector<double> vals);
+    virtual void setEdgeUppers(std::vector<double>& vals);
 
     virtual double getLowerBound();
 
@@ -151,6 +153,8 @@ class ArsGraphIntervalFull : public ArsGraphInterval {
     virtual void split(size_t idx,
                        ArsGraphInterval::Ptr intervLower,
                        ArsGraphInterval::Ptr intervUpper);
+    
+    virtual size_t size() const;    
 
    private:
     std::vector<double> nodeLowers_;

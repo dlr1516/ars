@@ -59,13 +59,19 @@ int main(int argc, char** argv){
 
     std::vector<double> solution;
     double cost;
-    solver.solve(solution, cost);
+    ars::ArsGraphSolver::Statistics stats;
+    solver.solve(solution, cost, stats);
 
     std::cout << "Solution: " << std::endl;
     for(int i = 0; i < solution.size(); i++){
         std::cout << "Node " << i << ": " 
             << solution[i]*(180.0/M_PI) << std::endl; 
     }
+
+    std::cout << "Created nodes: " << stats.createdNodes << std::endl;
+    std::cout << "Min interval size: " << stats.minIntervalSize << std::endl;
+    std::cout << "Max interval size: " << stats.maxIntervalSize << std::endl;
+    std::cout << "Average interval size: " << stats.avgIntervalSize << std::endl;
 
     return 0;
 }

@@ -46,6 +46,13 @@ class ArsGraphSolver {
         std::vector<double> anglesUpper;
     };
 
+    struct Statistics {
+        long minIntervalSize;
+        long maxIntervalSize;
+        double avgIntervalSize;
+        long long createdNodes;
+    };
+
     ArsGraphSolver();
 
     ArsGraphSolver(ArsGraphPtr& graph);
@@ -57,6 +64,7 @@ class ArsGraphSolver {
     void setXTol(double xtol);
 
     bool solve(std::vector<double>& solution, double& cost);
+    bool solve(std::vector<double>& solution, double& cost, Statistics& stats);
 
    protected:
     ArsGraphPtr graph_;

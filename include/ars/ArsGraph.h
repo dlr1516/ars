@@ -81,6 +81,8 @@ class ArsGraph {
 
     const std::vector<Edge>& edges() const;
 
+    size_t size() const;
+
    private:
     std::vector<Node> nodes_;
     std::vector<Edge> edges_;

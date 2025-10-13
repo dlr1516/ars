@@ -23,14 +23,15 @@ void ArsGraphSolver::setXTol(double xtol){
 bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost) {
     LeastUpperBoundFirstQueue queue;
     ArsGraphIntervalFull::Ptr initial(new ArsGraphIntervalFull(graph_));
-    solution.clear();
-
     initial->init(graph_);
     queue.push(initial);
+
+    solution.clear();
+
     lower_ = initial->getLowerBound();
     upper_ = initial->getUpperBound();
-    solution_.anglesLower = initial->getNodesLower();
-    solution_.anglesUpper = initial->getNodesUpper();
+    solution_.anglesLower = initial->getNodeLowers();
+    solution_.anglesUpper = initial->getNodeUppers();
 
     while (!queue.empty()) {
         ArsGraphIntervalPtr curr = queue.top();
@@ -39,8 +40,8 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost) {
             if (lower_ < curr->getLowerBound()) {
                 lower_ = curr->getLowerBound();
                 upper_ = curr->getUpperBound();
-                solution_.anglesLower = curr->getNodesLower();
-                solution_.anglesUpper = curr->getNodesUpper();
+                solution_.anglesLower = curr->getNodeLowers();
+                solution_.anglesUpper = curr->getNodeUppers();
             }
             std::vector<NodeInterval> validNodes;
             if(!checkInterval(curr, validNodes)){
@@ -61,10 +62,88 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost) {
             }
         }
     }
+    solution.resize(solution_.anglesLower.size());
     for(int i = 0; i < solution_.anglesLower.size(); i++){
         double angleLower = solution_.anglesLower[i];
         double angleUpper = solution_.anglesUpper[i];
-        solution.push_back((angleLower + angleUpper)/2);
+        solution[i] = (angleLower + angleUpper)/2;
+    }
+    cost = lower_;
+    return true;
+}
+
+bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost, Statistics& stats) {
+    LeastUpperBoundFirstQueue queue;
+    ArsGraphIntervalFull::Ptr initial(new ArsGraphIntervalFull(graph_));
+    initial->init(graph_);
+    queue.push(initial);
+
+    solution.clear();
+    stats.createdNodes = 1;
+    stats.minIntervalSize = initial->size();
+    stats.maxIntervalSize = initial->size();
+    stats.avgIntervalSize = initial->size();
+
+    lower_ = initial->getLowerBound();
+    upper_ = initial->getUpperBound();
+    solution_.anglesLower = initial->getNodeLowers();
+    solution_.anglesUpper = initial->getNodeUppers();
+
+    while (!queue.empty()) {
+        ArsGraphIntervalPtr curr = queue.top();
+        queue.pop();
+        if (curr->getUpperBound() >= lower_) {
+            if (lower_ < curr->getLowerBound()) {
+                lower_ = curr->getLowerBound();
+                upper_ = curr->getUpperBound();
+                solution_.anglesLower = curr->getNodeLowers();
+                solution_.anglesUpper = curr->getNodeUppers();
+            }
+            std::vector<NodeInterval> validNodes;
+            if(!checkInterval(curr, validNodes)){
+                ars::ArsGraphIntervalFull::Ptr intervLower(new ars::ArsGraphIntervalFull);
+                ars::ArsGraphIntervalFull::Ptr intervUpper(new ars::ArsGraphIntervalFull);
+
+                int node = validNodes[0].idx;
+                for(int i = 1; i < validNodes.size(); i++){
+                    if (validNodes[node].xWidth < validNodes[i].xWidth){
+                        node = validNodes[i].idx;
+                        break;
+                    }
+                }
+
+                curr->split(node, intervLower, intervUpper);
+                queue.push(intervLower);
+                queue.push(intervUpper);
+                stats.createdNodes += 2;
+                size_t lowerSize = intervLower->size();
+                size_t upperSize = intervUpper->size();
+
+                if(lowerSize < stats.minIntervalSize){
+                    stats.minIntervalSize = lowerSize;
+                }
+                if(lowerSize > stats.maxIntervalSize){
+                    stats.maxIntervalSize = lowerSize;
+                }
+
+                if(upperSize < stats.minIntervalSize){
+                    stats.minIntervalSize = upperSize;
+                }
+                if(upperSize > stats.maxIntervalSize){
+                    stats.maxIntervalSize = upperSize;
+                }
+
+                stats.avgIntervalSize = 
+                    (stats.avgIntervalSize * (stats.createdNodes-2) 
+                        + lowerSize + upperSize) / stats.createdNodes;
+            }
+        }
+    }
+    solution.resize(solution_.anglesLower.size());
+    for(int i = 0; i < solution_.anglesLower.size(); i++){
+        double angleLower = solution_.anglesLower[i];
+        double angleUpper = solution_.anglesUpper[i];
+        solution[i] = (angleLower + angleUpper)/2;
     }
     cost = lower_;
     return true;
