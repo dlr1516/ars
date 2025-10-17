@@ -21,10 +21,10 @@ void ArsGraphSolver::setXTol(double xtol){
 }
 
 bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost) {
-    LeastUpperBoundFirstQueue queue;
+    LeastUpperBoundFirstQueuePtr queue(new LeastUpperBoundFirstQueue);
     ArsGraphIntervalFull::Ptr initial(new ArsGraphIntervalFull(graph_));
     initial->init(graph_);
-    queue.push(initial);
+    queue->push(initial);
 
     solution.clear();
 
@@ -33,9 +33,9 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost) {
     solution_.anglesLower = initial->getNodeLowers();
     solution_.anglesUpper = initial->getNodeUppers();
 
-    while (!queue.empty()) {
-        ArsGraphIntervalPtr curr = queue.top();
-        queue.pop();
+    while (!queue->empty()) {
+        ArsGraphIntervalPtr curr = queue->top();
+        queue->pop();
         if (curr->getUpperBound() >= lower_) {
             if (lower_ < curr->getLowerBound()) {
                 lower_ = curr->getLowerBound();
@@ -57,8 +57,8 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost) {
                 }
 
                 curr->split(node, intervLower, intervUpper);
-                queue.push(intervLower);
-                queue.push(intervUpper);
+                queue->push(intervLower);
+                queue->push(intervUpper);
             }
         }
     }
@@ -73,10 +73,10 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost) {
 }
 
 bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost, Statistics& stats) {
-    LeastUpperBoundFirstQueue queue;
+    LeastUpperBoundFirstQueuePtr queue(new LeastUpperBoundFirstQueue);
     ArsGraphIntervalFull::Ptr initial(new ArsGraphIntervalFull(graph_));
     initial->init(graph_);
-    queue.push(initial);
+    queue->push(initial);
 
     solution.clear();
     stats.createdNodes = 1;
@@ -89,9 +89,9 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost, Statisti
     solution_.anglesLower = initial->getNodeLowers();
     solution_.anglesUpper = initial->getNodeUppers();
 
-    while (!queue.empty()) {
-        ArsGraphIntervalPtr curr = queue.top();
-        queue.pop();
+    while (!queue->empty()) {
+        ArsGraphIntervalPtr curr = queue->top();
+        queue->pop();
         if (curr->getUpperBound() >= lower_) {
             if (lower_ < curr->getLowerBound()) {
                 lower_ = curr->getLowerBound();
@@ -113,8 +113,8 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost, Statisti
                 }
 
                 curr->split(node, intervLower, intervUpper);
-                queue.push(intervLower);
-                queue.push(intervUpper);
+                queue->push(intervLower);
+                queue->push(intervUpper);
                 stats.createdNodes += 2;
                 size_t lowerSize = intervLower->size();
                 size_t upperSize = intervUpper->size();

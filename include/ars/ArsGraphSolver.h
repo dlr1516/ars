@@ -41,6 +41,9 @@ class ArsGraphSolver {
                             std::vector<ArsGraphIntervalPtr>,
                             UpperBoundLess>;
 
+    using LeastUpperBoundFirstQueuePtr =
+        std::shared_ptr<LeastUpperBoundFirstQueue>;
+
     struct Solution {
         std::vector<double> anglesLower;
         std::vector<double> anglesUpper;
@@ -51,6 +54,9 @@ class ArsGraphSolver {
         long maxIntervalSize;
         double avgIntervalSize;
         long long createdNodes;
+
+        Statistics() : minIntervalSize(0l), maxIntervalSize(0l),
+            avgIntervalSize(.0), createdNodes(0ll) {}
     };
 
     ArsGraphSolver();
