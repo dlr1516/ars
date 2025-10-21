@@ -58,7 +58,7 @@ int main(int argc, char** argv){
     ars::ArsGraphSolver solver(graph);
 
     std::vector<double> solution;
-    double cost;
+    double cost = 0;
     ars::ArsGraphSolver::Statistics stats;
     solver.solve(solution, cost, stats);
 
