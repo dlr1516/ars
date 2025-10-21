@@ -49,10 +49,10 @@ add_library(ars
   src/BBTranslation.cpp
   src/ConsensusTranslationEstimator.cpp
   src/DisjointSet.cpp
+  src/FourierLowerUpperLut.cpp
   src/GaussianMixtureEstimator.cpp
   src/HistogramCircularCorrelation.cpp
   src/HoughSpectrum.cpp
-
   # src/MortonOrderedPoints2d.cpp
   src/MortonSort.cpp
   src/ParamMap.cpp
