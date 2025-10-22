@@ -27,6 +27,8 @@ class FourierLowerUpperLut {
 
     void init(const std::vector<double>& coeffs, size_t levelNum);
 
+    void findLU(double xMin, double xMax, double& yLower, double& yUpper) const;
+
    private:
     std::vector<LUValues> luValues_;
     std::vector<LUIndex> intervals_;
@@ -49,6 +51,8 @@ class FourierLowerUpperLut {
     inline size_t childRight(size_t p) const { return ((p << 1) + 2); }
 
     inline size_t levelStart(size_t level) const { return (1 << level) - 1; }
+
+    size_t findCommonAncestor(size_t idxL, size_t idxU) const;
 };
 
 }  // namespace ars

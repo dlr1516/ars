@@ -63,4 +63,58 @@ void FourierLowerUpperLut::init(const std::vector<double>& coeffs,
     }
 }
 
+void FourierLowerUpperLut::findLU(double xMin,
+                                  double xMax,
+                                  double& yLower,
+                                  double& yUpper) const {
+    if (xMin > xMax)
+        std::swap(xMin, xMax);
+
+    if (xMax - xMin >= M_PI) {
+        size_t idxL = intervals_[0].idxL;
+        size_t idxU = intervals_[0].idxU;
+        yLower = luValues_[idxL].lower;
+        yUpper = luValues_[idxU].upper;
+        return;
+    } else {
+        size_t idxMin = (intervalNum_ + (int)floor(xMin / dx_)) % intervalNum_;
+        size_t idxMax = (intervalNum_ + (int)ceil(xMax / dx_)) % intervalNum_;
+
+        if (idxMin <= idxMax) {
+            size_t ancestor = findCommonAncestor(idxMin, idxMax - 1);
+            size_t idxL = intervals_[ancestor].idxL;
+            size_t idxU = intervals_[ancestor].idxU;
+            yLower = luValues_[idxL].lower;
+            yUpper = luValues_[idxU].upper;
+        } else {
+            size_t ancestorL = findCommonAncestor(idxMin, intervalNum_ - 1);
+            size_t ancestorU = findCommonAncestor(0, idxMax - 1);
+
+            size_t idxL1 = intervals_[ancestorL].idxL;
+            size_t idxU1 = intervals_[ancestorL].idxU;
+            size_t idxL2 = intervals_[ancestorU].idxL;
+            size_t idxU2 = intervals_[ancestorU].idxU;
+
+            yLower = std::min(luValues_[idxL1].lower, luValues_[idxL2].lower);
+            yUpper = std::max(luValues_[idxU1].upper, luValues_[idxU2].upper);
+        }
+    }
+}
+
+size_t FourierLowerUpperLut::findCommonAncestor(size_t idxL,
+                                                size_t idxU) const {
+    size_t nodeL = levelStart(levelNum_) + idxL;
+    size_t nodeU = levelStart(levelNum_) + idxU;
+
+    while (nodeL != nodeU) {
+        if (nodeL > nodeU) {
+            nodeL = parent(nodeL);
+        } else {
+            nodeU = parent(nodeU);
+        }
+    }
+
+    return nodeL;
+}
+
 }  // namespace ars
