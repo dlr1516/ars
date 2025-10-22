@@ -308,7 +308,7 @@ std::vector<double> ArsGraphIntervalDiff::getNodeLowers() const {
 }
 
 void ArsGraphIntervalDiff::setNodeLowers(std::vector<double> &vals) {
-    nodeLowersParent_ = std::make_shared<ParentT>(vals);
+    nodeLowersParent_ = std::make_shared<FullT>(vals);
     nodeLowersDiff_.clear();
 }
 
@@ -325,7 +325,7 @@ std::vector<double> ArsGraphIntervalDiff::getNodeUppers() const {
 }
 
 void ArsGraphIntervalDiff::setNodeUppers(std::vector<double> &vals) {
-    nodeUppersParent_ = std::make_shared<ParentT>(vals);
+    nodeUppersParent_ = std::make_shared<FullT>(vals);
     nodeUppersDiff_.clear();
 }
 
@@ -365,7 +365,7 @@ std::vector<double> ArsGraphIntervalDiff::getEdgeLowers() const {
 }
 
 void ArsGraphIntervalDiff::setEdgeLowers(std::vector<double> &vals) {
-    edgeLowersParent_ = std::make_shared<ParentT>(vals);
+    edgeLowersParent_ = std::make_shared<FullT>(vals);
     edgeLowersDiff_.clear();
 }
 
@@ -382,7 +382,7 @@ std::vector<double> ArsGraphIntervalDiff::getEdgeUppers() const {
 }
 
 void ArsGraphIntervalDiff::setEdgeUppers(std::vector<double> &vals) {
-    edgeUppersParent_ = std::make_shared<ParentT>(vals);
+    edgeUppersParent_ = std::make_shared<FullT>(vals);
     edgeUppersDiff_.clear();
 }
 
