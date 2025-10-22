@@ -14,13 +14,19 @@ int readConfig(const string& filename, vector<string>& cloudFiles, vector<vector
 int main(int argc, char** argv){
     vector<vector<int>> edges;
     vector<string> clouds;
+    bool useDiff = false;
     ars::ArsGraph::Ptr graph(new ars::ArsGraph);
     graph->setFourierOrder(30);
     ars::ArsGraphIntervalFull::Ptr interval(new ars::ArsGraphIntervalFull);
 
-    if(argc == 0 || readConfig(argv[1], clouds, edges) == -1){
+    if(argc == 1 || readConfig(argv[1], clouds, edges) == -1){
         std::cout << "Couldn't read config file!" << std::endl;
         return -1;
+    }
+
+    if (argc > 2 && std::string(argv[2]) == "true") {
+        useDiff = true;
+        std::cout << "Enabled differential Intervals" << std::endl;
     }
 
     int nodeCount = 0;
@@ -60,7 +66,7 @@ int main(int argc, char** argv){
     std::vector<double> solution;
     double cost = 0;
     ars::ArsGraphSolver::Statistics stats;
-    solver.solve(solution, cost, stats);
+    solver.solve(solution, cost, stats, useDiff);
 
     std::cout << "Solution: " << std::endl;
     for(int i = 0; i < solution.size(); i++){
