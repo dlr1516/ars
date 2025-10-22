@@ -37,6 +37,9 @@ class ArsGraphInterval {
     using Self = ArsGraphInterval;
     using Ptr = std::shared_ptr<Self>;
     using ArsGraphPtr = ArsGraph::Ptr;
+    using DiffT = std::map<int, double>;
+    using FullT = std::vector<double>;
+    using FullTPtr = std::shared_ptr<FullT>;
 
     ArsGraphInterval();
 
@@ -64,13 +67,13 @@ class ArsGraphInterval {
 
     virtual void setNodeLowers(std::vector<double>& vals) = 0;
 
-    virtual void setNodeLowers(std::map<int, double>& vals) = 0;
+    virtual void setNodeLowers(DiffT& vals) = 0;
 
     virtual std::vector<double> getNodeUppers() const = 0;
 
     virtual void setNodeUppers(std::vector<double>& vals) = 0;
 
-    virtual void setNodeUppers(std::map<int, double>& vals) = 0;
+    virtual void setNodeUppers(DiffT& vals) = 0;
 
     virtual double edgeLower(size_t i) = 0;
 
@@ -84,13 +87,13 @@ class ArsGraphInterval {
 
     virtual void setEdgeLowers(std::vector<double>& vals) = 0;
 
-    virtual void setEdgeLowers(std::map<int, double>& vals) = 0;
+    virtual void setEdgeLowers(DiffT& vals) = 0;
 
     virtual std::vector<double> getEdgeUppers() const = 0;
 
     virtual void setEdgeUppers(std::vector<double>& vals) = 0;
 
-    virtual void setEdgeUppers(std::map<int, double>& vals) = 0;
+    virtual void setEdgeUppers(DiffT& vals) = 0;
 
     virtual double getLowerBound() = 0;
 
@@ -137,13 +140,13 @@ class ArsGraphIntervalFull : public ArsGraphInterval {
 
     virtual void setNodeLowers(std::vector<double>& vals);
 
-    virtual void setNodeLowers(std::map<int, double>& vals);
+    virtual void setNodeLowers(DiffT& vals);
 
     virtual std::vector<double> getNodeUppers() const;
 
     virtual void setNodeUppers(std::vector<double>& vals);
 
-    virtual void setNodeUppers(std::map<int, double>& vals);
+    virtual void setNodeUppers(DiffT& vals);
 
     virtual double edgeLower(size_t i);
 
@@ -157,13 +160,13 @@ class ArsGraphIntervalFull : public ArsGraphInterval {
 
     virtual void setEdgeLowers(std::vector<double>& vals);
 
-    virtual void setEdgeLowers(std::map<int, double>& vals);
+    virtual void setEdgeLowers(DiffT& vals);
 
     virtual std::vector<double> getEdgeUppers() const;
 
     virtual void setEdgeUppers(std::vector<double>& vals);
 
-    virtual void setEdgeUppers(std::map<int, double>& vals);
+    virtual void setEdgeUppers(DiffT& vals);
 
     virtual double getLowerBound();
 
@@ -198,9 +201,6 @@ class ArsGraphIntervalDiff : public ArsGraphInterval {
     using Self = ArsGraphIntervalDiff;
     using Ptr = std::shared_ptr<Self>;
     using ArsGraphPtr = ArsGraph::Ptr;
-    using DiffT = std::map<int, double>;
-    using ParentT = std::vector<double>;
-    using ParentTPtr = std::shared_ptr<ParentT>;
 
     ArsGraphIntervalDiff();
 
@@ -222,13 +222,13 @@ class ArsGraphIntervalDiff : public ArsGraphInterval {
 
     virtual void setNodeLowers(std::vector<double>& vals);
 
-    virtual void setNodeLowers(std::map<int, double>& vals);
+    virtual void setNodeLowers(DiffT& vals);
 
     virtual std::vector<double> getNodeUppers() const;
 
     virtual void setNodeUppers(std::vector<double>& vals);
 
-    virtual void setNodeUppers(std::map<int, double>& vals);
+    virtual void setNodeUppers(DiffT& vals);
 
     virtual double edgeLower(size_t i);
 
@@ -242,13 +242,13 @@ class ArsGraphIntervalDiff : public ArsGraphInterval {
 
     virtual void setEdgeLowers(std::vector<double>& vals);
 
-    virtual void setEdgeLowers(std::map<int, double>& vals);
+    virtual void setEdgeLowers(DiffT& vals);
 
     virtual std::vector<double> getEdgeUppers() const;
 
     virtual void setEdgeUppers(std::vector<double>& vals);
 
-    virtual void setEdgeUppers(std::map<int, double>& vals);
+    virtual void setEdgeUppers(DiffT& vals);
 
     virtual double getLowerBound();
 
@@ -263,16 +263,16 @@ class ArsGraphIntervalDiff : public ArsGraphInterval {
     virtual size_t size() const;    
 
    private:
-    ParentTPtr nodeLowersParent_;
+    FullTPtr nodeLowersParent_;
     DiffT nodeLowersDiff_;
 
-    ParentTPtr nodeUppersParent_;
+    FullTPtr nodeUppersParent_;
     DiffT nodeUppersDiff_;
 
-    ParentTPtr edgeLowersParent_;
+    FullTPtr edgeLowersParent_;
     DiffT edgeLowersDiff_;
 
-    ParentTPtr edgeUppersParent_;
+    FullTPtr edgeUppersParent_;
     DiffT edgeUppersDiff_;
 
     double lower_;
