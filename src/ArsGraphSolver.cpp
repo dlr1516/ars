@@ -16,11 +16,11 @@ void ArsGraphSolver::setGraph(ArsGraphPtr& graph) {
     graph_ = graph;
 }
 
-void ArsGraphSolver::setXTol(double xtol){
+void ArsGraphSolver::setXTol(double xtol) {
     xtol_ = xtol;
 }
 
-bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost) {
+bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost, bool useDiff) {
     LeastUpperBoundFirstQueuePtr queue(new LeastUpperBoundFirstQueue);
     ArsGraphIntervalFull::Ptr initial(new ArsGraphIntervalFull(graph_));
     initial->init(graph_);
@@ -45,8 +45,16 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost) {
             }
             std::vector<NodeInterval> validNodes;
             if(!checkInterval(curr, validNodes)){
-                ars::ArsGraphIntervalFull::Ptr intervLower(new ars::ArsGraphIntervalFull);
-                ars::ArsGraphIntervalFull::Ptr intervUpper(new ars::ArsGraphIntervalFull);
+                ars::ArsGraphInterval::Ptr intervLower;
+                ars::ArsGraphInterval::Ptr intervUpper;
+                if (useDiff && curr->getDiffSize() <= curr->getEdgeNum()/3) {
+                    intervLower.reset(new ars::ArsGraphIntervalDiff);
+                    intervUpper.reset(new ars::ArsGraphIntervalDiff);
+                }
+                else {
+                    intervLower.reset(new ars::ArsGraphIntervalFull);
+                    intervUpper.reset(new ars::ArsGraphIntervalFull);
+                }
 
                 int node = validNodes[0].idx;
                 for(int i = 1; i < validNodes.size(); i++){
@@ -72,7 +80,9 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost) {
     return true;
 }
 
-bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost, Statistics& stats) {
+bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost, 
+    Statistics& stats, bool useDiff) {
+
     LeastUpperBoundFirstQueuePtr queue(new LeastUpperBoundFirstQueue);
     ArsGraphIntervalFull::Ptr initial(new ArsGraphIntervalFull(graph_));
     initial->init(graph_);
@@ -101,16 +111,25 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost, Statisti
             }
             std::vector<NodeInterval> validNodes;
             if(!checkInterval(curr, validNodes)){
-                ars::ArsGraphIntervalFull::Ptr intervLower(new ars::ArsGraphIntervalFull);
-                ars::ArsGraphIntervalFull::Ptr intervUpper(new ars::ArsGraphIntervalFull);
+                ars::ArsGraphInterval::Ptr intervLower;
+                ars::ArsGraphInterval::Ptr intervUpper;
+                if (useDiff && curr->getDiffSize() <= curr->getEdgeNum()/3) {
+                    intervLower.reset(new ars::ArsGraphIntervalDiff);
+                    intervUpper.reset(new ars::ArsGraphIntervalDiff);
+                }
+                else {
+                    intervLower.reset(new ars::ArsGraphIntervalFull);
+                    intervUpper.reset(new ars::ArsGraphIntervalFull);
+                }
 
-                int node = validNodes[0].idx;
+                int idx = 0;
                 for(int i = 1; i < validNodes.size(); i++){
-                    if (validNodes[node].xWidth < validNodes[i].xWidth){
-                        node = validNodes[i].idx;
+                    if (validNodes[idx].xWidth < validNodes[i].xWidth){
+                        idx = i;
                         break;
                     }
                 }
+                int node = validNodes[idx].idx;
 
                 curr->split(node, intervLower, intervUpper);
                 queue->push(intervLower);

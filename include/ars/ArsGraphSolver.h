@@ -69,8 +69,8 @@ class ArsGraphSolver {
     void setGraph(ArsGraphPtr& graph);
     void setXTol(double xtol);
 
-    bool solve(std::vector<double>& solution, double& cost);
-    bool solve(std::vector<double>& solution, double& cost, Statistics& stats);
+    bool solve(std::vector<double>& solution, double& cost, bool useDiff = true);
+    bool solve(std::vector<double>& solution, double& cost, Statistics& stats, bool useDiff = true);
 
    protected:
     ArsGraphPtr graph_;
