@@ -38,10 +38,12 @@ void ArsGraphInterval::setGraph(ArsGraphPtr& graph){
 // ------------------------------------------------------------------
 
 ArsGraphIntervalFull::ArsGraphIntervalFull() 
-    : ArsGraphInterval(), upper_(NAN), lower_(NAN) {}
+    : ArsGraphInterval(), upper_(NAN), lower_(NAN), nodeLowers_(nullptr),
+        nodeUppers_(nullptr), edgeLowers_(nullptr), edgeUppers_(nullptr) {}
 
 ArsGraphIntervalFull::ArsGraphIntervalFull(ArsGraphPtr& graph)
-    : ArsGraphInterval(graph), upper_(NAN), lower_(NAN) {}
+    : ArsGraphInterval(graph), upper_(NAN), lower_(NAN), nodeLowers_(nullptr),
+        nodeUppers_(nullptr), edgeLowers_(nullptr), edgeUppers_(nullptr) {}
 
 ArsGraphIntervalFull::~ArsGraphIntervalFull() {}
 
@@ -52,24 +54,24 @@ void ArsGraphIntervalFull::init(ArsGraphPtr& graph) {
     size_t edgeNum = getEdgeNum();
 
     // Initializes node lower and upper values
-    nodeLowers_.resize(nodeNum);
-    nodeUppers_.resize(nodeNum);
-    std::fill(std::begin(nodeLowers_), std::end(nodeLowers_), 0.0);
-    std::fill(std::begin(nodeUppers_), std::end(nodeUppers_), M_PI);
-    nodeLowers_[0] = 0.0;
-    nodeUppers_[0] = 0.0;
+    nodeLowers_ = FullTPtr(new FullT(nodeNum));
+    nodeUppers_ = FullTPtr(new FullT(nodeNum));
+    std::fill(std::begin(*nodeLowers_), std::end(*nodeLowers_), 0.0);
+    std::fill(std::begin(*nodeUppers_), std::end(*nodeUppers_), M_PI);
+    nodeLowers_->at(0) = 0.0;
+    nodeUppers_->at(0) = 0.0;
 
     // Computes lower and upper bounds of each edge
-    edgeLowers_.resize(edgeNum);
-    edgeUppers_.resize(edgeNum);
+    edgeLowers_ = FullTPtr(new FullT(edgeNum));
+    edgeUppers_ = FullTPtr(new FullT(edgeNum));
     for (int j = 0; j < graph_->edges().size(); ++j) {
         const ArsGraph::Edge& edge = graph_->edges()[j];
         int isrc = edge.isrc;
         int idst = edge.idst;
-        double thetaMin = nodeLowers_[idst] - nodeUppers_[isrc];
-        double thetaMax = nodeUppers_[idst] - nodeLowers_[isrc];
-        ars::findLUFourier(edge.coeffs, thetaMin, thetaMax, edgeLowers_[j],
-                           edgeUppers_[j]);
+        double thetaMin = nodeLowers_->at(idst) - nodeUppers_->at(isrc);
+        double thetaMax = nodeUppers_->at(idst) - nodeLowers_->at(isrc);
+        ars::findLUFourier(edge.coeffs, thetaMin, thetaMax, edgeLowers_->at(j),
+                           edgeUppers_->at(j));
     }
     computeEdgeBounds();
 }
@@ -81,93 +83,93 @@ int ArsGraphIntervalFull::getDiffSize() {
 double ArsGraphIntervalFull::nodeLower(size_t i)
 {
     // TODO: check overflow of i
-    return nodeLowers_[i];
+    return nodeLowers_->at(i);
 }
 
 void ArsGraphIntervalFull::setNodeLower(size_t idx, double val) {
-    nodeLowers_[idx] = val;
+    nodeLowers_->at(idx) = val;
 }
 
 double ArsGraphIntervalFull::nodeUpper(size_t i)
 {
     // TODO: check overflow of i
-    return nodeUppers_[i];
+    return nodeUppers_->at(i);
 }
 
 void ArsGraphIntervalFull::setNodeUpper(size_t idx, double val) {
-    nodeUppers_[idx] = val;
+    nodeUppers_->at(idx) = val;
 }
 
 std::vector<double> ArsGraphIntervalFull::getNodeLowers() const
 {
-    return nodeLowers_;
+    return *nodeLowers_;
 }
 
-void ArsGraphIntervalFull::setNodeLowers(std::vector<double>& vals) {
-    nodeLowers_ = vals;
+void ArsGraphIntervalFull::setNodeLowers(const FullTPtr& vals) {
+    nodeLowers_ = std::make_shared<FullT>(*vals);
 }
 
-void ArsGraphIntervalFull::setNodeLowers(std::map<int, double> &vals) {
+void ArsGraphIntervalFull::setNodeLowers(DiffT &vals) {
     for (auto& [key, val] : vals)
-        nodeLowers_[key] = val;
+        nodeLowers_->at(key) = val;
 }
 
 std::vector<double> ArsGraphIntervalFull::getNodeUppers() const
 {
-    return nodeUppers_;
+    return *nodeUppers_;
 }
 
-void ArsGraphIntervalFull::setNodeUppers(std::vector<double>& vals) {
-    nodeUppers_ = vals;
+void ArsGraphIntervalFull::setNodeUppers(const FullTPtr& vals) {
+    nodeUppers_ = std::make_shared<FullT>(*vals);
 }
 
-void ArsGraphIntervalFull::setNodeUppers(std::map<int, double> &vals) {
+void ArsGraphIntervalFull::setNodeUppers(DiffT &vals) {
     for (auto& [key, val] : vals)
-        nodeUppers_[key] = val;
+        nodeUppers_->at(key) = val;
 }
 
 double ArsGraphIntervalFull::edgeLower(size_t i) {
     // TODO: check overflow of i
-    return edgeLowers_[i];
+    return edgeLowers_->at(i);
 }
 
 void ArsGraphIntervalFull::setEdgeLower(size_t idx, double val) {
-    edgeLowers_[idx] = val;
+    edgeLowers_->at(idx) = val;
 }
 
 double ArsGraphIntervalFull::edgeUpper(size_t i) {
     // TODO: check overflow of i
-    return edgeUppers_[i];
+    return edgeUppers_->at(i);
 }
 
 void ArsGraphIntervalFull::setEdgeUpper(size_t idx, double val) {
-    edgeUppers_[idx] = val;
+    edgeUppers_->at(idx) = val;
 }
 
 std::vector<double> ArsGraphIntervalFull::getEdgeLowers() const {
-    return edgeLowers_;
+    return *edgeLowers_;
 }
 
-void ArsGraphIntervalFull::setEdgeLowers(std::vector<double>& vals) {
-    edgeLowers_ = vals;
+void ArsGraphIntervalFull::setEdgeLowers(const FullTPtr& vals) {
+    edgeLowers_ = std::make_shared<FullT>(*vals);
 }
 
-void ArsGraphIntervalFull::setEdgeLowers(std::map<int, double> &vals) {
+void ArsGraphIntervalFull::setEdgeLowers(DiffT &vals) {
     for (auto& [key, val] : vals)
-        edgeLowers_[key] = val;
+        edgeLowers_->at(key) = val;
 }
 
 std::vector<double> ArsGraphIntervalFull::getEdgeUppers() const {
-    return edgeUppers_;
+    return *edgeUppers_;
 }
 
-void ArsGraphIntervalFull::setEdgeUppers(std::vector<double>& vals) {
-    edgeUppers_ = vals;
+void ArsGraphIntervalFull::setEdgeUppers(const FullTPtr& vals) {
+    edgeUppers_ = std::make_shared<FullT>(*vals);
 }
 
-void ArsGraphIntervalFull::setEdgeUppers(std::map<int, double> &vals) {
+void ArsGraphIntervalFull::setEdgeUppers(DiffT &vals) {
     for (auto& [key, val] : vals)
-        edgeUppers_[key] = val;
+        edgeUppers_->at(key) = val;
 }
 
 double ArsGraphIntervalFull::getLowerBound() {
@@ -197,8 +199,8 @@ void ArsGraphIntervalFull::computeEdgeBounds() {
     lower_ = 0.0;
     upper_ = 0.0;
     for (int i = 0; i < edgeNum; ++i) {
-        lower_ += edgeLowers_[i];
-        upper_ += edgeUppers_[i];
+        lower_ += edgeLowers_->at(i);
+        upper_ += edgeUppers_->at(i);
     }
 }
 
@@ -210,7 +212,7 @@ void ArsGraphIntervalFull::split(size_t idx,
     intervLower->setGraph(graph_);
     intervUpper->setGraph(graph_);
 
-    double thetaMid = 0.5 * (nodeLowers_[idx] + nodeUppers_[idx]);
+    double thetaMid = 0.5 * (nodeLowers_->at(idx) + nodeUppers_->at(idx));
     intervLower->setNodeLowers(nodeLowers_);
     intervLower->setNodeUppers(nodeUppers_);
     intervLower->setNodeUpper(idx, thetaMid);
@@ -253,10 +255,10 @@ void ArsGraphIntervalFull::split(size_t idx,
 size_t ArsGraphIntervalFull::size() const{
     size_t size = 0;
     size += sizeof(graph_);
-    size += nodeLowers_.size()*sizeof(nodeLowers_.front());
-    size += nodeUppers_.size()*sizeof(nodeUppers_.front());
-    size += edgeLowers_.size()*sizeof(edgeLowers_.front());
-    size += edgeUppers_.size()*sizeof(edgeUppers_.front());
+    size += nodeLowers_->size()*sizeof(nodeLowers_->front());
+    size += nodeUppers_->size()*sizeof(nodeUppers_->front());
+    size += edgeLowers_->size()*sizeof(edgeLowers_->front());
+    size += edgeUppers_->size()*sizeof(edgeUppers_->front());
     size += sizeof(lower_);
     size += sizeof(upper_);
     return size;
@@ -267,10 +269,12 @@ size_t ArsGraphIntervalFull::size() const{
 // ------------------------------------------------------------------
 
 ArsGraphIntervalDiff::ArsGraphIntervalDiff() 
-    : ArsGraphInterval(), upper_(NAN), lower_(NAN) {}
+    : ArsGraphInterval(), upper_(NAN), lower_(NAN), nodeLowersParent_(nullptr),
+        nodeUppersParent_(nullptr), edgeLowersParent_(nullptr), edgeUppersParent_(nullptr) {}
 
 ArsGraphIntervalDiff::ArsGraphIntervalDiff(ArsGraphPtr& graph)
-    : ArsGraphInterval(graph), upper_(NAN), lower_(NAN) {}
+    : ArsGraphInterval(graph), upper_(NAN), lower_(NAN), nodeLowersParent_(nullptr),
+        nodeUppersParent_(nullptr), edgeLowersParent_(nullptr), edgeUppersParent_(nullptr) {}
 
 ArsGraphIntervalDiff::~ArsGraphIntervalDiff() {}
 
@@ -307,12 +311,12 @@ std::vector<double> ArsGraphIntervalDiff::getNodeLowers() const {
     return nodes;
 }
 
-void ArsGraphIntervalDiff::setNodeLowers(std::vector<double> &vals) {
-    nodeLowersParent_ = std::make_shared<FullT>(vals);
+void ArsGraphIntervalDiff::setNodeLowers(const FullTPtr &vals) {
+    nodeLowersParent_ = FullTPtr(vals);
     nodeLowersDiff_.clear();
 }
 
-void ArsGraphIntervalDiff::setNodeLowers(std::map<int, double> &vals) {
+void ArsGraphIntervalDiff::setNodeLowers(DiffT &vals) {
     for (auto& [key, val] : vals)
         nodeLowersDiff_[key] = val;
 }
@@ -324,12 +328,12 @@ std::vector<double> ArsGraphIntervalDiff::getNodeUppers() const {
     return nodes;
 }
 
-void ArsGraphIntervalDiff::setNodeUppers(std::vector<double> &vals) {
-    nodeUppersParent_ = std::make_shared<FullT>(vals);
+void ArsGraphIntervalDiff::setNodeUppers(const FullTPtr &vals) {
+    nodeUppersParent_ = FullTPtr(vals);
     nodeUppersDiff_.clear();
 }
 
-void ArsGraphIntervalDiff::setNodeUppers(std::map<int, double> &vals) {
+void ArsGraphIntervalDiff::setNodeUppers(DiffT &vals) {
     for (auto& [key, val] : vals)
         nodeUppersDiff_[key] = val;
 }
@@ -364,12 +368,12 @@ std::vector<double> ArsGraphIntervalDiff::getEdgeLowers() const {
     return edges;
 }
 
-void ArsGraphIntervalDiff::setEdgeLowers(std::vector<double> &vals) {
-    edgeLowersParent_ = std::make_shared<FullT>(vals);
+void ArsGraphIntervalDiff::setEdgeLowers(const FullTPtr &vals) {
+    edgeLowersParent_ = FullTPtr(vals);
     edgeLowersDiff_.clear();
 }
 
-void ArsGraphIntervalDiff::setEdgeLowers(std::map<int, double> &vals) {
+void ArsGraphIntervalDiff::setEdgeLowers(DiffT &vals) {
     for (auto& [key, val] : vals)
         edgeLowersDiff_[key] = val;
 }
@@ -381,12 +385,12 @@ std::vector<double> ArsGraphIntervalDiff::getEdgeUppers() const {
     return edges;
 }
 
-void ArsGraphIntervalDiff::setEdgeUppers(std::vector<double> &vals) {
-    edgeUppersParent_ = std::make_shared<FullT>(vals);
+void ArsGraphIntervalDiff::setEdgeUppers(const FullTPtr &vals) {
+    edgeUppersParent_ = FullTPtr(vals);
     edgeUppersDiff_.clear();
 }
 
-void ArsGraphIntervalDiff::setEdgeUppers(std::map<int, double> &vals) {
+void ArsGraphIntervalDiff::setEdgeUppers(DiffT &vals) {
     for (auto& [key, val] : vals)
         edgeUppersDiff_[key] = val;
 }
@@ -448,26 +452,26 @@ void ArsGraphIntervalDiff::split(size_t idx, Base::Ptr intervLower, Base::Ptr in
 
     double thetaMid = 0.5 * (thetaLower + thetaUpper);
 
-    intervLower->setNodeLowers(*nodeLowersParent_);
+    intervLower->setNodeLowers(nodeLowersParent_);
     intervLower->setNodeLowers(nodeLowersDiff_);
-    intervLower->setNodeUppers(*nodeUppersParent_);
+    intervLower->setNodeUppers(nodeUppersParent_);
     intervLower->setNodeUppers(nodeUppersDiff_);
     intervLower->setNodeUpper(idx, thetaMid);
 
-    intervUpper->setNodeLowers(*nodeLowersParent_);
+    intervUpper->setNodeLowers(nodeLowersParent_);
     intervUpper->setNodeLowers(nodeLowersDiff_);
-    intervUpper->setNodeUppers(*nodeUppersParent_);
+    intervUpper->setNodeUppers(nodeUppersParent_);
     intervUpper->setNodeUppers(nodeUppersDiff_);
     intervUpper->setNodeLower(idx, thetaMid);
 
-    intervLower->setEdgeLowers(*edgeLowersParent_);
+    intervLower->setEdgeLowers(edgeLowersParent_);
     intervLower->setEdgeLowers(edgeLowersDiff_);
-    intervLower->setEdgeUppers(*edgeUppersParent_);
+    intervLower->setEdgeUppers(edgeUppersParent_);
     intervLower->setEdgeUppers(edgeUppersDiff_);
 
-    intervUpper->setEdgeLowers(*edgeLowersParent_);
+    intervUpper->setEdgeLowers(edgeLowersParent_);
     intervUpper->setEdgeLowers(edgeLowersDiff_);
-    intervUpper->setEdgeUppers(*edgeUppersParent_);
+    intervUpper->setEdgeUppers(edgeUppersParent_);
     intervUpper->setEdgeUppers(edgeUppersDiff_);
 
     for (int eidx : graph_->nodes()[idx].incidents) {

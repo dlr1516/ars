@@ -113,7 +113,7 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost,
             if(!checkInterval(curr, validNodes)){
                 ars::ArsGraphInterval::Ptr intervLower;
                 ars::ArsGraphInterval::Ptr intervUpper;
-                if (useDiff && curr->getDiffSize() <= curr->getEdgeNum()/3) {
+                if (useDiff && curr->getDiffSize() <= curr->getEdgeNum()*0.5) {
                     intervLower.reset(new ars::ArsGraphIntervalDiff);
                     intervUpper.reset(new ars::ArsGraphIntervalDiff);
                 }

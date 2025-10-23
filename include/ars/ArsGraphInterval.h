@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <boost/container/flat_map.hpp>
 
 #include <ars/ArsGraph.h>
 #include <ars/definitions.h>
@@ -37,7 +38,7 @@ class ArsGraphInterval {
     using Self = ArsGraphInterval;
     using Ptr = std::shared_ptr<Self>;
     using ArsGraphPtr = ArsGraph::Ptr;
-    using DiffT = std::map<int, double>;
+    using DiffT = boost::container::flat_map<int, double>;
     using FullT = std::vector<double>;
     using FullTPtr = std::shared_ptr<FullT>;
 
@@ -65,13 +66,13 @@ class ArsGraphInterval {
 
     virtual std::vector<double> getNodeLowers() const = 0;
 
-    virtual void setNodeLowers(std::vector<double>& vals) = 0;
+    virtual void setNodeLowers(const FullTPtr& vals) = 0;
 
     virtual void setNodeLowers(DiffT& vals) = 0;
 
     virtual std::vector<double> getNodeUppers() const = 0;
 
-    virtual void setNodeUppers(std::vector<double>& vals) = 0;
+    virtual void setNodeUppers(const FullTPtr& vals) = 0;
 
     virtual void setNodeUppers(DiffT& vals) = 0;
 
@@ -85,13 +86,13 @@ class ArsGraphInterval {
 
     virtual std::vector<double> getEdgeLowers() const = 0;
 
-    virtual void setEdgeLowers(std::vector<double>& vals) = 0;
+    virtual void setEdgeLowers(const FullTPtr& vals) = 0;
 
     virtual void setEdgeLowers(DiffT& vals) = 0;
 
     virtual std::vector<double> getEdgeUppers() const = 0;
 
-    virtual void setEdgeUppers(std::vector<double>& vals) = 0;
+    virtual void setEdgeUppers(const FullTPtr& vals) = 0;
 
     virtual void setEdgeUppers(DiffT& vals) = 0;
 
@@ -138,13 +139,13 @@ class ArsGraphIntervalFull : public ArsGraphInterval {
 
     virtual std::vector<double> getNodeLowers() const;
 
-    virtual void setNodeLowers(std::vector<double>& vals);
+    virtual void setNodeLowers(const FullTPtr& vals);
 
     virtual void setNodeLowers(DiffT& vals);
 
     virtual std::vector<double> getNodeUppers() const;
 
-    virtual void setNodeUppers(std::vector<double>& vals);
+    virtual void setNodeUppers(const FullTPtr& vals);
 
     virtual void setNodeUppers(DiffT& vals);
 
@@ -158,13 +159,13 @@ class ArsGraphIntervalFull : public ArsGraphInterval {
 
     virtual std::vector<double> getEdgeLowers() const;
 
-    virtual void setEdgeLowers(std::vector<double>& vals);
+    virtual void setEdgeLowers(const FullTPtr& vals);
 
     virtual void setEdgeLowers(DiffT& vals);
 
     virtual std::vector<double> getEdgeUppers() const;
 
-    virtual void setEdgeUppers(std::vector<double>& vals);
+    virtual void setEdgeUppers(const FullTPtr& vals);
 
     virtual void setEdgeUppers(DiffT& vals);
 
@@ -181,10 +182,10 @@ class ArsGraphIntervalFull : public ArsGraphInterval {
     virtual size_t size() const;    
 
    private:
-    std::vector<double> nodeLowers_;
-    std::vector<double> nodeUppers_;
-    std::vector<double> edgeLowers_;
-    std::vector<double> edgeUppers_;
+    FullTPtr nodeLowers_;
+    FullTPtr nodeUppers_;
+    FullTPtr edgeLowers_;
+    FullTPtr edgeUppers_;
     double lower_;
     double upper_;
 
@@ -220,13 +221,13 @@ class ArsGraphIntervalDiff : public ArsGraphInterval {
 
     virtual std::vector<double> getNodeLowers() const;
 
-    virtual void setNodeLowers(std::vector<double>& vals);
+    virtual void setNodeLowers(const FullTPtr& vals);
 
     virtual void setNodeLowers(DiffT& vals);
 
     virtual std::vector<double> getNodeUppers() const;
 
-    virtual void setNodeUppers(std::vector<double>& vals);
+    virtual void setNodeUppers(const FullTPtr& vals);
 
     virtual void setNodeUppers(DiffT& vals);
 
@@ -240,13 +241,13 @@ class ArsGraphIntervalDiff : public ArsGraphInterval {
 
     virtual std::vector<double> getEdgeLowers() const;
 
-    virtual void setEdgeLowers(std::vector<double>& vals);
+    virtual void setEdgeLowers(const FullTPtr& vals);
 
     virtual void setEdgeLowers(DiffT& vals);
 
     virtual std::vector<double> getEdgeUppers() const;
 
-    virtual void setEdgeUppers(std::vector<double>& vals);
+    virtual void setEdgeUppers(const FullTPtr& vals);
 
     virtual void setEdgeUppers(DiffT& vals);
 
