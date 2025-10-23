@@ -36,6 +36,11 @@ class FourierLowerUpperLut {
     size_t intervalNum_;
     double dx_;
 
+    void findLUTree(size_t idxMin,
+                    size_t idxMax,
+                    double& lower,
+                    double& upper) const;
+
     /**
      * The vector intervals_ stores a tree organized into levels.
      * The left and right children of a node p are:

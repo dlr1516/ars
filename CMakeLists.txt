@@ -53,6 +53,7 @@ add_library(ars
   src/GaussianMixtureEstimator.cpp
   src/HistogramCircularCorrelation.cpp
   src/HoughSpectrum.cpp
+
   # src/MortonOrderedPoints2d.cpp
   src/MortonSort.cpp
   src/ParamMap.cpp
@@ -102,6 +103,9 @@ target_link_libraries(testArsGraphSplit ${ars_LINK_LIBS} ars)
 
 add_executable(testArsGraphSolver app/testArsGraphSolver.cpp)
 target_link_libraries(testArsGraphSolver ${ars_LINK_LIBS} ars)
+
+add_executable(testFourierLowerUpperLut app/testFourierLowerUpperLut.cpp)
+target_link_libraries(testFourierLowerUpperLut ${ars_LINK_LIBS} ars)
 
 # add_executable(testMortonOrderedPoints app/testMortonOrderedPoints.cpp)
 # target_link_libraries(testMortonOrderedPoints ${ars_LINK_LIBS} ars)

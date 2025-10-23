@@ -1,4 +1,5 @@
 #include <ars/FourierLowerUpperLut.h>
+#include <ars/MortonSort.h>
 #include <ars/functions.h>
 
 namespace ars {
@@ -61,6 +62,16 @@ void FourierLowerUpperLut::init(const std::vector<double>& coeffs,
             c = p;
         }
     }
+
+    // Debug print:
+    for (size_t i = 0; i < luValues_.size(); ++i) {
+        size_t idxLower = intervals_[i].idxL;
+        size_t idxUpper = intervals_[i].idxU;
+        double lower = luValues_[idxLower].lower;
+        double upper = luValues_[idxUpper].upper;
+        ARS_PRINT("node " << i << " idxLower " << idxLower << ", idxUpper "
+                          << idxUpper << "[" << lower << "," << upper << "]");
+    }
 }
 
 void FourierLowerUpperLut::findLU(double xMin,
@@ -81,24 +92,45 @@ void FourierLowerUpperLut::findLU(double xMin,
         size_t idxMax = (intervalNum_ + (int)ceil(xMax / dx_)) % intervalNum_;
 
         if (idxMin <= idxMax) {
-            size_t ancestor = findCommonAncestor(idxMin, idxMax - 1);
-            size_t idxL = intervals_[ancestor].idxL;
-            size_t idxU = intervals_[ancestor].idxU;
-            yLower = luValues_[idxL].lower;
-            yUpper = luValues_[idxU].upper;
+            findLUTree(idxMin, idxMax, yLower, yUpper);
         } else {
             size_t ancestorL = findCommonAncestor(idxMin, intervalNum_ - 1);
             size_t ancestorU = findCommonAncestor(0, idxMax - 1);
 
-            size_t idxL1 = intervals_[ancestorL].idxL;
-            size_t idxU1 = intervals_[ancestorL].idxU;
-            size_t idxL2 = intervals_[ancestorU].idxL;
-            size_t idxU2 = intervals_[ancestorU].idxU;
+            double yLower1, yUpper1, yLower2, yUpper2;
+            findLUTree(idxMin, intervalNum_ - 1, yLower1, yUpper1);
+            findLUTree(0, idxMax, yLower2, yUpper2);
 
-            yLower = std::min(luValues_[idxL1].lower, luValues_[idxL2].lower);
-            yUpper = std::max(luValues_[idxU1].upper, luValues_[idxU2].upper);
+            yLower = std::min(yLower1, yLower2);
+            yUpper = std::max(yUpper1, yUpper2);
         }
     }
+}
+
+void FourierLowerUpperLut::findLUTree(size_t idxMin,
+                                      size_t idxMax,
+                                      double& lower,
+                                      double& upper) const {
+    size_t idxLow, idxMid, idxUpp;
+    size_t ancestor, idxL, idxU;
+    double lower1, upper1, lower2, upper2;
+
+    intervalPow2(idxMin, idxMax, idxLow, idxMid, idxUpp);
+
+    if (idxLow == idxMin && idxUpp == idxMax) {
+        ancestor = findCommonAncestor(idxMin, idxMax - 1);
+        idxL = intervals_[ancestor].idxL;
+        idxU = intervals_[ancestor].idxU;
+        lower = luValues_[idxL].lower;
+        upper = luValues_[idxU].upper;
+        return;
+    }
+
+    findLU(idxMin, idxMid, lower1, upper1);
+    findLU(idxMid, idxMax, lower2, upper2);
+
+    lower = std::min(lower1, lower2);
+    upper = std::max(upper1, upper2);
 }
 
 size_t FourierLowerUpperLut::findCommonAncestor(size_t idxL,
