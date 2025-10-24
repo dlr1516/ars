@@ -5,6 +5,7 @@
 
 #include <ars/ArsGraph.h>
 #include <ars/ArsGraphInterval.h>
+#include <ars/BBOptimizer1d.h>
 
 namespace ars {
 
@@ -80,6 +81,10 @@ class ArsGraphSolver {
     double xtol_;
 
     bool checkInterval(ArsGraphIntervalPtr interval, std::vector<NodeInterval>& validIndices);
+
+    bool initialSolutionFromTree(const ArsGraphInterval::Ptr& initial);
+
+    bool initialSolutionFromGraph();
 };
 
 }  // namespace ars
