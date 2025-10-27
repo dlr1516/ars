@@ -35,6 +35,7 @@ class FourierLowerUpperLut {
         double yLower;
         double yUpper;
     };
+    using Intervals = std::vector<Interval>;
 
     FourierLowerUpperLut();
 
@@ -46,8 +47,15 @@ class FourierLowerUpperLut {
 
     void findLU(double xMin, double xMax, double& yLower, double& yUpper) const;
 
+    /**
+     * @brief Added for debug only. It will be removed!
+     *
+     * @return const std::vector<Interval>&
+     */
+    const std::vector<Interval>& intervals() const { return intervals_; }
+
    private:
-    std::vector<Interval> intervals_;
+    Intervals intervals_;
     std::vector<Sinusoid> sinusoids_;
     size_t levelNum_;
 };

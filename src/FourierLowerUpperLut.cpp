@@ -114,6 +114,8 @@ void FourierLowerUpperLut::init(const std::vector<double>& coeffs,
         interval.yUpper =
             std::max(yLowerInc + yLowerDec, yUpperInc + yUpperDec);
         intervals_.push_back(interval);
+        ARS_VAR4(interval.thetaMin, interval.thetaMax, interval.yLower,
+                 interval.yUpper);
 
         thetaPrev = cp.theta;
     }
