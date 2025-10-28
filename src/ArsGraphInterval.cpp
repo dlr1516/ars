@@ -70,7 +70,7 @@ void ArsGraphIntervalFull::init(ArsGraphPtr& graph) {
         int idst = edge.idst;
         double thetaMin = nodeLowers_->at(idst) - nodeUppers_->at(isrc);
         double thetaMax = nodeUppers_->at(idst) - nodeLowers_->at(isrc);
-        ars::findLUFourier(edge.coeffs, thetaMin, thetaMax, edgeLowers_->at(j),
+        ars::findLUFourierBetterLower(edge.coeffs, thetaMin, thetaMax, edgeLowers_->at(j),
                            edgeUppers_->at(j));
     }
     computeEdgeBounds();
@@ -236,7 +236,7 @@ void ArsGraphIntervalFull::split(size_t idx,
             intervLower->nodeLower(idst) - intervLower->nodeUpper(isrc);
         double thetaMax =
             intervLower->nodeUpper(idst) - intervLower->nodeLower(isrc);
-        ars::findLUFourier(edge.coeffs, thetaMin, thetaMax,
+        ars::findLUFourierBetterLower(edge.coeffs, thetaMin, thetaMax,
                            edgeLower, edgeUpper);
         intervLower->setEdgeLower(eidx, edgeLower);
         intervLower->setEdgeUpper(eidx, edgeUpper);
@@ -245,7 +245,7 @@ void ArsGraphIntervalFull::split(size_t idx,
             intervUpper->nodeLower(idst) - intervUpper->nodeUpper(isrc);
         thetaMax =
             intervUpper->nodeUpper(idst) - intervUpper->nodeLower(isrc);
-        ars::findLUFourier(edge.coeffs, thetaMin, thetaMax,
+        ars::findLUFourierBetterLower(edge.coeffs, thetaMin, thetaMax,
                            edgeLower, edgeUpper);
         intervUpper->setEdgeLower(eidx, edgeLower);
         intervUpper->setEdgeUpper(eidx, edgeUpper);
@@ -484,7 +484,7 @@ void ArsGraphIntervalDiff::split(size_t idx, Base::Ptr intervLower, Base::Ptr in
             intervLower->nodeLower(idst) - intervLower->nodeUpper(isrc);
         double thetaMax =
             intervLower->nodeUpper(idst) - intervLower->nodeLower(isrc);
-        ars::findLUFourier(edge.coeffs, thetaMin, thetaMax,
+        ars::findLUFourierBetterLower(edge.coeffs, thetaMin, thetaMax,
                            edgeLower, edgeUpper);
         intervLower->setEdgeLower(eidx, edgeLower);
         intervLower->setEdgeUpper(eidx, edgeUpper);
@@ -493,7 +493,7 @@ void ArsGraphIntervalDiff::split(size_t idx, Base::Ptr intervLower, Base::Ptr in
             intervUpper->nodeLower(idst) - intervUpper->nodeUpper(isrc);
         thetaMax =
             intervUpper->nodeUpper(idst) - intervUpper->nodeLower(isrc);
-        ars::findLUFourier(edge.coeffs, thetaMin, thetaMax,
+        ars::findLUFourierBetterLower(edge.coeffs, thetaMin, thetaMax,
                            edgeLower, edgeUpper);
         intervUpper->setEdgeLower(eidx, edgeLower);
         intervUpper->setEdgeUpper(eidx, edgeUpper);
