@@ -9,29 +9,33 @@ namespace ars {
 
 class FourierLowerUpperLut {
    public:
+    /**
+     * Struct Sinusoid stores the parameters of a sinusoid term in the Fourier
+     * series.
+     */
     struct Sinusoid {
         size_t order;
         double module;
         double phase;
-        // double phaseMin;
         bool increasing;
     };
 
     /**
-     * PointInterval stores the point where the monotonicity of
+     * Struct PointInterval stores the point where the monotonicity of
      * sinusoid of order k changes.
      */
     struct CriticalPoint {
         size_t order;
-        double theta;
+        double x;
     };
 
     /**
-     *
+     * Struct Interval stores the lower and upper bounds of the Fourier series
+     * in an interval where all the sinusoid terms are monotonic.
      */
     struct Interval {
-        double thetaMin;
-        double thetaMax;
+        double xMin;
+        double xMax;
         double yLower;
         double yUpper;
     };

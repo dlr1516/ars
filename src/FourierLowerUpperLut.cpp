@@ -21,13 +21,13 @@ FourierLowerUpperLut::~FourierLowerUpperLut() {}
 void FourierLowerUpperLut::init(const std::vector<double>& coeffs,
                                 size_t levelNum) {
     auto comp = [](const CriticalPoint& cp1, const CriticalPoint& cp2) -> bool {
-        return cp1.theta > cp2.theta;
+        return cp1.x > cp2.x;
     };
     std::priority_queue<CriticalPoint, std::vector<CriticalPoint>,
                         decltype(comp)>
         queue;
     Sinusoid ci;
-    double period, thetaStart;
+    double period, xBeg, xPrev;
     double yLowerInc, yUpperInc, yLowerDec, yUpperDec, y1, y2;
 
     // We expect that levelNum_ is not required in this implementation, but we
@@ -55,31 +55,31 @@ void FourierLowerUpperLut::init(const std::vector<double>& coeffs,
         ci.phase =
             std::fmod(std::atan2(coeffs[2 * k + 1], coeffs[2 * k]) + 2.0 * M_PI,
                       2.0 * M_PI);
-        // thetaStart is the first occurrence in interval [0, pi) of min or max
+        // xBeg is the first occurrence in interval [0, pi) of min or max
         // of sinsuoid with argument 2*k*x - phase
-        //   2 * k * thetaStart - phase = j * pi   (j is 0 or 1)
-        thetaStart = ci.phase / (2.0 * k);
-        if (thetaStart <= 0.5 * period)
+        //   2 * k * xBeg - phase = j * pi   (j is 0 or 1)
+        xBeg = ci.phase / (2.0 * k);
+        if (xBeg <= 0.5 * period)
             ci.increasing = true;
         else {
             ci.increasing = false;
-            thetaStart -= 0.5 * period;
+            xBeg -= 0.5 * period;
         }
 
         sinusoids_.push_back(ci);
-        ARS_VAR5(k, ci.module, RAD2DEG(ci.phase), RAD2DEG(thetaStart),
+        ARS_VAR5(k, ci.module, RAD2DEG(ci.phase), RAD2DEG(xBeg),
                  RAD2DEG(period));
 
         // Inserts the point where next change of monotonicity occurs
         // in the queue
         CriticalPoint cp;
         cp.order = k;
-        cp.theta = thetaStart;
+        cp.x = xBeg;
         queue.push(cp);
     }
 
     // Process the queue to extract the critical points in [0, pi)
-    double thetaPrev = 0.0;
+    xPrev = 0.0;
     while (!queue.empty()) {
         CriticalPoint cp = queue.top();
         queue.pop();
@@ -90,12 +90,12 @@ void FourierLowerUpperLut::init(const std::vector<double>& coeffs,
         yUpperDec = 0.0;
         for (size_t k = 0; k < sinusoids_.size(); ++k) {
             y1 = sinusoids_[k].module *
-                 std::cos(2 * k * thetaPrev - sinusoids_[k].phase);
+                 std::cos(2 * k * xPrev - sinusoids_[k].phase);
             y2 = sinusoids_[k].module *
-                 std::cos(2 * k * cp.theta - sinusoids_[k].phase);
+                 std::cos(2 * k * cp.x - sinusoids_[k].phase);
 
-            ARS_VAR6(k, sinusoids_[k].increasing, RAD2DEG(thetaPrev),
-                     RAD2DEG(cp.theta), y1, y2);
+            ARS_VAR6(k, sinusoids_[k].increasing, RAD2DEG(xPrev), RAD2DEG(cp.x),
+                     y1, y2);
 
             if (sinusoids_[k].increasing) {
                 yLowerInc += y1;
@@ -112,25 +112,25 @@ void FourierLowerUpperLut::init(const std::vector<double>& coeffs,
                 // Insert the next critical point in the queue
                 CriticalPoint cpNext;
                 cpNext.order = k;
-                cpNext.theta = cp.theta + (0.5 * M_PI / k);
-                if (cpNext.theta < M_PI) {
+                cpNext.x = cp.x + (0.5 * M_PI / k);
+                if (cpNext.x < M_PI) {
                     queue.push(cpNext);
                 }
             }
         }
 
         Interval interval;
-        interval.thetaMin = thetaPrev;
-        interval.thetaMax = cp.theta;
+        interval.xMin = xPrev;
+        interval.xMax = cp.x;
         interval.yLower =
             std::min(yLowerInc + yLowerDec, yUpperInc + yUpperDec);
         interval.yUpper =
             std::max(yLowerInc + yLowerDec, yUpperInc + yUpperDec);
         intervals_.push_back(interval);
-        ARS_VAR4(interval.thetaMin, interval.thetaMax, interval.yLower,
+        ARS_VAR4(interval.xMin, interval.xMax, interval.yLower,
                  interval.yUpper);
 
-        thetaPrev = cp.theta;
+        xPrev = cp.x;
     }
 }
 
