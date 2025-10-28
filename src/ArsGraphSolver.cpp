@@ -2,7 +2,8 @@
 
 namespace ars {
 
-ArsGraphSolver::ArsGraphSolver() : graph_(nullptr), lower_(0.0), upper_(0.0), xtol_(M_PI / 180.0) {}
+ArsGraphSolver::ArsGraphSolver()
+    : graph_(nullptr), lower_(0.0), upper_(0.0), xtol_(M_PI / 180.0) {}
 
 ArsGraphSolver::ArsGraphSolver(ArsGraphPtr& graph)
     : graph_(graph), lower_(0.0), upper_(0.0), xtol_(M_PI / 180.0) {}
@@ -20,7 +21,9 @@ void ArsGraphSolver::setXTol(double xtol) {
     xtol_ = xtol;
 }
 
-bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost, bool useDiff) {    
+bool ArsGraphSolver::solve(std::vector<double>& solution,
+                           double& cost,
+                           bool useDiff) {
     LeastUpperBoundFirstQueuePtr queue(new LeastUpperBoundFirstQueue);
     ArsGraphIntervalFull::Ptr initial(new ArsGraphIntervalFull(graph_));
     initial->init(graph_);
@@ -31,15 +34,15 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost, bool use
     solution_.anglesLower = initial->getNodeLowers();
     solution_.anglesUpper = initial->getNodeUppers();*/
 
-    if(!initialSolutionFromTree(initial)){
+    if (!initialSolutionFromTree(initial)) {
         std::cout << "Couldn't find a spanning tree, graph is not connected!"
-            << std::endl;          
+                  << std::endl;
     }
     std::cout << "Initial solution: " << std::endl;
-    for(int i = 0; i < solution_.anglesLower.size(); i++){
-        std::cout << "Node " << i << ": " 
-            << solution_.anglesLower[i]*(180.0/M_PI) << std::endl;
-        return false; 
+    for (int i = 0; i < solution_.anglesLower.size(); i++) {
+        std::cout << "Node " << i << ": "
+                  << solution_.anglesLower[i] * (180.0 / M_PI) << std::endl;
+        return false;
     }
 
     while (!queue->empty()) {
@@ -53,21 +56,20 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost, bool use
                 solution_.anglesUpper = curr->getNodeUppers();
             }
             std::vector<NodeInterval> validNodes;
-            if(!checkInterval(curr, validNodes)){
+            if (!checkInterval(curr, validNodes)) {
                 ars::ArsGraphInterval::Ptr intervLower;
                 ars::ArsGraphInterval::Ptr intervUpper;
-                if (useDiff && curr->getDiffSize() <= curr->getEdgeNum()/3) {
+                if (useDiff && curr->getDiffSize() <= curr->getEdgeNum() / 3) {
                     intervLower.reset(new ars::ArsGraphIntervalDiff);
                     intervUpper.reset(new ars::ArsGraphIntervalDiff);
-                }
-                else {
+                } else {
                     intervLower.reset(new ars::ArsGraphIntervalFull);
                     intervUpper.reset(new ars::ArsGraphIntervalFull);
                 }
 
                 int node = validNodes[0].idx;
-                for(int i = 1; i < validNodes.size(); i++){
-                    if (validNodes[node].xWidth < validNodes[i].xWidth){
+                for (int i = 1; i < validNodes.size(); i++) {
+                    if (validNodes[node].xWidth < validNodes[i].xWidth) {
                         node = validNodes[i].idx;
                         break;
                     }
@@ -80,18 +82,19 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost, bool use
         }
     }
     solution.resize(solution_.anglesLower.size());
-    for(int i = 0; i < solution_.anglesLower.size(); i++){
+    for (int i = 0; i < solution_.anglesLower.size(); i++) {
         double angleLower = solution_.anglesLower[i];
         double angleUpper = solution_.anglesUpper[i];
-        solution[i] = (angleLower + angleUpper)/2;
+        solution[i] = (angleLower + angleUpper) / 2;
     }
     cost = lower_;
     return true;
 }
 
-bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost, 
-    Statistics& stats, bool useDiff) {
-    
+bool ArsGraphSolver::solve(std::vector<double>& solution,
+                           double& cost,
+                           Statistics& stats,
+                           bool useDiff) {
     LeastUpperBoundFirstQueuePtr queue(new LeastUpperBoundFirstQueue);
     ArsGraphIntervalFull::Ptr initial(new ArsGraphIntervalFull(graph_));
     initial->init(graph_);
@@ -112,45 +115,47 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost,
     /*if(!initialSolutionFromTree(initial)){
         std::cout << "Couldn't find a spanning tree, graph is not connected!"
             << std::endl;
-        return false;          
+        return false;
     }*/
     initialSolutionFromGraph();
     std::cout << "Initial solution: " << std::endl;
-    for(int i = 0; i < solution_.anglesLower.size(); i++){
-        std::cout << "Node " << i << ": " 
-            << solution_.anglesLower[i]*(180.0/M_PI) << std::endl; 
+    for (int i = 0; i < solution_.anglesLower.size(); i++) {
+        std::cout << "Node " << i << ": "
+                  << solution_.anglesLower[i] * (180.0 / M_PI) << std::endl;
     }
 
     while (!queue->empty()) {
         ArsGraphIntervalPtr curr = queue->top();
         queue->pop();
+        ARS_VAR1(curr->size());
         if (curr->getUpperBound() >= lower_) {
             if (lower_ < curr->getLowerBound()) {
                 lower_ = curr->getLowerBound();
                 upper_ = curr->getUpperBound();
                 solution_.anglesLower = curr->getNodeLowers();
                 solution_.anglesUpper = curr->getNodeUppers();
-                if(!updated){
-                    std::cout << "Updated sol after: " << stats.createdNodes <<std::endl;
+                if (!updated) {
+                    std::cout << "Updated sol after: " << stats.createdNodes
+                              << std::endl;
                     updated = true;
                 }
             }
             std::vector<NodeInterval> validNodes;
-            if(!checkInterval(curr, validNodes)){
+            if (!checkInterval(curr, validNodes)) {
                 ars::ArsGraphInterval::Ptr intervLower;
                 ars::ArsGraphInterval::Ptr intervUpper;
-                if (useDiff && curr->getDiffSize() <= curr->getEdgeNum()*0.5) {
+                if (useDiff &&
+                    curr->getDiffSize() <= curr->getEdgeNum() * 0.5) {
                     intervLower.reset(new ars::ArsGraphIntervalDiff);
                     intervUpper.reset(new ars::ArsGraphIntervalDiff);
-                }
-                else {
+                } else {
                     intervLower.reset(new ars::ArsGraphIntervalFull);
                     intervUpper.reset(new ars::ArsGraphIntervalFull);
                 }
 
                 int idx = 0;
-                for(int i = 1; i < validNodes.size(); i++){
-                    if (validNodes[idx].xWidth < validNodes[i].xWidth){
+                for (int i = 1; i < validNodes.size(); i++) {
+                    if (validNodes[idx].xWidth < validNodes[i].xWidth) {
                         idx = i;
                         break;
                     }
@@ -164,51 +169,54 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost,
                 size_t lowerSize = intervLower->size();
                 size_t upperSize = intervUpper->size();
 
-                if(lowerSize < stats.minIntervalSize){
+                if (lowerSize < stats.minIntervalSize) {
                     stats.minIntervalSize = lowerSize;
                 }
-                if(lowerSize > stats.maxIntervalSize){
+                if (lowerSize > stats.maxIntervalSize) {
                     stats.maxIntervalSize = lowerSize;
                 }
 
-                if(upperSize < stats.minIntervalSize){
+                if (upperSize < stats.minIntervalSize) {
                     stats.minIntervalSize = upperSize;
                 }
-                if(upperSize > stats.maxIntervalSize){
+                if (upperSize > stats.maxIntervalSize) {
                     stats.maxIntervalSize = upperSize;
                 }
 
-                stats.avgIntervalSize = 
-                    (stats.avgIntervalSize * (stats.createdNodes-2) 
-                        + lowerSize + upperSize) / stats.createdNodes;
+                stats.avgIntervalSize =
+                    (stats.avgIntervalSize * (stats.createdNodes - 2) +
+                     lowerSize + upperSize) /
+                    stats.createdNodes;
             }
         }
     }
     solution.resize(solution_.anglesLower.size());
-    for(int i = 0; i < solution_.anglesLower.size(); i++){
+    for (int i = 0; i < solution_.anglesLower.size(); i++) {
         double angleLower = solution_.anglesLower[i];
         double angleUpper = solution_.anglesUpper[i];
-        solution[i] = (angleLower + angleUpper)/2;
+        solution[i] = (angleLower + angleUpper) / 2;
     }
     cost = lower_;
     return true;
 }
 
-bool ArsGraphSolver::checkInterval(ArsGraphIntervalPtr interval, std::vector<NodeInterval>& validNodes){
+bool ArsGraphSolver::checkInterval(ArsGraphIntervalPtr interval,
+                                   std::vector<NodeInterval>& validNodes) {
     validNodes.clear();
 
-    for(size_t i = 1; i < interval->getNodeNum(); i++){
+    for (size_t i = 1; i < interval->getNodeNum(); i++) {
         double xLower = interval->nodeLower(i);
         double xUpper = interval->nodeUpper(i);
         double xWidth = xUpper - xLower;
-        if(xWidth > xtol_){
+        if (xWidth > xtol_) {
             validNodes.push_back(NodeInterval(i, xLower, xUpper, xWidth));
         }
     }
     return validNodes.empty();
 }
 
-bool ArsGraphSolver::initialSolutionFromTree(const ArsGraphInterval::Ptr& initial) {
+bool ArsGraphSolver::initialSolutionFromTree(
+    const ArsGraphInterval::Ptr& initial) {
     lower_ = initial->getLowerBound();
     upper_ = initial->getUpperBound();
     solution_.anglesLower = initial->getNodeLowers();
@@ -220,24 +228,23 @@ bool ArsGraphSolver::initialSolutionFromTree(const ArsGraphInterval::Ptr& initia
     std::queue<int> explorable;
     explorable.push(0);
 
-    while(!explorable.empty()){
+    while (!explorable.empty()) {
         int isrc = explorable.front();
         auto node = graph_->nodes()[isrc];
         explorable.pop();
-        for(int eidx : node.incidents) {
+        for (int eidx : node.incidents) {
             auto edge = graph_->edges()[eidx];
             int mult = 1;
             int idst;
 
-            if (isrc == edge.isrc){      
+            if (isrc == edge.isrc) {
                 idst = edge.idst;
-            }
-            else{
+            } else {
                 idst = edge.isrc;
                 mult = -1;
             }
 
-            if(std::find(added.begin(), added.end(), idst) != added.end())
+            if (std::find(added.begin(), added.end(), idst) != added.end())
                 continue;
 
             double tMax, fLow, fUp;
@@ -251,13 +258,13 @@ bool ArsGraphSolver::initialSolutionFromTree(const ArsGraphInterval::Ptr& initia
 
             lower_ += (fLow - initial->edgeLower(eidx));
             upper_ += (fUp - initial->edgeUpper(eidx));
-            double sol = solution_.anglesLower[isrc] + (mult*tMax);
+            double sol = solution_.anglesLower[isrc] + (mult * tMax);
             solution_.anglesLower[idst] = sol;
             solution_.anglesUpper[idst] = sol;
 
             explorable.push(idst);
             added.push_back(idst);
-        }   
+        }
     }
     return added.size() == graph_->nodes().size();
 }
@@ -271,13 +278,13 @@ bool ArsGraphSolver::initialSolutionFromGraph() {
     solution_.anglesLower[0] = .0;
     solution_.anglesUpper[0] = .0;
 
-    for(int i = 0; i < graph_->getNodeNum(); i++){
+    for (int i = 0; i < graph_->getNodeNum(); i++) {
         auto node = graph_->nodes()[i];
-        for(int eidx : node.incidents) {
+        for (int eidx : node.incidents) {
             auto edge = graph_->edges()[eidx];
             int idst = edge.idst;
 
-            if (i != edge.isrc){      
+            if (i != edge.isrc) {
                 continue;
             }
 
@@ -296,9 +303,8 @@ bool ArsGraphSolver::initialSolutionFromGraph() {
             solution_.anglesLower[idst] = sol;
             solution_.anglesUpper[idst] = sol;
         }
-        
     }
     return true;
 }
 
-} // namespace ars
+}  // namespace ars

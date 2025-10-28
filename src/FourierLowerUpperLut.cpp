@@ -132,6 +132,36 @@ void FourierLowerUpperLut::init(const std::vector<double>& coeffs,
 
         xPrev = cp.x;
     }
+
+    // Final interval from last critical point to pi
+    yLowerInc = 0.0;
+    yUpperInc = 0.0;
+    yLowerDec = 0.0;
+    yUpperDec = 0.0;
+    for (size_t k = 0; k < sinusoids_.size(); ++k) {
+        y1 = sinusoids_[k].module *
+             std::cos(2 * k * xPrev - sinusoids_[k].phase);
+        y2 =
+            sinusoids_[k].module * std::cos(2 * k * M_PI - sinusoids_[k].phase);
+
+        ARS_VAR6(k, sinusoids_[k].increasing, RAD2DEG(xPrev), RAD2DEG(M_PI), y1,
+                 y2);
+
+        if (sinusoids_[k].increasing) {
+            yLowerInc += y1;
+            yUpperInc += y2;
+        } else {
+            yLowerDec += y2;
+            yUpperDec += y1;
+        }
+    }
+    Interval interval;
+    interval.xMin = xPrev;
+    interval.xMax = M_PI;
+    interval.yLower = std::min(yLowerInc + yLowerDec, yUpperInc + yUpperDec);
+    interval.yUpper = std::max(yLowerInc + yLowerDec, yUpperInc + yUpperDec);
+    intervals_.push_back(interval);
+    ARS_VAR4(interval.xMin, interval.xMax, interval.yLower, interval.yUpper);
 }
 
 void FourierLowerUpperLut::findLU(double xMin,
