@@ -13,7 +13,7 @@ class FourierLowerUpperLut {
         size_t order;
         double module;
         double phase;
-        double phaseMin;
+        // double phaseMin;
         bool increasing;
     };
 
@@ -53,6 +53,8 @@ class FourierLowerUpperLut {
      * @return const std::vector<Interval>&
      */
     const std::vector<Interval>& intervals() const { return intervals_; }
+
+    void exportPlot(std::ostream& out);
 
    private:
     Intervals intervals_;

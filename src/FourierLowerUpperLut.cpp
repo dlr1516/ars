@@ -3,6 +3,8 @@
 #include <ars/definitions.h>
 #include <ars/functions.h>
 
+#define RAD2DEG(X) (180.0 / M_PI * (X))
+
 namespace ars {
 
 FourierLowerUpperLut::FourierLowerUpperLut()
@@ -25,7 +27,8 @@ void FourierLowerUpperLut::init(const std::vector<double>& coeffs,
                         decltype(comp)>
         queue;
     Sinusoid ci;
-    double period, yLowerInc, yUpperInc, yLowerDec, yUpperDec;
+    double period, thetaStart;
+    double yLowerInc, yUpperInc, yLowerDec, yUpperDec, y1, y2;
 
     // We expect that levelNum_ is not required in this implementation, but we
     // keep it for compatibility with the previous one.
@@ -38,34 +41,40 @@ void FourierLowerUpperLut::init(const std::vector<double>& coeffs,
     // We convert it to: sum_i{ module_i*cos(2*i*x - phase_i) }
     ci.module = coeffs[0];
     ci.phase = 0.0;
-    ci.phaseMin = 0.0;
+    // ci.phaseMin = 0.0;
     ci.order = 0;
     ci.increasing = true;
     sinusoids_.push_back(ci);
-    for (size_t i = 1; i < sinusoidNum; ++i) {
-        period = M_PI / i;
+    for (size_t k = 1; k < sinusoidNum; ++k) {
+        period = M_PI / k;
 
-        ci.order = i;
-        ci.module = std::sqrt(coeffs[2 * i] * coeffs[2 * i] +
-                              coeffs[2 * i + 1] * coeffs[2 * i + 1]);
+        ci.order = k;
+        ci.module = std::sqrt(coeffs[2 * k] * coeffs[2 * k] +
+                              coeffs[2 * k + 1] * coeffs[2 * k + 1]);
         // Phase normalized in [0, 2pi)
         ci.phase =
-            std::fmod(std::atan2(coeffs[2 * i + 1], coeffs[2 * i]) + 2.0 * M_PI,
+            std::fmod(std::atan2(coeffs[2 * k + 1], coeffs[2 * k]) + 2.0 * M_PI,
                       2.0 * M_PI);
-        // PhaseMin is the first occurrence in interval [0, pi) of max of
-        // sinsuoid with argument 2*i*x - phaseMin = 0 => x = phaseMin / (2*i)
-        ci.phaseMin = std::fmod(ci.phase, M_PI / i);
-        if (ci.phaseMin < 0.5 * period)
+        // thetaStart is the first occurrence in interval [0, pi) of min or max
+        // of sinsuoid with argument 2*k*x - phase
+        //   2 * k * thetaStart - phase = j * pi   (j is 0 or 1)
+        thetaStart = ci.phase / (2.0 * k);
+        if (thetaStart <= 0.5 * period)
             ci.increasing = true;
-        else
+        else {
             ci.increasing = false;
+            thetaStart -= 0.5 * period;
+        }
+
         sinusoids_.push_back(ci);
+        ARS_VAR5(k, ci.module, RAD2DEG(ci.phase), RAD2DEG(thetaStart),
+                 RAD2DEG(period));
 
         // Inserts the point where next change of monotonicity occurs
         // in the queue
         CriticalPoint cp;
-        cp.order = i;
-        cp.theta = ci.phaseMin;
+        cp.order = k;
+        cp.theta = thetaStart;
         queue.push(cp);
     }
 
@@ -80,16 +89,20 @@ void FourierLowerUpperLut::init(const std::vector<double>& coeffs,
         yLowerDec = 0.0;
         yUpperDec = 0.0;
         for (size_t k = 0; k < sinusoids_.size(); ++k) {
+            y1 = sinusoids_[k].module *
+                 std::cos(2 * k * thetaPrev - sinusoids_[k].phase);
+            y2 = sinusoids_[k].module *
+                 std::cos(2 * k * cp.theta - sinusoids_[k].phase);
+
+            ARS_VAR6(k, sinusoids_[k].increasing, RAD2DEG(thetaPrev),
+                     RAD2DEG(cp.theta), y1, y2);
+
             if (sinusoids_[k].increasing) {
-                yLowerInc += sinusoids_[k].module *
-                             std::cos(2 * k * thetaPrev - sinusoids_[k].phase);
-                yUpperInc += sinusoids_[k].module *
-                             std::cos(2 * k * cp.theta - sinusoids_[k].phase);
+                yLowerInc += y1;
+                yUpperInc += y2;
             } else {
-                yLowerDec += sinusoids_[k].module *
-                             std::cos(2 * k * cp.theta - sinusoids_[k].phase);
-                yUpperDec += sinusoids_[k].module *
-                             std::cos(2 * k * thetaPrev - sinusoids_[k].phase);
+                yLowerDec += y2;
+                yUpperDec += y1;
             }
 
             if (k == cp.order) {
@@ -125,6 +138,25 @@ void FourierLowerUpperLut::findLU(double xMin,
                                   double xMax,
                                   double& yLower,
                                   double& yUpper) const {}
+
+void FourierLowerUpperLut::exportPlot(std::ostream& out) {
+    const size_t NUM = 720;
+    double dx = M_PI / static_cast<double>(NUM);
+
+    for (size_t k = 0; k < sinusoids_.size(); ++k) {
+        out << "set term wxt " << k << "\n";
+        out << "set title 'Sinusoid order " << sinusoids_[k].order << "'\n";
+        out << "plot '-' title 'sinusoid' w l\n";
+        for (size_t i = 0; i <= NUM; ++i) {
+            double x = i * dx;
+            double y =
+                sinusoids_[k].module *
+                std::cos(2 * sinusoids_[k].order * x - sinusoids_[k].phase);
+            out << RAD2DEG(x) << " " << y << "\n";
+        }
+        out << "e\n";
+    }
+}
 
 // FourierLowerUpperLut::FourierLowerUpperLut()
 //     : levelNum_(0), intervalNum_(0), dx_(0.0) {}

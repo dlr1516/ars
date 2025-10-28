@@ -89,8 +89,11 @@ int main(int argc, char** argv) {
 
     Gnuplot gp("gnuplot -persist");
     double vieweps = 5e-3;
+
+    lut.exportPlot(gp);
+
     //  std::ostream& gp = std::cout;
-    gp << "set term wxt 0\n";
+    gp << "set term wxt 100\n";
     gp << "plot '-' title \"fourier\" w l, '-' title "
           "\"bb\" w l\n";
     for (int i = 0; i < thetaNum; ++i) {
