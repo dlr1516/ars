@@ -80,13 +80,12 @@ int main(int argc, char** argv) {
     std::cout << "Parameters: " << std::endl;
     params.write(std::cout);
 
-    lut.init(coeffs, levelNum);
+    lut.init(coeffs);
 
-    // double yL, yU;
-    // lut.findLU(xL, xU, yL, yU);
-    // std::cout << "Bounds for [" << xL << ", " << xU << "]: " << yL << ", " <<
-    // yU
-    //           << std::endl;
+    double yL, yU;
+    lut.findLU(xL, xU, yL, yU);
+    std::cout << "Bounds for [" << RAD2DEG(xL) << ", " << RAD2DEG(xU)
+              << "]: " << yL << ", " << yU << std::endl;
 
     Gnuplot gp("gnuplot -persist");
     double vieweps = 5e-3;
@@ -96,7 +95,7 @@ int main(int argc, char** argv) {
     //  std::ostream& gp = std::cout;
     gp << "set term wxt 100\n";
     gp << "plot '-' title \"fourier\" w l, '-' title "
-          "\"bb\" w l\n";
+          "\"bb\" w l, '-' title \"query\" w l\n";
     for (int i = 0; i < thetaNum; ++i) {
         double theta = (M_PI / thetaNum) * i;
         double fourier = ars::evaluateFourier(coeffs, 2.0 * theta);
@@ -104,6 +103,12 @@ int main(int argc, char** argv) {
     }
     gp << "e" << std::endl;
     plotBranchBoundBox(gp, lut.intervals());
+    gp << "e" << std::endl;
+    gp << RAD2DEG(xL) << " " << yL << "\n"
+       << RAD2DEG(xU) << " " << yL << "\n"
+       << RAD2DEG(xU) << " " << yU << "\n"
+       << RAD2DEG(xL) << " " << yU << "\n"
+       << RAD2DEG(xL) << " " << yL << "\n";
     gp << "e" << std::endl;
 
     return 0;

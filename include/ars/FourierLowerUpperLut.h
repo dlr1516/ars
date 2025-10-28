@@ -1,6 +1,7 @@
 #ifndef ARS_LU_BOUNDS_LUT_H_
 #define ARS_LU_BOUNDS_LUT_H_
 
+#include <ars/definitions.h>
 #include <functional>
 #include <iostream>
 #include <vector>
@@ -19,6 +20,7 @@ class FourierLowerUpperLut {
         double phase;
         bool increasing;
     };
+    using Sinusoids = std::vector<Sinusoid>;
 
     /**
      * Struct PointInterval stores the point where the monotonicity of
@@ -41,14 +43,44 @@ class FourierLowerUpperLut {
     };
     using Intervals = std::vector<Interval>;
 
+    struct IndexNode {
+        double xMin;
+        double xMax;
+        size_t idxYL;
+        size_t idxYU;
+        struct IndexNode* left;
+        struct IndexNode* right;
+    };
+
+    /**
+     * Default constructor.
+     */
     FourierLowerUpperLut();
 
-    FourierLowerUpperLut(const std::vector<double>& coeffs, size_t levelNum);
+    /**
+     * Constructor with Fourier coefficients.
+     * @param coeffs Fourier coefficients
+     */
+    FourierLowerUpperLut(const std::vector<double>& coeffs);
 
+    /**
+     * @brief Destroy the Fourier Lower Upper Lut object
+     */
     ~FourierLowerUpperLut();
 
-    void init(const std::vector<double>& coeffs, size_t levelNum);
+    /**
+     * @brief Initialize the LUT with Fourier coefficients
+     */
+    void init(const std::vector<double>& coeffs);
 
+    /**
+     * @brief Find the lower and upper bounds for the given x interval
+     *
+     * @param xMin lower bound of x
+     * @param xMax upper bound of x
+     * @param yLower output lower bound of y
+     * @param yUpper output upper bound of y
+     */
     void findLU(double xMin, double xMax, double& yLower, double& yUpper) const;
 
     /**
@@ -58,67 +90,28 @@ class FourierLowerUpperLut {
      */
     const std::vector<Interval>& intervals() const { return intervals_; }
 
+    /**
+     * @brief Export the LUT data for plotting
+     *
+     * @param out output stream
+     */
     void exportPlot(std::ostream& out);
 
-   private:
+   protected:
     Intervals intervals_;
-    std::vector<Sinusoid> sinusoids_;
-    size_t levelNum_;
+    Sinusoids sinusoids_;
+    IndexNode* tree_;
+
+    IndexNode* buildTree(size_t idxBeg, size_t idxEnd);
+
+    void removeTree(IndexNode* node);
+
+    void findLUTree(IndexNode* node,
+                    double xMin,
+                    double xMax,
+                    double& yLower,
+                    double& yUpper) const;
 };
-
-// class FourierLowerUpperLut {
-//    public:
-//     struct LUIndex {
-//         size_t idxL;
-//         size_t idxU;
-//     };
-
-//     struct LUValues {
-//         double lower;
-//         double upper;
-//     };
-
-//     FourierLowerUpperLut();
-
-//     FourierLowerUpperLut(const std::vector<double>& coeffs, size_t levelNum);
-
-//     ~FourierLowerUpperLut();
-
-//     void init(const std::vector<double>& coeffs, size_t levelNum);
-
-//     void findLU(double xMin, double xMax, double& yLower, double& yUpper)
-//     const;
-
-//    private:
-//     std::vector<LUValues> luValues_;
-//     std::vector<LUIndex> intervals_;
-//     size_t levelNum_;
-//     size_t intervalNum_;
-//     double dx_;
-
-//     void findLUTree(size_t idxMin,
-//                     size_t idxMax,
-//                     double& lower,
-//                     double& upper) const;
-
-//     /**
-//      * The vector intervals_ stores a tree organized into levels.
-//      * The left and right children of a node p are:
-//      *    childLeft(p) = 2*p + 1
-//      *    childRight(p) = 2*p + 2
-//      * Thus the parent of a child c is:
-//      *   parent(c) = (c - 1) / 2
-//      */
-//     inline size_t parent(size_t c) const { return ((c - 1) >> 1); }
-
-//     inline size_t childLeft(size_t p) const { return ((p << 1) + 1); }
-
-//     inline size_t childRight(size_t p) const { return ((p << 1) + 2); }
-
-//     inline size_t levelStart(size_t level) const { return (1 << level) - 1; }
-
-//     size_t findCommonAncestor(size_t idxL, size_t idxU) const;
-// };
 
 }  // namespace ars
 

@@ -1,6 +1,5 @@
 #include <ars/FourierLowerUpperLut.h>
 #include <ars/MortonSort.h>
-#include <ars/definitions.h>
 #include <ars/functions.h>
 
 #define RAD2DEG(X) (180.0 / M_PI * (X))
@@ -8,18 +7,18 @@
 namespace ars {
 
 FourierLowerUpperLut::FourierLowerUpperLut()
-    : intervals_(), sinusoids_(), levelNum_(0) {}
+    : intervals_(), sinusoids_(), tree_(nullptr) {}
 
-FourierLowerUpperLut::FourierLowerUpperLut(const std::vector<double>& coeffs,
-                                           size_t levelNum)
-    : intervals_(), sinusoids_(), levelNum_(0) {
-    init(coeffs, levelNum);
+FourierLowerUpperLut::FourierLowerUpperLut(const std::vector<double>& coeffs)
+    : intervals_(), sinusoids_(), tree_(nullptr) {
+    init(coeffs);
 }
 
-FourierLowerUpperLut::~FourierLowerUpperLut() {}
+FourierLowerUpperLut::~FourierLowerUpperLut() {
+    removeTree(tree_);
+}
 
-void FourierLowerUpperLut::init(const std::vector<double>& coeffs,
-                                size_t levelNum) {
+void FourierLowerUpperLut::init(const std::vector<double>& coeffs) {
     auto comp = [](const CriticalPoint& cp1, const CriticalPoint& cp2) -> bool {
         return cp1.x > cp2.x;
     };
@@ -32,7 +31,6 @@ void FourierLowerUpperLut::init(const std::vector<double>& coeffs,
 
     // We expect that levelNum_ is not required in this implementation, but we
     // keep it for compatibility with the previous one.
-    levelNum_ = levelNum;
     ARS_ASSERT_VAR2(coeffs.size() % 2 == 0, "Coeffs size must be even",
                     coeffs.size());
     size_t sinusoidNum = coeffs.size() / 2;
@@ -162,12 +160,22 @@ void FourierLowerUpperLut::init(const std::vector<double>& coeffs,
     interval.yUpper = std::max(yLowerInc + yLowerDec, yUpperInc + yUpperDec);
     intervals_.push_back(interval);
     ARS_VAR4(interval.xMin, interval.xMax, interval.yLower, interval.yUpper);
+
+    if (tree_ != nullptr) {
+        removeTree(tree_);
+    }
+    tree_ = buildTree(0, intervals_.size());
 }
 
 void FourierLowerUpperLut::findLU(double xMin,
                                   double xMax,
                                   double& yLower,
-                                  double& yUpper) const {}
+                                  double& yUpper) const {
+    ARS_ASSERT(tree_ != nullptr);
+    yLower = intervals_[tree_->idxYL].yLower;
+    yUpper = intervals_[tree_->idxYU].yUpper;
+    findLUTree(tree_, xMin, xMax, yLower, yUpper);
+}
 
 void FourierLowerUpperLut::exportPlot(std::ostream& out) {
     const size_t NUM = 720;
@@ -188,164 +196,78 @@ void FourierLowerUpperLut::exportPlot(std::ostream& out) {
     }
 }
 
-// FourierLowerUpperLut::FourierLowerUpperLut()
-//     : levelNum_(0), intervalNum_(0), dx_(0.0) {}
+// ------------------------------------------------------------------
+// PRIVATE METHODS
+// ------------------------------------------------------------------
 
-// FourierLowerUpperLut::FourierLowerUpperLut(const std::vector<double>& coeffs,
-//                                            size_t levelNum) {
-//     init(coeffs, levelNum);
-// }
+FourierLowerUpperLut::IndexNode* FourierLowerUpperLut::buildTree(
+    size_t idxBeg,
+    size_t idxEnd) {
+    IndexNode* node;
+    size_t idxMid;
 
-// FourierLowerUpperLut::~FourierLowerUpperLut() {}
+    if (idxBeg == idxEnd) {
+        return nullptr;
+    } else if (idxEnd == idxBeg + 1) {
+        node = new IndexNode;
+        node->xMin = intervals_[idxBeg].xMin;
+        node->xMax = intervals_[idxBeg].xMax;
+        node->idxYL = idxBeg;
+        node->idxYU = idxBeg;
+        node->left = nullptr;
+        node->right = nullptr;
+        return node;
+    } else {
+        node = new IndexNode;
+        idxMid = (idxBeg + idxEnd) / 2 + (idxBeg + idxEnd) % 2;
+        node->left = buildTree(idxBeg, idxMid);
+        node->right = buildTree(idxMid, idxEnd);
 
-// void FourierLowerUpperLut::init(const std::vector<double>& coeffs,
-//                                 size_t levelNum) {
-//     levelNum_ = levelNum;
-//     intervalNum_ = 1 << levelNum_;
-//     int treeSize = (1 << (levelNum_ + 1)) - 1;
-//     dx_ = M_PI / static_cast<double>(intervalNum_);
+        ARS_ASSERT(node->left != nullptr || node->right != nullptr);
 
-//     luValues_.resize(intervalNum_);
-//     intervals_.resize(treeSize);
+        node->xMin = node->left->xMin;
+        node->xMax = node->right->xMax;
+        node->idxYL = intervals_[node->left->idxYL].yLower <
+                              intervals_[node->right->idxYL].yLower
+                          ? node->left->idxYL
+                          : node->right->idxYL;
+        node->idxYU = intervals_[node->left->idxYU].yUpper >
+                              intervals_[node->right->idxYU].yUpper
+                          ? node->left->idxYU
+                          : node->right->idxYU;
+        return node;
+    }
+    return nullptr;
+}
 
-//     size_t leafStart = levelStart(levelNum_);
-//     for (int i = 0; i < intervalNum_; ++i) {
-//         double xMin = i * dx_;
-//         double xMax = (i + 1) * dx_;
+void FourierLowerUpperLut::removeTree(IndexNode* node) {
+    if (node != nullptr) {
+        removeTree(node->left);
+        removeTree(node->right);
+        delete node;
+    }
+}
 
-//         double yLower, yUpper;
-//         findLUFourier(coeffs, xMin, xMax, yLower, yUpper);
-
-//         luValues_[i].lower = yLower;
-//         luValues_[i].upper = yUpper;
-
-//         intervals_[leafStart + i].idxL = i;
-//         intervals_[leafStart + i].idxU = i;
-
-//         size_t h = i;
-//         size_t c = leafStart + i;
-//         while (h > 0) {
-//             size_t p = parent(c);
-//             size_t cl = childLeft(p);
-//             size_t cr = childRight(p);
-
-//             size_t idxL = (luValues_[intervals_[cl].idxL].lower <
-//                            luValues_[intervals_[cr].idxL].lower)
-//                               ? intervals_[cl].idxL
-//                               : intervals_[cr].idxL;
-
-//             size_t idxU = (luValues_[intervals_[cl].idxU].upper >
-//                            luValues_[intervals_[cr].idxU].upper)
-//                               ? intervals_[cl].idxU
-//                               : intervals_[cr].idxU;
-
-//             intervals_[p].idxL = idxL;
-//             intervals_[p].idxU = idxU;
-
-//             h = h >> 1;
-//             c = p;
-//         }
-//     }
-
-//     // Debug print:
-//     for (size_t i = 0; i < luValues_.size(); ++i) {
-//         size_t idxLower = intervals_[i].idxL;
-//         size_t idxUpper = intervals_[i].idxU;
-//         double lower = luValues_[idxLower].lower;
-//         double upper = luValues_[idxUpper].upper;
-//         ARS_PRINT("node " << i << " idxLower " << idxLower << ", idxUpper "
-//                           << idxUpper << "[" << lower << "," << upper <<
-//                           "]");
-//     }
-// }
-
-// void FourierLowerUpperLut::findLU(double xMin,
-//                                   double xMax,
-//                                   double& yLower,
-//                                   double& yUpper) const {
-//     if (xMin > xMax)
-//         std::swap(xMin, xMax);
-
-//     if (xMax - xMin >= M_PI) {
-//         size_t idxL = intervals_[0].idxL;
-//         size_t idxU = intervals_[0].idxU;
-//         yLower = luValues_[idxL].lower;
-//         yUpper = luValues_[idxU].upper;
-//         return;
-//     } else {
-//         size_t idxMin = (intervalNum_ + (int)floor(xMin / dx_)) %
-//         intervalNum_; size_t idxMax = (intervalNum_ + (int)ceil(xMax / dx_))
-//         % intervalNum_;
-
-//         ARS_VAR4(xMin, xMax, idxMin, idxMax);
-//         std::cout << "xMin " << xMin << " in [" << (idxMin * dx_) << ", "
-//                   << (idxMin + 1) * dx_ << "], xMax " << xMax << " in ["
-//                   << (idxMax - 1) * dx_ << ", " << idxMax * dx_ << "]"
-//                   << std::endl;
-//         if (idxMin <= idxMax) {
-//             findLUTree(idxMin, idxMax, yLower, yUpper);
-//         } else {
-//             size_t ancestorL = findCommonAncestor(idxMin, intervalNum_ - 1);
-//             size_t ancestorU = findCommonAncestor(0, idxMax - 1);
-
-//             double yLower1, yUpper1, yLower2, yUpper2;
-//             findLUTree(idxMin, intervalNum_ - 1, yLower1, yUpper1);
-//             findLUTree(0, idxMax, yLower2, yUpper2);
-
-//             yLower = std::min(yLower1, yLower2);
-//             yUpper = std::max(yUpper1, yUpper2);
-//         }
-//     }
-// }
-
-// void FourierLowerUpperLut::findLUTree(size_t idxMin,
-//                                       size_t idxMax,
-//                                       double& lower,
-//                                       double& upper) const {
-//     size_t idxLow, idxMid, idxUpp;
-//     size_t ancestor, idxL, idxU;
-//     double lower1, upper1, lower2, upper2;
-
-//     intervalPow2(idxMin, idxMax, idxLow, idxMid, idxUpp);
-
-//     ARS_VAR5(idxMin, idxMax, idxLow, idxMid, idxUpp);
-//     std::cout << " idxMin:  " << std::bitset<32>(idxMin) << "\n"
-//               << " idxMax:  " << std::bitset<32>(idxMax) << "\n"
-//               << " idxLow:  " << std::bitset<32>(idxLow) << "\n"
-//               << " idxMid:  " << std::bitset<32>(idxMid) << "\n"
-//               << " idxUpp:  " << std::bitset<32>(idxUpp) << "\n"
-//               << std::endl;
-
-//     if (idxLow == idxMin && idxUpp == idxMax) {
-//         ancestor = findCommonAncestor(idxMin, idxMax - 1);
-//         idxL = intervals_[ancestor].idxL;
-//         idxU = intervals_[ancestor].idxU;
-//         lower = luValues_[idxL].lower;
-//         upper = luValues_[idxU].upper;
-//         return;
-//     }
-
-//     findLUTree(idxMin, idxMid - 1, lower1, upper1);
-//     findLUTree(idxMid, idxMax, lower2, upper2);
-
-//     lower = std::min(lower1, lower2);
-//     upper = std::max(upper1, upper2);
-// }
-
-// size_t FourierLowerUpperLut::findCommonAncestor(size_t idxL,
-//                                                 size_t idxU) const {
-//     size_t nodeL = levelStart(levelNum_) + idxL;
-//     size_t nodeU = levelStart(levelNum_) + idxU;
-
-//     while (nodeL != nodeU) {
-//         if (nodeL > nodeU) {
-//             nodeL = parent(nodeL);
-//         } else {
-//             nodeU = parent(nodeU);
-//         }
-//     }
-
-//     return nodeL;
-// }
+void FourierLowerUpperLut::findLUTree(IndexNode* node,
+                                      double xMin,
+                                      double xMax,
+                                      double& yLower,
+                                      double& yUpper) const {
+    if (node == nullptr) {
+        return;
+    }
+    if (xMax < node->xMin || xMin > node->xMax) {
+        // No overlap
+        return;
+    } else if (xMin <= node->xMin && node->xMax <= xMax) {
+        // Full overlap
+        yLower = std::min(yLower, intervals_[node->idxYL].yLower);
+        yUpper = std::max(yUpper, intervals_[node->idxYU].yUpper);
+    } else {
+        // Partial overlap
+        findLUTree(node->left, xMin, xMax, yLower, yUpper);
+        findLUTree(node->right, xMin, xMax, yLower, yUpper);
+    }
+}
 
 }  // namespace ars
