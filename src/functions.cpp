@@ -358,6 +358,24 @@ void findLUCos(double a, double b, double& cmin, double& cmax) {
     }
 }
 
+void findUCos(double a, double b, double& cmax) {
+    double amod, bmod;
+
+    if (a > b) std::swap(a, b);
+
+    if (b - a >= 2.0 * M_PI) cmax = +1.0;
+    else {
+        // Normalizes to circular interval [0, 2*M_PI[
+        amod = fmod(a, 2.0 * M_PI);
+        if (amod < 0.0) amod += 2.0 * M_PI;
+        bmod = fmod(b, 2.0 * M_PI);
+        if (bmod < 0.0) bmod += 2.0 * M_PI;
+        // Case bmod < amod: for example [300,30[ deg: angle 0 is included.
+        if (bmod < amod) cmax = +1.0;
+        else cmax = std::max(cos(amod), cos(bmod));
+    }
+}
+
 void findLUFourier(const std::vector<double>& coeffs, double theta0, double theta1, double& fourierMin, double& fourierMax) {
     double amplitude, phase, sinusoidMin, sinusoidMax;
     int n, i0, i1;
@@ -387,6 +405,37 @@ void findLUFourier(const std::vector<double>& coeffs, double theta0, double thet
         fourierMin += amplitude * sinusoidMin;
         fourierMax += amplitude * sinusoidMax;
     }
+}
+
+void findLUFourierBetterLower(const std::vector<double>& coeffs, double theta0, double theta1, double& fourierMin, double& fourierMax) {
+    double amplitude, phase, lowerAngle, sinusoidMax;
+    int n, i0, i1;
+
+    if (coeffs.size() % 2 != 0) {
+        std::cerr << __FILE__ << "," << __LINE__ << ": the number of coefficients must be even: found " << coeffs.size() << std::endl;
+    }
+    n = (coeffs.size() / 2) - 1;
+
+    if (theta1 < theta0) {
+        std::cerr << __FILE__ << "," << __LINE__ << ": invalid interval [" << theta0 << "," << theta1 << "]: swapping endpoints to continue" << std::endl;
+        std::swap(theta0, theta1);
+    }
+
+    // fourierMin and fourierMax initialized with constant component
+    lowerAngle = (theta0 + theta1)/2;
+    fourierMax = coeffs[0];
+    for (int k = 1; k <= n; ++k) {
+        // t_k = a_k * cos(2*k*theta) + b_k * sin(2*k*theta) = amplitude * cos(2*k*theta - phase)
+        // Period of k-th terms is M_PI / k.
+        amplitude = sqrt(coeffs[2 * k] * coeffs[2 * k] + coeffs[2 * k + 1] * coeffs[2 * k + 1]);
+        phase = atan2(coeffs[2 * k + 1], coeffs[2 * k]);
+        // std::cout << "k " << k << ", amplitude " << amplitude << ", phase[deg] " << (180.0/M_PI*phase) << std::endl;
+        //  If the [theta0,theta1] interval is larger than period, then the whole sinusoid amplitude is considered.
+        //  Otherwise, a more refined evaluation is performed.
+        findUCos(2.0 * k * theta0 - phase, 2.0 * k * theta1 - phase, sinusoidMax);
+        fourierMax += amplitude * sinusoidMax;
+    }
+    fourierMin = evaluateFourier(coeffs, 2.0*lowerAngle);
 }
 
 void fft(const std::vector<double>& funIn, std::vector<double>& coeffs, int fourierOrder) {
