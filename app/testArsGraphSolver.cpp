@@ -62,6 +62,7 @@ int main(int argc, char** argv){
     }
 
     ars::ArsGraphSolver solver(graph);
+    solver.initialSolutionFromTree();
 
     std::vector<double> solution;
     double cost = 0;
@@ -84,6 +85,9 @@ int main(int argc, char** argv){
 
 int readConfig(const string& filename, vector<string>& cloudFiles, vector<vector<int>>& edges){
     std::ifstream file(filename);
+    if(file.fail()){
+       return -1; 
+    }
     std::string line;
     cloudFiles.clear();
     edges.clear();
@@ -121,6 +125,9 @@ int readConfig(const string& filename, vector<string>& cloudFiles, vector<vector
 
 int csvToCoeffs(const std::string& filename, std::vector<double>& coeffs){
     std::ifstream file(filename);
+    if(file.fail()){
+       return -1; 
+    }
     std::string line;
     coeffs.clear();
     while (!file.eof()) {
