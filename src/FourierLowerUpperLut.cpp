@@ -172,8 +172,8 @@ void FourierLowerUpperLut::findLU(double xMin,
                                   double& yLower,
                                   double& yUpper) const {
     ARS_ASSERT(tree_ != nullptr);
-    yLower = intervals_[tree_->idxYL].yLower;
-    yUpper = intervals_[tree_->idxYU].yUpper;
+    yLower = 1.0;
+    yUpper = -1.0;
     findLUTree(tree_, xMin, xMax, yLower, yUpper);
 }
 
@@ -282,9 +282,10 @@ void FourierLowerUpperLut::findLUTree(IndexNode* node,
         // Full overlap
         yLower = std::min(yLower, intervals_[node->idxYL].yLower);
         yUpper = std::max(yUpper, intervals_[node->idxYU].yUpper);
-        ARS_PRINT("Full overlap node [" << RAD2DEG(node->xMin) << ", "
-                                        << RAD2DEG(node->xMax)
-                                        << "]: " << yLower << ", " << yUpper);
+    } else if (node->left == nullptr || node->right == nullptr) {
+        // Partial overlap, leaf
+        yLower = std::min(yLower, intervals_[node->idxYL].yLower);
+        yUpper = std::max(yUpper, intervals_[node->idxYU].yUpper);
     } else {
         // Partial overlap
         findLUTree(node->left, xMin, xMax, yLower, yUpper);

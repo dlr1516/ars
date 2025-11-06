@@ -206,6 +206,7 @@ void evaluateHermiteFunction(int n, double x, std::vector<double>& hfunc);
 /** Computes lower and upper bounds of cosine function on a given interval.
  */
 void findLUCos(double a, double b, double& cmin, double& cmax);
+void findUCos(double a, double b, double& cmax);
 
 /** Computes lower and upper bounds of Fourier Series (represented by its coefficients)
  * on a given interval.
@@ -213,6 +214,8 @@ void findLUCos(double a, double b, double& cmin, double& cmax);
  *   S(x) = \sum_{i=0}^{n} ( coeffs[2*i] * cos(2*i*x) + coeffs[2*i+1] * sin(2*i*x) )
  */
 void findLUFourier(const std::vector<double>& coeffs, double theta0, double theta1, double& fourierMin, double& fourierfMax);
+
+void findLUFourierBetterLower(const std::vector<double>& coeffs, double theta0, double theta1, double& fourierMin, double& fourierfMax);
 
 void fft(const std::vector<double>& funIn, std::vector<double>& coeff, int fourierOrder);
 
