@@ -196,6 +196,11 @@ void FourierLowerUpperLut::exportPlot(std::ostream& out) {
     }
 }
 
+void FourierLowerUpperLut::printTree(std::ostream& out) const {
+    ARS_PRINT("Interval Index Tree:");
+    printTree(out, tree_, 0);
+}
+
 // ------------------------------------------------------------------
 // PRIVATE METHODS
 // ------------------------------------------------------------------
@@ -248,6 +253,20 @@ void FourierLowerUpperLut::removeTree(IndexNode* node) {
     }
 }
 
+void FourierLowerUpperLut::printTree(std::ostream& out,
+                                     IndexNode* node,
+                                     int level) const {
+    if (node != nullptr) {
+        out << std::string(level * 2, ' ') << "Node [" << RAD2DEG(node->xMin)
+            << ", " << RAD2DEG(node->xMax) << "]: idxYL=" << node->idxYL << " ("
+            << intervals_[node->idxYL].yLower << ")"
+            << ", idxYU=" << node->idxYU << " ("
+            << intervals_[node->idxYU].yUpper << ")" << std::endl;
+        printTree(out, node->left, level + 1);
+        printTree(out, node->right, level + 1);
+    }
+}
+
 void FourierLowerUpperLut::findLUTree(IndexNode* node,
                                       double xMin,
                                       double xMax,
@@ -263,6 +282,9 @@ void FourierLowerUpperLut::findLUTree(IndexNode* node,
         // Full overlap
         yLower = std::min(yLower, intervals_[node->idxYL].yLower);
         yUpper = std::max(yUpper, intervals_[node->idxYU].yUpper);
+        ARS_PRINT("Full overlap node [" << RAD2DEG(node->xMin) << ", "
+                                        << RAD2DEG(node->xMax)
+                                        << "]: " << yLower << ", " << yUpper);
     } else {
         // Partial overlap
         findLUTree(node->left, xMin, xMax, yLower, yUpper);

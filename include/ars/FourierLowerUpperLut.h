@@ -97,6 +97,8 @@ class FourierLowerUpperLut {
      */
     void exportPlot(std::ostream& out);
 
+    void printTree(std::ostream& out) const;
+
    protected:
     Intervals intervals_;
     Sinusoids sinusoids_;
@@ -105,6 +107,8 @@ class FourierLowerUpperLut {
     IndexNode* buildTree(size_t idxBeg, size_t idxEnd);
 
     void removeTree(IndexNode* node);
+
+    void printTree(std::ostream& out, IndexNode* node, int level) const;
 
     void findLUTree(IndexNode* node,
                     double xMin,
