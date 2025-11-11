@@ -107,6 +107,9 @@ target_link_libraries(testArsGraphSolver ${ars_LINK_LIBS} ars)
 add_executable(testFourierLowerUpperLut app/testFourierLowerUpperLut.cpp)
 target_link_libraries(testFourierLowerUpperLut ${ars_LINK_LIBS} ars)
 
+add_executable(testArsGraphDerivative app/testArsGraphDerivative.cpp)
+target_link_libraries(testArsGraphDerivative ${ars_LINK_LIBS} ars)
+
 # add_executable(testMortonOrderedPoints app/testMortonOrderedPoints.cpp)
 # target_link_libraries(testMortonOrderedPoints ${ars_LINK_LIBS} ars)
 
