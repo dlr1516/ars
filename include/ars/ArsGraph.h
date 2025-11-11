@@ -34,6 +34,21 @@ class ArsGraph {
    public:
     using Self = ArsGraph;
     using Ptr = std::shared_ptr<Self>;
+    using compT = std::complex<double>;
+
+    struct StationaryPoint{
+        double theta;
+        double val;
+
+        StationaryPoint(double t, double v) : theta(t), val(v) {}
+    };
+
+    struct StationaryPointMore {
+        bool operator()(StationaryPoint& r0,
+                        StationaryPoint& r1) const {
+            return (r0.val > r1.val);
+        }
+    } statPointSorter;
 
     struct Node {
         std::vector<double> coeffs;
@@ -45,6 +60,7 @@ class ArsGraph {
         int idst;
         double weight;
         std::vector<double> coeffs;
+        std::vector<StationaryPoint> sPoints;
     };
 
     /**
@@ -76,6 +92,7 @@ class ArsGraph {
     int addNode(const std::vector<double>& coeffs);
 
     int addEdge(int isrc, int idst, double weight = 1.0);
+    int addEdgeWithDerivative(int isrc, int idst, double weight = 1.0);
 
     const std::vector<Node>& nodes() const;
 
@@ -87,6 +104,10 @@ class ArsGraph {
     std::vector<Node> nodes_;
     std::vector<Edge> edges_;
     size_t fourierOrder_;
+    const double e = 1000000*std::numeric_limits<double>::epsilon();
+
+    void fourierDerivative(const std::vector<double>& coeffs, std::vector<double>& dCoeffs);
+    void fourierRootsCCM(const std::vector<double>& coeffs, std::vector<double>& roots);
 };
 
 }  // namespace ars
