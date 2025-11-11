@@ -457,4 +457,101 @@ void fft(const std::vector<double>& funIn, std::vector<double>& coeffs, int four
     }
 }
 
+// --------------------------------------------------------
+// STATIONARY POINTS FUNCTIONS
+// --------------------------------------------------------
+
+void fourierDerivative(const std::vector<double>& coeffs, std::vector<double>& dCoeffs){
+    int fourierOrder = (coeffs.size() - 2) * 0.5;
+    dCoeffs.resize(coeffs.size());
+    //The average value of the function doesn't influence it's derivative
+    dCoeffs[0] = 0;
+    dCoeffs[1] = 0;
+    //in order to compute the derivative of the fourier series for each level k we have
+    //a*cos(k*theta) + b*sin(k*theta) => k*b*cos(k*theta) - k*a*sin(k*theta)
+    for(int i = 1; i < fourierOrder+1; i++){
+        int idx = 2*i;
+        dCoeffs[idx] = i*coeffs[idx+1];
+        dCoeffs[idx+1] = -(i*coeffs[idx]);
+    }
+}
+
+void fourierRootsCCM(const std::vector<double>& coeffs, std::vector<double>& roots){
+    int fOrder = (coeffs.size() - 2) * 0.5;
+    Eigen::MatrixXcd m(2*fOrder, 2*fOrder);
+    std::vector<compT> h(2*fOrder + 1);
+    roots.clear();
+
+    for (int k = 0; k < h.size(); k++){
+        if (k < fOrder)
+            h[k] = compT(coeffs[2*(fOrder-k)], coeffs[2*(fOrder-k) + 1]);
+        else if (k == fOrder)
+            h[k] = 2*coeffs[0];
+        else
+            h[k] = compT(coeffs[2*(k-fOrder)], -coeffs[2*(k-fOrder) + 1]);
+    }
+
+    for (int i = 0; i<2*fOrder-1; i++){
+        for (int j = 0; j<2*fOrder; j++){
+            if(i == j-1)    m(i,j) = 1.0;
+            else            m(i,j) = .0;
+        }
+    }
+
+    int i = 2*fOrder-1;
+    compT den = 1.0/compT(coeffs[2*fOrder], -coeffs[2*fOrder+1]);
+    for(int j = 0; j<2*fOrder; j++){
+        m(i,j) = -(h[j]*den);
+    }
+
+    Eigen::ComplexEigenSolver<Eigen::MatrixXcd> eigensolver(m);
+    std::complex<double> eig;
+    double norm;
+    for(int i = 0; i < m.rows(); ++i){
+        eig = eigensolver.eigenvalues().col(0)[i];
+        norm = std::norm(eig);
+        if(1.0 - e <= norm && norm <= 1.0 + e){
+            double arg = std::arg(eig);
+            double root = arg < 0 ? arg + 2*M_PI : arg;
+            roots.push_back(root);
+        }
+    }
+}
+
+void findLUFourierStationaryPoints(const std::vector<double>& coeffs, double theta0, 
+            double theta1, double& fourierMin, double& fourierMax, std::vector<StationaryPoint> sPoints){
+    
+    double sPoint = -1.0;
+
+    if (coeffs.size() % 2 != 0) {
+        std::cerr << __FILE__ << "," << __LINE__ << ": the number of coefficients must be even: found " << coeffs.size() << std::endl;
+    }
+
+    if (theta1 < theta0) {
+        std::cerr << __FILE__ << "," << __LINE__ << ": invalid interval [" << theta0 << "," << theta1 << "]: swapping endpoints to continue" << std::endl;
+        std::swap(theta0, theta1);
+    }
+
+    if(theta1 - theta0 > M_PI){
+        theta0 = .0;
+        theta1 = M_PI;
+    }
+
+    //Finding upper bound by comparing the highest value stationaty point in the interval
+    //with the value of the function along the extremes of the interval
+    //We can break after the first hit because the list is ordered
+    for(int i = 0; i < sPoints.size(); i++){
+        auto& sp = sPoints[i];
+        if(sp.theta > theta0 && sp.theta < theta1){
+            sPoint = sp.val;
+            break;
+        }
+    }
+    double left = evaluateFourier(coeffs, 2*theta0);
+    double right = evaluateFourier(coeffs, 2*theta1);
+    fourierMax = std::max(sPoint, std::max(left, right));
+    //Middle of the interval -> 2*(theta1+theta2)*0.5 -> theta1+theta2
+    fourierMin = evaluateFourier(coeffs, theta0 + theta1);
+}
+
 }  // namespace ars

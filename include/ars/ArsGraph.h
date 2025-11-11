@@ -34,14 +34,6 @@ class ArsGraph {
    public:
     using Self = ArsGraph;
     using Ptr = std::shared_ptr<Self>;
-    using compT = std::complex<double>;
-
-    struct StationaryPoint{
-        double theta;
-        double val;
-
-        StationaryPoint(double t, double v) : theta(t), val(v) {}
-    };
 
     struct StationaryPointMore {
         bool operator()(StationaryPoint& r0,
@@ -104,10 +96,6 @@ class ArsGraph {
     std::vector<Node> nodes_;
     std::vector<Edge> edges_;
     size_t fourierOrder_;
-    const double e = 1000000*std::numeric_limits<double>::epsilon();
-
-    void fourierDerivative(const std::vector<double>& coeffs, std::vector<double>& dCoeffs);
-    void fourierRootsCCM(const std::vector<double>& coeffs, std::vector<double>& roots);
 };
 
 }  // namespace ars

@@ -41,6 +41,7 @@ class ArsGraphInterval {
     using DiffT = boost::container::flat_map<int, double>;
     using FullT = std::vector<double>;
     using FullTPtr = std::shared_ptr<FullT>;
+    using SPointT = ars::StationaryPoint;
 
     ArsGraphInterval();
 
