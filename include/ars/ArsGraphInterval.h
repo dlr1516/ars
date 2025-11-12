@@ -103,6 +103,8 @@ class ArsGraphInterval {
 
     virtual void split(size_t idx, Ptr intervLower, Ptr intervUpper) = 0;
 
+    virtual void splitWithStationary(size_t idx, Ptr intervLower, Ptr intervUpper) = 0;
+
     virtual size_t size() const = 0;
 
    protected:
@@ -127,6 +129,8 @@ class ArsGraphIntervalFull : public ArsGraphInterval {
     virtual ~ArsGraphIntervalFull();
 
     void init(ArsGraphPtr& graph);
+
+    void initWithStationary(ArsGraphPtr& graph);
 
     virtual int getDiffSize();
 
@@ -177,6 +181,10 @@ class ArsGraphIntervalFull : public ArsGraphInterval {
     virtual void getEdgeBounds(double& lower, double& upper);
 
     virtual void split(size_t idx,
+                       Base::Ptr intervLower,
+                       Base::Ptr intervUpper);
+
+    virtual void splitWithStationary(size_t idx,
                        Base::Ptr intervLower,
                        Base::Ptr intervUpper);
     
@@ -259,6 +267,10 @@ class ArsGraphIntervalDiff : public ArsGraphInterval {
     virtual void getEdgeBounds(double& lower, double& upper);
 
     virtual void split(size_t idx,
+                       Base::Ptr intervLower,
+                       Base::Ptr intervUpper);
+
+    virtual void splitWithStationary(size_t idx,
                        Base::Ptr intervLower,
                        Base::Ptr intervUpper);
     

@@ -348,6 +348,107 @@ bool ArsGraphSolver::solve(std::vector<double>& solution, double& cost,
     return true;
 }
 
+bool ArsGraphSolver::solveWithStationary(std::vector<double>& solution, double& cost, 
+    Statistics& stats, bool useDiff) {
+    
+    LeastUpperBoundFirstQueuePtr queue(new LeastUpperBoundFirstQueue);
+    ArsGraphIntervalFull::Ptr initial(new ArsGraphIntervalFull(graph_));
+    initial->initWithStationary(graph_);
+    queue->push(initial);
+
+    stats.createdNodes = 1;
+    stats.minIntervalSize = initial->size();
+    stats.maxIntervalSize = initial->size();
+    stats.avgIntervalSize = initial->size();
+
+    bool updated = false;
+
+    if(solution_.anglesLower.size() != graph_->getNodeNum()){
+        lower_ = initial->getLowerBound();
+        upper_ = initial->getUpperBound();
+        solution_.anglesLower = initial->getNodeLowers();
+        solution_.anglesUpper = initial->getNodeUppers();
+    }
+    std::cout << "Initial solution: " << std::endl;
+    for(int i = 0; i < solution_.anglesLower.size(); i++){
+        std::cout << "Node " << i << ": " 
+            << solution_.anglesLower[i]*(180.0/M_PI) << 
+            " - " << solution_.anglesUpper[i]*(180.0/M_PI) << std::endl; 
+    }
+
+    while (!queue->empty()) {
+        ArsGraphIntervalPtr curr = queue->top();
+        queue->pop();
+        if (curr->getUpperBound() >= lower_) {
+            if (lower_ < curr->getLowerBound()) {
+                lower_ = curr->getLowerBound();
+                upper_ = curr->getUpperBound();
+                solution_.anglesLower = curr->getNodeLowers();
+                solution_.anglesUpper = curr->getNodeUppers();
+                if(!updated){
+                    std::cout << "Updated sol after: " << stats.createdNodes <<std::endl;
+                    updated = true;
+                }
+            }
+            std::vector<NodeInterval> validNodes;
+            if(!checkInterval(curr, validNodes)){
+                ars::ArsGraphInterval::Ptr intervLower;
+                ars::ArsGraphInterval::Ptr intervUpper;
+                if (useDiff && curr->getDiffSize() <= curr->getEdgeNum()*0.5) {
+                    intervLower.reset(new ars::ArsGraphIntervalDiff);
+                    intervUpper.reset(new ars::ArsGraphIntervalDiff);
+                }
+                else {
+                    intervLower.reset(new ars::ArsGraphIntervalFull);
+                    intervUpper.reset(new ars::ArsGraphIntervalFull);
+                }
+
+                int idx = 0;
+                for(int i = 1; i < validNodes.size(); i++){
+                    if (validNodes[idx].xWidth < validNodes[i].xWidth){
+                        idx = i;
+                        break;
+                    }
+                }
+                int node = validNodes[idx].idx;
+
+                curr->splitWithStationary(node, intervLower, intervUpper);
+                queue->push(intervLower);
+                queue->push(intervUpper);
+                stats.createdNodes += 2;
+                size_t lowerSize = intervLower->size();
+                size_t upperSize = intervUpper->size();
+
+                if(lowerSize < stats.minIntervalSize){
+                    stats.minIntervalSize = lowerSize;
+                }
+                if(lowerSize > stats.maxIntervalSize){
+                    stats.maxIntervalSize = lowerSize;
+                }
+
+                if(upperSize < stats.minIntervalSize){
+                    stats.minIntervalSize = upperSize;
+                }
+                if(upperSize > stats.maxIntervalSize){
+                    stats.maxIntervalSize = upperSize;
+                }
+
+                stats.avgIntervalSize = 
+                    (stats.avgIntervalSize * (stats.createdNodes-2) 
+                        + lowerSize + upperSize) / stats.createdNodes;
+            }
+        }
+    }
+    solution.resize(solution_.anglesLower.size());
+    for(int i = 0; i < solution_.anglesLower.size(); i++){
+        double angleLower = solution_.anglesLower[i];
+        double angleUpper = solution_.anglesUpper[i];
+        solution[i] = (angleLower + angleUpper)/2;
+    }
+    cost = lower_;
+    return true;
+}
+
 bool ArsGraphSolver::checkInterval(ArsGraphIntervalPtr interval, std::vector<NodeInterval>& validNodes){
     validNodes.clear();
 
