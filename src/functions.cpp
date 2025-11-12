@@ -422,7 +422,7 @@ void findLUFourierBetterLower(const std::vector<double>& coeffs, double theta0, 
     }
 
     // fourierMin and fourierMax initialized with constant component
-    lowerAngle = (theta0 + theta1)/2;
+    lowerAngle = (theta0 + theta1)*0.5;
     fourierMax = coeffs[0];
     for (int k = 1; k <= n; ++k) {
         // t_k = a_k * cos(2*k*theta) + b_k * sin(2*k*theta) = amplitude * cos(2*k*theta - phase)
@@ -531,10 +531,20 @@ void findLUFourierStationaryPoints(const std::vector<double>& coeffs, double the
         std::cerr << __FILE__ << "," << __LINE__ << ": invalid interval [" << theta0 << "," << theta1 << "]: swapping endpoints to continue" << std::endl;
         std::swap(theta0, theta1);
     }
-
-    if(theta1 - theta0 > M_PI){
-        theta0 = .0;
-        theta1 = M_PI;
+    //Since the stationary points are described by an angle between 0 and PI, i want the interval [theta0,theta1] to also be
+    //included in [0,PI[ 
+    double a = theta0;
+    double b = theta1;
+    if(b - a >= M_PI){
+        a = .0;
+        b = M_PI;
+    }
+    else{
+        // Normalizes to circular interval [0, M_PI[
+        a = fmod(a, M_PI);
+        if (a < 0.0) a += M_PI;
+        b = fmod(b, M_PI);
+        if (b < 0.0) b += M_PI;
     }
 
     //Finding upper bound by comparing the highest value stationaty point in the interval
@@ -542,15 +552,25 @@ void findLUFourierStationaryPoints(const std::vector<double>& coeffs, double the
     //We can break after the first hit because the list is ordered
     for(int i = 0; i < sPoints.size(); i++){
         auto& sp = sPoints[i];
-        if(sp.theta > theta0 && sp.theta < theta1){
+        double t = sp.theta;
+        // Case theta1 < theta0: for example [150,30] deg.
+        if(b < a){
+            if((t >= .0 && t <= b) || 
+                (t >= a && t <= M_PI )){
+                sPoint = sp.val;
+                break;
+            }
+        }
+        else if(t > a && t < b){
             sPoint = sp.val;
             break;
         }
     }
-    double left = evaluateFourier(coeffs, 2*theta0);
-    double right = evaluateFourier(coeffs, 2*theta1);
+    double left = evaluateFourier(coeffs, 2*a);
+    double right = evaluateFourier(coeffs, 2*b);
     fourierMax = std::max(sPoint, std::max(left, right));
-    //Middle of the interval -> 2*(theta1+theta2)*0.5 -> theta1+theta2
+    //Middle of the interval -> 2*(theta1+theta2)*0.5 -> theta0+theta1
+    //This angle is used because it's the same considered by the solution
     fourierMin = evaluateFourier(coeffs, theta0 + theta1);
 }
 
