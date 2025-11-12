@@ -82,10 +82,11 @@ int main(int argc, char** argv){
         }
         gp << "e" << std::endl;
 
+        std::cout << "id " << id << ": ";
         for(size_t i = 0; i < edge.sPoints.size(); i++){
             double theta = edge.sPoints[i].theta;
             double fourier = edge.sPoints[i].val;
-            std::cout << "id " << id << ": " << RAD2DEG(theta) << "," << fourier << "; ";
+            std::cout << RAD2DEG(theta) << "," << fourier << "; ";
             gp << RAD2DEG(theta) << " " << fourier << "\n";
         }
         gp << "e" << std::endl;
