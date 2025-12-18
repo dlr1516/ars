@@ -45,6 +45,7 @@ add_library(ars
   src/ArsGraph.cpp
   src/ArsGraphInterval.cpp
   src/ArsGraphSolver.cpp
+  src/HoughTranslationEstimator.cpp
   src/BBOptimizer1d.cpp
   src/BBTranslation.cpp
   src/ConsensusTranslationEstimator.cpp
@@ -112,6 +113,9 @@ target_link_libraries(testFourierLowerUpperLut ${ars_LINK_LIBS} ars)
 
 add_executable(testArsGraphDerivative app/testArsGraphDerivative.cpp)
 target_link_libraries(testArsGraphDerivative ${ars_LINK_LIBS} ars)
+
+add_executable(testHoughTranslationSolver app/testHoughTranslationSolver.cpp)
+target_link_libraries(testHoughTranslationSolver ${ars_LINK_LIBS} ars)
 
 # add_executable(testMortonOrderedPoints app/testMortonOrderedPoints.cpp)
 # target_link_libraries(testMortonOrderedPoints ${ars_LINK_LIBS} ars)
