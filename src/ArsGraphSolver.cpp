@@ -83,8 +83,11 @@ bool ArsGraphSolver::initialSolutionFromTree() {
     solution_.anglesLower[0] = .0;
     solution_.anglesUpper[0] = .0;
 
-    std::vector<int> added;
-    added.push_back(0);
+    std::vector<std::vector<int>> addedEdges;
+    addedEdges.resize(graph_->getEdgeNum());
+
+    std::vector<int> addedNodes;
+    addedNodes.push_back(0);
 
     std::queue<int> explorable;
     explorable.push(0);
@@ -106,22 +109,24 @@ bool ArsGraphSolver::initialSolutionFromTree() {
                 mult = -1;
             }
 
-            if(std::find(added.begin(), added.end(), idst) != added.end()){
-                if (isrc == edge.isrc){
+            if(std::find(addedNodes.begin(), addedNodes.end(), idst) != addedNodes.end()){
+                auto& edges = addedEdges[edge.isrc];
+                if (std::find(edges.begin(), edges.end(), edge.idst) == edges.end()){
                     double fLow, fUp;
 
                     double t = solution_.anglesLower[idst] - solution_.anglesLower[isrc];
 
-                    findLUFourier(edge.coeffs, t - xtol_*.5, t + xtol_*.5, fLow, fUp);
+                    findLUFourierStationaryPoints(edge.coeffs, t - xtol_*.5, t + xtol_*.5, fLow, fUp, edge.sPoints);
 
                     lower_ += fLow;
                     upper_ += fUp;
+                    edges.push_back(edge.idst);
                 }
                 continue;
             }
 
             double tMax, fLow, fUp;
-            FourierOptimizerBB1D fopt(edge.coeffs);
+            FourierOptimizerBB1DStationary fopt(edge.coeffs, edge.sPoints);
 
             fopt.setXTolerance(xtol_);
             fopt.enableXTolerance(true);
@@ -132,19 +137,22 @@ bool ArsGraphSolver::initialSolutionFromTree() {
             lower_ += fLow;
             upper_ += fUp;
             double sol = solution_.anglesLower[isrc] + (mult*tMax);
+            sol < .0 ? sol += M_PI : sol = sol;
+            sol > M_PI ? sol -= M_PI : sol = sol;
             solution_.anglesLower[idst] = sol;
             solution_.anglesUpper[idst] = sol;
 
             explorable.push(idst);
-            added.push_back(idst);
+            addedNodes.push_back(idst);
+            addedEdges[edge.isrc].push_back(edge.idst);
         }   
     }
-    return added.size() == graph_->nodes().size();
+    return addedNodes.size() == graph_->nodes().size();
 }
 
 bool ArsGraphSolver::initialSolutionFromGraph() {
-    lower_ = 0;
-    upper_ = 0;
+    lower_ = .0;
+    upper_ = .0;
 
     solution_.anglesLower.resize(graph_->getNodeNum());
     solution_.anglesUpper.resize(graph_->getNodeNum());
