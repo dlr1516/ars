@@ -158,9 +158,46 @@ namespace ars {
          */
         virtual void findLU(double xmin, double xmax, double& ylower, double& yupper);
 
-    private:
+    protected:
         std::vector<double> coeffs_;
         int orderMax_;
+    };
+
+    /**
+     * Class FourierOptimizerBB1D performs optimization on 1D functionts represented as 
+     * Fourier series with finite terms using stationary points. 
+     * It is a specialization of OptimizerBB1D.
+     */
+
+    class FourierOptimizerBB1DStationary : public FourierOptimizerBB1D {
+    public:
+        /**
+         * Default constructor.
+         */
+        FourierOptimizerBB1DStationary();
+
+        /**
+         * Constructor with Fourier series coefficients.
+         */
+        FourierOptimizerBB1DStationary(const std::vector<double>& coeffs, const std::vector<StationaryPoint>& sPoints);
+
+        /**
+         * Destructor.
+         */
+        virtual ~FourierOptimizerBB1DStationary();
+
+        /**
+         * Sets the stationary points. 
+         */
+        void setStationary(const std::vector<StationaryPoint>& sPoints);
+
+        /**
+         * Returns the lower and upper bound of the function over the given interval [xmin, xmax].
+         */
+        virtual void findLU(double xmin, double xmax, double& ylower, double& yupper);
+
+    private:
+        std::vector<StationaryPoint> sPoints_;
     };
 
 
