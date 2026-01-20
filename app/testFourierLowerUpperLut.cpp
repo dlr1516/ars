@@ -33,31 +33,30 @@
 
 using BoundInterval = ars::FourierLowerUpperLut::Interval;
 
-std::vector<double> coeffs = {0.0956209,    0,
-                              -0.00756418,  0.0254858,
-                              -0.0159511,   -0.0222764,
-                              0.0105998,    -0.00548222,
-                              -0.00154664,  0.0105675,
-                              0.00202689,   0.00236173,
-                              0.00606581,   0.00169872,
-                              0.000362685,  -0.000263201,
-                              0.00168924,   -0.00354879,
-                              0.000656388,  -0.00223724,
-                              -0.00162124,  -9.29845e-06,
-                              -0.00127703,  -0.0032378,
-                              0.00142952,   0.00148903,
-                              -0.000444384, 0.000975841,
-                              0.000341318,  -0.00198222,
-                              1.51505e-05,  0.000739245,
-                              -0.000620007, 0.000517741,
-                              -0.000155,    -0.000509777,
-                              0.000594383,  -0.000966466,
-                              -0.000169302, -0.000123654,
-                              -0.000989125, 0.000505298};
+// std::vector<double> coeffs = {0.0956209,    0,
+//                               -0.00756418,  0.0254858,
+//                               -0.0159511,   -0.0222764,
+//                               0.0105998,    -0.00548222,
+//                               -0.00154664,  0.0105675,
+//                               0.00202689,   0.00236173,
+//                               0.00606581,   0.00169872,
+//                               0.000362685,  -0.000263201,
+//                               0.00168924,   -0.00354879,
+//                               0.000656388,  -0.00223724,
+//                               -0.00162124,  -9.29845e-06,
+//                               -0.00127703,  -0.0032378,
+//                               0.00142952,   0.00148903,
+//                               -0.000444384, 0.000975841,
+//                               0.000341318,  -0.00198222,
+//                               1.51505e-05,  0.000739245,
+//                               -0.000620007, 0.000517741,
+//                               -0.000155,    -0.000509777,
+//                               0.000594383,  -0.000966466,
+//                               -0.000169302, -0.000123654,
+//                               -0.000989125, 0.000505298};
 
-// std::vector<double> coeffs = {0.0956209,  0,          -0.00756418, 0.0254858,
-//                               -0.0159511, -0.0222764, 0.0105998,
-//                               -0.00548222};
+std::vector<double> coeffs = {0.0956209,  0,          -0.00756418, 0.0254858,
+                              -0.0159511, -0.0222764, 0.0105998,   -0.00548222};
 
 void plotBranchBoundBox(std::ostream& out,
                         const std::vector<BoundInterval>& bbbs);
@@ -80,13 +79,13 @@ int main(int argc, char** argv) {
     std::cout << "Parameters: " << std::endl;
     params.write(std::cout);
 
-    lut.init(coeffs, levelNum);
+    lut.init(coeffs);
+    lut.printTree(std::cout);
 
-    // double yL, yU;
-    // lut.findLU(xL, xU, yL, yU);
-    // std::cout << "Bounds for [" << xL << ", " << xU << "]: " << yL << ", " <<
-    // yU
-    //           << std::endl;
+    double yL, yU;
+    lut.findLU(xL, xU, yL, yU);
+    std::cout << "Bounds for [" << RAD2DEG(xL) << ", " << RAD2DEG(xU)
+              << "]: " << yL << ", " << yU << std::endl;
 
     Gnuplot gp("gnuplot -persist");
     double vieweps = 5e-3;
@@ -96,7 +95,7 @@ int main(int argc, char** argv) {
     //  std::ostream& gp = std::cout;
     gp << "set term wxt 100\n";
     gp << "plot '-' title \"fourier\" w l, '-' title "
-          "\"bb\" w l\n";
+          "\"bb\" w l, '-' title \"query\" w l\n";
     for (int i = 0; i < thetaNum; ++i) {
         double theta = (M_PI / thetaNum) * i;
         double fourier = ars::evaluateFourier(coeffs, 2.0 * theta);
@@ -104,6 +103,12 @@ int main(int argc, char** argv) {
     }
     gp << "e" << std::endl;
     plotBranchBoundBox(gp, lut.intervals());
+    gp << "e" << std::endl;
+    gp << RAD2DEG(xL) << " " << yL << "\n"
+       << RAD2DEG(xU) << " " << yL << "\n"
+       << RAD2DEG(xU) << " " << yU << "\n"
+       << RAD2DEG(xL) << " " << yU << "\n"
+       << RAD2DEG(xL) << " " << yL << "\n";
     gp << "e" << std::endl;
 
     return 0;

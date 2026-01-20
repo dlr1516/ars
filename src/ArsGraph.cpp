@@ -53,7 +53,7 @@ int ArsGraph::addNode(const std::vector<double>& coeffs) {
     } else {
         ARS_ERROR("invalid Fourier order: there are "
                   << coeffs.size() << " coefficients instead of "
-                  << (2 * fourierOrder_));
+                  << 2 * (fourierOrder_ + 1));
         return -1;
     }
 }
@@ -72,6 +72,44 @@ int ArsGraph::addEdge(int isrc, int idst, double weight) {
     edge.idst = idst;
     edge.weight = weight;
     computeFourierCorr(nodes_[isrc].coeffs, nodes_[idst].coeffs, edge.coeffs);
+    edges_.push_back(edge);
+
+    nodes_[isrc].incidents.push_back((int)edges_.size() - 1);
+    nodes_[idst].incidents.push_back((int)edges_.size() - 1);
+
+    return ((int)edges_.size() - 1);
+}
+
+int ArsGraph::addEdgeWithDerivative(int isrc, int idst, double weight) {
+    int n = getNodeNum();
+    if (isrc < 0 || isrc >= n || idst < 0 || idst >= n) {
+        ARS_ERROR("invalid node indices: isrc "
+                  << "isrc" << isrc << " idst " << idst
+                  << " must be in interval [0, " << n << "[");
+        return -1;
+    }
+
+    Edge edge;
+    edge.isrc = isrc;
+    edge.idst = idst;
+    edge.weight = weight;
+    computeFourierCorr(nodes_[isrc].coeffs, nodes_[idst].coeffs, edge.coeffs);
+    //Finding roots of the derivative for each edge and its value in the original function
+    std::vector<double> dCoeffs, rootsTheta;
+    std::vector<StationaryPoint> sPoints;
+    fourierDerivative(edge.coeffs, dCoeffs);
+    fourierRootsCCM(dCoeffs, rootsTheta);
+    for(int i = 0; i < rootsTheta.size(); i++){
+        //since the ars function is periodic on PI and not on 2*PI, the angle found by
+        //the CCM method is double the actual angle
+        double theta = rootsTheta[i]*0.5;
+        sPoints.push_back(StationaryPoint(
+            theta, evaluateFourier(edge.coeffs, 2*theta)));
+    }
+    //Stationary points sorted in descending order considering their value
+    std::sort(sPoints.begin(), sPoints.end(), statPointSorter);
+    edge.sPoints = sPoints;
+    
     edges_.push_back(edge);
 
     nodes_[isrc].incidents.push_back((int)edges_.size() - 1);

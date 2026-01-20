@@ -22,6 +22,7 @@
 #include <iostream>
 #include <queue>
 #include <vector>
+#include <complex>
 //#include <Eigen/Dense>
 
 namespace ars {
@@ -29,6 +30,8 @@ namespace ars {
 const double PNEBI_ARG_MAX = 600.0;
 const double BIG_NUM = 1.0e+10;
 const double SMALL_NUM = 1.0e-10;
+const double e = 1000000*std::numeric_limits<double>::epsilon();
+
 
 // --------------------------------------------------------
 // COS-SIN FAST EVALUATION
@@ -206,6 +209,7 @@ void evaluateHermiteFunction(int n, double x, std::vector<double>& hfunc);
 /** Computes lower and upper bounds of cosine function on a given interval.
  */
 void findLUCos(double a, double b, double& cmin, double& cmax);
+void findUCos(double a, double b, double& cmax);
 
 /** Computes lower and upper bounds of Fourier Series (represented by its coefficients)
  * on a given interval.
@@ -213,8 +217,42 @@ void findLUCos(double a, double b, double& cmin, double& cmax);
  *   S(x) = \sum_{i=0}^{n} ( coeffs[2*i] * cos(2*i*x) + coeffs[2*i+1] * sin(2*i*x) )
  */
 void findLUFourier(const std::vector<double>& coeffs, double theta0, double theta1, double& fourierMin, double& fourierfMax);
+/** Computes lower and upper bounds of Fourier Series (represented by its coefficients)
+ * on a given interval.
+ * The vector of coefficients coeffs[i] are used in Fourier series:
+ *   S(x) = \sum_{i=0}^{n} ( coeffs[2*i] * cos(2*i*x) + coeffs[2*i+1] * sin(2*i*x) )
+ */
+void findLUFourierBetterLower(const std::vector<double>& coeffs, double theta0, double theta1, double& fourierMin, double& fourierfMax);
 
 void fft(const std::vector<double>& funIn, std::vector<double>& coeff, int fourierOrder);
+
+// --------------------------------------------------------
+// STATIONARY POINTS FUNCTIONS
+// --------------------------------------------------------
+
+using compT = std::complex<double>;
+
+struct StationaryPoint{
+    double theta;
+    double val;
+
+    StationaryPoint(double t, double v) : theta(t), val(v) {}
+};
+/** Computes the coefficients of the fourier series representing the derivative of the fourier series 
+ * described by the input coefficients.
+ */
+void fourierDerivative(const std::vector<double>& coeffs, std::vector<double>& dCoeffs);
+/** Method CCM described in the paper https://www.sciencedirect.com/science/article/pii/S0021999113002003#s0070
+ * used to find the roots of the function represented by a fourier series.
+ */
+void fourierRootsCCM(const std::vector<double>& coeffs, std::vector<double>& roots);
+/** Computes lower and upper bounds of Fourier Series (represented by its coefficients)
+ * on a given interval by using a given list of stationary points.
+ * The vector of coefficients coeffs[i] are used in Fourier series:
+ *   S(x) = \sum_{i=0}^{n} ( coeffs[2*i] * cos(2*i*x) + coeffs[2*i+1] * sin(2*i*x) )
+ */
+void findLUFourierStationaryPoints(const std::vector<double>& coeffs, double theta0, 
+            double theta1, double& fourierMin, double& fourierMax, std::vector<StationaryPoint> sPoints);
 
 }  // namespace ars
 

@@ -70,8 +70,14 @@ class ArsGraphSolver {
     void setGraph(ArsGraphPtr& graph);
     void setXTol(double xtol);
 
+    bool initialSolutionFromInitialAndTree(const ArsGraphInterval::Ptr& initial);
+    bool initialSolutionFromTree();
+    bool initialSolutionFromGraph();
+
+
     bool solve(std::vector<double>& solution, double& cost, bool useDiff = true);
-    bool solve(std::vector<double>& solution, double& cost, Statistics& stats, bool useDiff = true);
+    bool solve(std::vector<double>& solution, double& cost, Statistics& stats, bool useDiff = false);
+    bool solveWithStationary(std::vector<double>& solution, double& cost, Statistics& stats, bool useDiff = false);
 
    protected:
     ArsGraphPtr graph_;
@@ -81,10 +87,6 @@ class ArsGraphSolver {
     double xtol_;
 
     bool checkInterval(ArsGraphIntervalPtr interval, std::vector<NodeInterval>& validIndices);
-
-    bool initialSolutionFromTree(const ArsGraphInterval::Ptr& initial);
-
-    bool initialSolutionFromGraph();
 };
 
 }  // namespace ars

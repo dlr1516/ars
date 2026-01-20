@@ -145,7 +145,27 @@ namespace ars {
         findLUFourier(coeffs_, xmin, xmax, ylower, yupper);
     }
 
+    // --------------------------------------------------------
 
+    FourierOptimizerBB1DStationary::FourierOptimizerBB1DStationary()
+    : FourierOptimizerBB1D(){
+    }
+
+    FourierOptimizerBB1DStationary::FourierOptimizerBB1DStationary(const std::vector<double>& coeffs, const std::vector<StationaryPoint>& sPoints)
+    : FourierOptimizerBB1D(coeffs){
+        sPoints_ = sPoints;
+    }
+
+    FourierOptimizerBB1DStationary::~FourierOptimizerBB1DStationary() {
+    }
+
+    void FourierOptimizerBB1DStationary::setStationary(const std::vector<StationaryPoint> &sPoints){
+        sPoints_ = sPoints;
+    }
+
+    void FourierOptimizerBB1DStationary::findLU(double xmin, double xmax, double& ylower, double& yupper) {
+        findLUFourierStationaryPoints(coeffs_, xmin, xmax, ylower, yupper, sPoints_);
+    }
 
     // --------------------------------------------------------
 

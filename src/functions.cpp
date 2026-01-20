@@ -358,6 +358,24 @@ void findLUCos(double a, double b, double& cmin, double& cmax) {
     }
 }
 
+void findUCos(double a, double b, double& cmax) {
+    double amod, bmod;
+
+    if (a > b) std::swap(a, b);
+
+    if (b - a >= 2.0 * M_PI) cmax = +1.0;
+    else {
+        // Normalizes to circular interval [0, 2*M_PI[
+        amod = fmod(a, 2.0 * M_PI);
+        if (amod < 0.0) amod += 2.0 * M_PI;
+        bmod = fmod(b, 2.0 * M_PI);
+        if (bmod < 0.0) bmod += 2.0 * M_PI;
+        // Case bmod < amod: for example [300,30[ deg: angle 0 is included.
+        if (bmod < amod) cmax = +1.0;
+        else cmax = std::max(cos(amod), cos(bmod));
+    }
+}
+
 void findLUFourier(const std::vector<double>& coeffs, double theta0, double theta1, double& fourierMin, double& fourierMax) {
     double amplitude, phase, sinusoidMin, sinusoidMax;
     int n, i0, i1;
@@ -389,6 +407,37 @@ void findLUFourier(const std::vector<double>& coeffs, double theta0, double thet
     }
 }
 
+void findLUFourierBetterLower(const std::vector<double>& coeffs, double theta0, double theta1, double& fourierMin, double& fourierMax) {
+    double amplitude, phase, lowerAngle, sinusoidMax;
+    int n, i0, i1;
+
+    if (coeffs.size() % 2 != 0) {
+        std::cerr << __FILE__ << "," << __LINE__ << ": the number of coefficients must be even: found " << coeffs.size() << std::endl;
+    }
+    n = (coeffs.size() / 2) - 1;
+
+    if (theta1 < theta0) {
+        std::cerr << __FILE__ << "," << __LINE__ << ": invalid interval [" << theta0 << "," << theta1 << "]: swapping endpoints to continue" << std::endl;
+        std::swap(theta0, theta1);
+    }
+
+    // fourierMin and fourierMax initialized with constant component
+    lowerAngle = (theta0 + theta1)*0.5;
+    fourierMax = coeffs[0];
+    for (int k = 1; k <= n; ++k) {
+        // t_k = a_k * cos(2*k*theta) + b_k * sin(2*k*theta) = amplitude * cos(2*k*theta - phase)
+        // Period of k-th terms is M_PI / k.
+        amplitude = sqrt(coeffs[2 * k] * coeffs[2 * k] + coeffs[2 * k + 1] * coeffs[2 * k + 1]);
+        phase = atan2(coeffs[2 * k + 1], coeffs[2 * k]);
+        // std::cout << "k " << k << ", amplitude " << amplitude << ", phase[deg] " << (180.0/M_PI*phase) << std::endl;
+        //  If the [theta0,theta1] interval is larger than period, then the whole sinusoid amplitude is considered.
+        //  Otherwise, a more refined evaluation is performed.
+        findUCos(2.0 * k * theta0 - phase, 2.0 * k * theta1 - phase, sinusoidMax);
+        fourierMax += amplitude * sinusoidMax;
+    }
+    fourierMin = evaluateFourier(coeffs, 2.0*lowerAngle);
+}
+
 void fft(const std::vector<double>& funIn, std::vector<double>& coeffs, int fourierOrder) {
     Eigen::FFT<double> fft_;
     std::vector<std::complex<double> > freqvec;
@@ -406,6 +455,123 @@ void fft(const std::vector<double>& funIn, std::vector<double>& coeffs, int four
         coeffs[2 * i] = factor * freqvec[i].real();
         coeffs[2 * i + 1] = -factor * freqvec[i].imag();
     }
+}
+
+// --------------------------------------------------------
+// STATIONARY POINTS FUNCTIONS
+// --------------------------------------------------------
+
+void fourierDerivative(const std::vector<double>& coeffs, std::vector<double>& dCoeffs){
+    int fourierOrder = (coeffs.size() - 2) * 0.5;
+    dCoeffs.resize(coeffs.size());
+    //The average value of the function doesn't influence it's derivative
+    dCoeffs[0] = 0;
+    dCoeffs[1] = 0;
+    //in order to compute the derivative of the fourier series for each level k we have
+    //a*cos(k*theta) + b*sin(k*theta) => k*b*cos(k*theta) - k*a*sin(k*theta)
+    for(int i = 1; i < fourierOrder+1; i++){
+        int idx = 2*i;
+        dCoeffs[idx] = i*coeffs[idx+1];
+        dCoeffs[idx+1] = -(i*coeffs[idx]);
+    }
+}
+
+void fourierRootsCCM(const std::vector<double>& coeffs, std::vector<double>& roots){
+    int fOrder = (coeffs.size() - 2) * 0.5;
+    Eigen::MatrixXcd m(2*fOrder, 2*fOrder);
+    std::vector<compT> h(2*fOrder + 1);
+    roots.clear();
+
+    for (int k = 0; k < h.size(); k++){
+        if (k < fOrder)
+            h[k] = compT(coeffs[2*(fOrder-k)], coeffs[2*(fOrder-k) + 1]);
+        else if (k == fOrder)
+            h[k] = 2*coeffs[0];
+        else
+            h[k] = compT(coeffs[2*(k-fOrder)], -coeffs[2*(k-fOrder) + 1]);
+    }
+
+    for (int i = 0; i<2*fOrder-1; i++){
+        for (int j = 0; j<2*fOrder; j++){
+            if(i == j-1)    m(i,j) = 1.0;
+            else            m(i,j) = .0;
+        }
+    }
+
+    int i = 2*fOrder-1;
+    compT den = 1.0/compT(coeffs[2*fOrder], -coeffs[2*fOrder+1]);
+    for(int j = 0; j<2*fOrder; j++){
+        m(i,j) = -(h[j]*den);
+    }
+
+    Eigen::ComplexEigenSolver<Eigen::MatrixXcd> eigensolver(m);
+    std::complex<double> eig;
+    double norm;
+    for(int i = 0; i < m.rows(); ++i){
+        eig = eigensolver.eigenvalues().col(0)[i];
+        norm = std::norm(eig);
+        if(1.0 - e <= norm && norm <= 1.0 + e){
+            double arg = std::arg(eig);
+            double root = arg < 0 ? arg + 2*M_PI : arg;
+            roots.push_back(root);
+        }
+    }
+}
+
+void findLUFourierStationaryPoints(const std::vector<double>& coeffs, double theta0, 
+            double theta1, double& fourierMin, double& fourierMax, std::vector<StationaryPoint> sPoints){
+    
+    double sPoint = -1.0;
+
+    if (coeffs.size() % 2 != 0) {
+        std::cerr << __FILE__ << "," << __LINE__ << ": the number of coefficients must be even: found " << coeffs.size() << std::endl;
+    }
+
+    if (theta1 < theta0) {
+        std::cerr << __FILE__ << "," << __LINE__ << ": invalid interval [" << theta0 << "," << theta1 << "]: swapping endpoints to continue" << std::endl;
+        std::swap(theta0, theta1);
+    }
+    //Since the stationary points are described by an angle between 0 and PI, i want the interval [theta0,theta1] to also be
+    //included in [0,PI[ 
+    double a = theta0;
+    double b = theta1;
+    if(b - a >= M_PI){
+        a = .0;
+        b = M_PI;
+    }
+    else{
+        // Normalizes to circular interval [0, M_PI[
+        a = fmod(a, M_PI);
+        if (a < 0.0) a += M_PI;
+        b = fmod(b, M_PI);
+        if (b < 0.0) b += M_PI;
+    }
+
+    //Finding upper bound by comparing the highest value stationaty point in the interval
+    //with the value of the function along the extremes of the interval
+    //We can break after the first hit because the list is ordered
+    for(int i = 0; i < sPoints.size(); i++){
+        auto& sp = sPoints[i];
+        double t = sp.theta;
+        // Case theta1 < theta0: for example [150,30] deg.
+        if(b < a){
+            if((t >= .0 && t <= b) || 
+                (t >= a && t <= M_PI )){
+                sPoint = sp.val;
+                break;
+            }
+        }
+        else if(t > a && t < b){
+            sPoint = sp.val;
+            break;
+        }
+    }
+    double left = evaluateFourier(coeffs, 2*a);
+    double right = evaluateFourier(coeffs, 2*b);
+    fourierMax = std::max(sPoint, std::max(left, right));
+    //Middle of the interval -> 2*(theta1+theta2)*0.5 -> theta0+theta1
+    //This angle is used because it's the same considered by the solution
+    fourierMin = evaluateFourier(coeffs, theta0 + theta1);
 }
 
 }  // namespace ars

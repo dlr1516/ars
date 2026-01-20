@@ -70,8 +70,37 @@ void ArsGraphIntervalFull::init(ArsGraphPtr& graph) {
         int idst = edge.idst;
         double thetaMin = nodeLowers_->at(idst) - nodeUppers_->at(isrc);
         double thetaMax = nodeUppers_->at(idst) - nodeLowers_->at(isrc);
-        ars::findLUFourier(edge.coeffs, thetaMin, thetaMax, edgeLowers_->at(j),
+        ars::findLUFourierBetterLower(edge.coeffs, thetaMin, thetaMax, edgeLowers_->at(j),
                            edgeUppers_->at(j));
+    }
+    computeEdgeBounds();
+}
+
+void ArsGraphIntervalFull::initWithStationary(ArsGraphPtr& graph) {
+    graph_ = graph;
+
+    size_t nodeNum = getNodeNum();
+    size_t edgeNum = getEdgeNum();
+
+    // Initializes node lower and upper values
+    nodeLowers_ = FullTPtr(new FullT(nodeNum));
+    nodeUppers_ = FullTPtr(new FullT(nodeNum));
+    std::fill(std::begin(*nodeLowers_), std::end(*nodeLowers_), 0.0);
+    std::fill(std::begin(*nodeUppers_), std::end(*nodeUppers_), M_PI);
+    nodeLowers_->at(0) = 0.0;
+    nodeUppers_->at(0) = 0.0;
+
+    // Computes lower and upper bounds of each edge
+    edgeLowers_ = FullTPtr(new FullT(edgeNum));
+    edgeUppers_ = FullTPtr(new FullT(edgeNum));
+    for (int j = 0; j < graph_->edges().size(); ++j) {
+        const ArsGraph::Edge& edge = graph_->edges()[j];
+        int isrc = edge.isrc;
+        int idst = edge.idst;
+        double thetaMin = nodeLowers_->at(idst) - nodeUppers_->at(isrc);
+        double thetaMax = nodeUppers_->at(idst) - nodeLowers_->at(isrc);
+        ars::findLUFourierStationaryPoints(edge.coeffs, thetaMin, thetaMax, edgeLowers_->at(j),
+                           edgeUppers_->at(j), edge.sPoints);
     }
     computeEdgeBounds();
 }
@@ -236,7 +265,7 @@ void ArsGraphIntervalFull::split(size_t idx,
             intervLower->nodeLower(idst) - intervLower->nodeUpper(isrc);
         double thetaMax =
             intervLower->nodeUpper(idst) - intervLower->nodeLower(isrc);
-        ars::findLUFourier(edge.coeffs, thetaMin, thetaMax,
+        ars::findLUFourierBetterLower(edge.coeffs, thetaMin, thetaMax,
                            edgeLower, edgeUpper);
         intervLower->setEdgeLower(eidx, edgeLower);
         intervLower->setEdgeUpper(eidx, edgeUpper);
@@ -245,8 +274,56 @@ void ArsGraphIntervalFull::split(size_t idx,
             intervUpper->nodeLower(idst) - intervUpper->nodeUpper(isrc);
         thetaMax =
             intervUpper->nodeUpper(idst) - intervUpper->nodeLower(isrc);
-        ars::findLUFourier(edge.coeffs, thetaMin, thetaMax,
+        ars::findLUFourierBetterLower(edge.coeffs, thetaMin, thetaMax,
                            edgeLower, edgeUpper);
+        intervUpper->setEdgeLower(eidx, edgeLower);
+        intervUpper->setEdgeUpper(eidx, edgeUpper);
+    }
+}
+
+void ArsGraphIntervalFull::splitWithStationary(size_t idx,
+                                 Base::Ptr intervLower,
+                                 Base::Ptr intervUpper) {
+    ARS_ASSERT_VAR1(idx != 0, idx);
+
+    intervLower->setGraph(graph_);
+    intervUpper->setGraph(graph_);
+
+    double thetaMid = 0.5 * (nodeLowers_->at(idx) + nodeUppers_->at(idx));
+    intervLower->setNodeLowers(nodeLowers_);
+    intervLower->setNodeUppers(nodeUppers_);
+    intervLower->setNodeUpper(idx, thetaMid);
+
+    intervUpper->setNodeLowers(nodeLowers_);
+    intervUpper->setNodeUppers(nodeUppers_);
+    intervUpper->setNodeLower(idx, thetaMid);
+
+    intervLower->setEdgeLowers(edgeLowers_);
+    intervLower->setEdgeUppers(edgeUppers_);
+    intervUpper->setEdgeLowers(edgeLowers_);
+    intervUpper->setEdgeUppers(edgeUppers_);
+
+    for (int eidx : graph_->nodes()[idx].incidents) {
+        const ArsGraph::Edge& edge = graph_->edges()[eidx];
+        int isrc = edge.isrc;
+        int idst = edge.idst;
+        double edgeLower, edgeUpper;
+
+        double thetaMin =
+            intervLower->nodeLower(idst) - intervLower->nodeUpper(isrc);
+        double thetaMax =
+            intervLower->nodeUpper(idst) - intervLower->nodeLower(isrc);
+        ars::findLUFourierStationaryPoints(edge.coeffs, thetaMin, thetaMax,
+                           edgeLower, edgeUpper, edge.sPoints);
+        intervLower->setEdgeLower(eidx, edgeLower);
+        intervLower->setEdgeUpper(eidx, edgeUpper);
+
+        thetaMin =
+            intervUpper->nodeLower(idst) - intervUpper->nodeUpper(isrc);
+        thetaMax =
+            intervUpper->nodeUpper(idst) - intervUpper->nodeLower(isrc);
+        ars::findLUFourierStationaryPoints(edge.coeffs, thetaMin, thetaMax,
+                           edgeLower, edgeUpper, edge.sPoints);
         intervUpper->setEdgeLower(eidx, edgeLower);
         intervUpper->setEdgeUpper(eidx, edgeUpper);
     }
@@ -484,7 +561,7 @@ void ArsGraphIntervalDiff::split(size_t idx, Base::Ptr intervLower, Base::Ptr in
             intervLower->nodeLower(idst) - intervLower->nodeUpper(isrc);
         double thetaMax =
             intervLower->nodeUpper(idst) - intervLower->nodeLower(isrc);
-        ars::findLUFourier(edge.coeffs, thetaMin, thetaMax,
+        ars::findLUFourierBetterLower(edge.coeffs, thetaMin, thetaMax,
                            edgeLower, edgeUpper);
         intervLower->setEdgeLower(eidx, edgeLower);
         intervLower->setEdgeUpper(eidx, edgeUpper);
@@ -493,12 +570,16 @@ void ArsGraphIntervalDiff::split(size_t idx, Base::Ptr intervLower, Base::Ptr in
             intervUpper->nodeLower(idst) - intervUpper->nodeUpper(isrc);
         thetaMax =
             intervUpper->nodeUpper(idst) - intervUpper->nodeLower(isrc);
-        ars::findLUFourier(edge.coeffs, thetaMin, thetaMax,
+        ars::findLUFourierBetterLower(edge.coeffs, thetaMin, thetaMax,
                            edgeLower, edgeUpper);
         intervUpper->setEdgeLower(eidx, edgeLower);
         intervUpper->setEdgeUpper(eidx, edgeUpper);
     }
 }
+
+void ArsGraphIntervalDiff::splitWithStationary(size_t idx,
+                                 Base::Ptr intervLower,
+                                 Base::Ptr intervUpper) {}
 
 size_t ArsGraphIntervalDiff::size() const {
     size_t size = 0;

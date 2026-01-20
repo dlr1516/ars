@@ -35,6 +35,13 @@ class ArsGraph {
     using Self = ArsGraph;
     using Ptr = std::shared_ptr<Self>;
 
+    struct StationaryPointMore {
+        bool operator()(StationaryPoint& r0,
+                        StationaryPoint& r1) const {
+            return (r0.val > r1.val);
+        }
+    } statPointSorter;
+
     struct Node {
         std::vector<double> coeffs;
         std::vector<int> incidents; 
@@ -45,6 +52,7 @@ class ArsGraph {
         int idst;
         double weight;
         std::vector<double> coeffs;
+        std::vector<StationaryPoint> sPoints;
     };
 
     /**
@@ -76,6 +84,7 @@ class ArsGraph {
     int addNode(const std::vector<double>& coeffs);
 
     int addEdge(int isrc, int idst, double weight = 1.0);
+    int addEdgeWithDerivative(int isrc, int idst, double weight = 1.0);
 
     const std::vector<Node>& nodes() const;
 
